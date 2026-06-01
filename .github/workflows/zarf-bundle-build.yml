@@ -1,0 +1,75 @@
+# UDS bundle build — additive, dispatchable. Author: Yachay; DCO.
+# Produces a cosign-signed Zarf package and anchors its digest in Sigstore Rekor.
+name: zarf-bundle-build
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Bundle version tag"
+        required: true
+        default: "v0.1.0"
+      anchor_rekor:
+        description: "Anchor the bundle digest in the public Sigstore Rekor log"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  packages: read
+  id-token: write   # enables keyless/tlog operations
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Zarf
+        uses: defenseunicorns/setup-zarf@main
+        with:
+          version: v0.51.0
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: v2.4.1
+
+      - name: Zarf package create (per-flagship dirs in uds-bundles/PER_BUNDLE/*)
+        run: |
+          mkdir -p dist
+          for d in uds-bundles/PER_BUNDLE/*/; do
+            [ -f "$d/zarf.yaml" ] || continue
+            zarf package create "$d" --confirm -o dist
+          done
+          # if a consolidated root zarf.yaml exists, build it too
+          [ -f zarf.yaml ] && zarf package create . --confirm -o dist || true
+          PKG=$(ls dist/zarf-package-*.tar.zst | head -1)
+          echo "PKG=$PKG" >> "$GITHUB_ENV"
+          for p in dist/zarf-package-*.tar.zst; do sha256sum "$p" | tee "$p.sha256"; done
+
+      - name: Cosign sign-blob (key from secret; Rekor anchor optional)
+        env:
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+        run: |
+          echo "${{ secrets.COSIGN_KEY }}" > cosign.key
+          if [ "${{ inputs.anchor_rekor }}" = "true" ]; then
+            cosign sign-blob --key cosign.key --tlog-upload=true \
+              --rekor-url=https://rekor.sigstore.dev \
+              --bundle "${PKG}.rekor.bundle" --yes "${PKG}.sha256" > "${PKG}.sig"
+          else
+            cosign sign-blob --key cosign.key --tlog-upload=false --yes "${PKG}" > "${PKG}.sig"
+          fi
+          rm -f cosign.key
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: szl-uds-bundle-${{ inputs.version }}
+          path: |
+            dist/zarf-package-*.tar.zst
+            dist/zarf-package-*.tar.zst.sig
+            dist/zarf-package-*.tar.zst.sha256
+            dist/zarf-package-*.tar.zst.rekor.bundle
+          if-no-files-found: error
