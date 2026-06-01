@@ -47,7 +47,7 @@ sha256sum -c bundle.tar.zst.sha256
 
 # 2) authenticity, anchored in the public Sigstore transparency log (full tlog verify)
 cosign verify-blob --key cosign.pub --bundle bundle.tar.zst.rekor.bundle bundle.tar.zst.sha256
-#    -> Verified OK   (proves the digest manifest is anchored at Rekor logIndex 1693738287)
+#    -> Verified OK   (proves the digest manifest is anchored at Rekor logIndex 1693757456)
 
 # 2b) airgap/offline equivalent for the bundle itself
 cosign verify-blob --key cosign.pub --insecure-ignore-tlog=true \
