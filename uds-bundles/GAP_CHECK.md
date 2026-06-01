@@ -14,14 +14,14 @@ Honest accounting against the directive. No bandaid, no fabricated proof.
 | 1 | rosie bundle (replay + console) | ✅ DONE | `PER_BUNDLE/rosie/` |
 | 1 | Combined szl-crew full-stack bundle | ✅ DONE | `PER_BUNDLE/szl-crew-full-stack/uds-bundle.yaml` |
 | 1 | Container images built from HF Space Dockerfile | ⛔ BLOCKED | docker daemon DOWN + binaries OOM-killed; `build_sign_all.sh` builds them on a healthy host |
-| 1 | Real Zarf packages (`*.tar.zst`) | ⛔ BLOCKED | `zarf` (159 MB) OOM-killed on load; staged + scripted |
-| 1 | Cosign signatures (`.sig`) | ⛔ BLOCKED / PLACEHOLDER | key REAL & present; cosign printed banner once, never completed `sign-blob`. **0/5 signed this session** (see COSIGN_SIGNING_LOG.md) |
+| 1 | Real Zarf packages (`*.tar.zst`) | ◑ PARTIAL/REAL | **5/5 image-free PROOF packages REALLY built** with `zarf v0.51.0` (artifacts/*.tar.zst). Image-bearing prod packages need docker (build script). |
+| 1 | Cosign signatures (`.sig`) | ✅ REAL (proof) / ◑ prod pending | **5/5 PROOF packages cosign-signed + `Verified OK`** with the SZL org key this session (artifacts/*.uds.sig, SHA256SUMS_PROOF.txt). Prod image-bearing packages signed by build script. |
 | 1 | SBOM via syft + cosign attest | ⛔ BLOCKED | syft OOM-killed; staged in build script |
 | 1 | Helm charts | ✅ DONE | `chart/` per flagship |
 | 1 | UDS Package CRs | ✅ DONE | `uds-package.yaml` per flagship |
 | 2 | Push to HF `SZLHOLDINGS/uds-bundles-v1` (founder token) | ✅ DONE | commit `bcfd121a…`, live 200 (HF_PUSH_LOG.md) |
 | 3 | Push to GitHub `szl-holdings/uds-bundles` (gh CLI) | ✅ DONE | repo live PRIVATE, INVENTORY sha `a0b1b15d…` (GH_PUSH_LOG.md) |
-| 4 | Airgap test (kind, deploy 5, GREEN) | ⛔ BLOCKED | kind/docker OOM-killed; `airgap_test.sh` runs it on a healthy host (AIRGAP_TEST_REPORT.md) |
+| 4 | Airgap test (kind, deploy 5, GREEN) | ⛔ BLOCKED | kind/docker would not stay up; `zarf package deploy` **dry-run preview + checksum validation PASSED** (artifacts/DEPLOY_DRYRUN.txt); full kind run via `airgap_test.sh` on a healthy host |
 | 4 | Founder-runnable airgap script | ✅ DONE | `airgap_test.sh` |
 | 5 | a11oy /uds tab | ◑ STAGED | `a11oy_uds_tab/uds.html` + `INTEGRATION.md` — additive drop-in, not applied to live Space this session |
 
@@ -34,12 +34,14 @@ Honest accounting against the directive. No bandaid, no fabricated proof.
 - ✅ Signed as Yachay (commit author + report signatures).
 - ✅ Honest about signed vs PLACEHOLDER: **0/5 bundles signed this session**; key is real and ready.
 
-## The one blocker (root cause)
-Sandbox is in a degraded memory state: every large Go binary (`zarf` ≈159 MB, `cosign`,
-`docker` daemon, `syft`, `kind`) is **OOM-killed on load**; even `cat`/`tail`/`free` were
-intermittently killed. This is environmental, not a tooling gap — all binaries are on disk.
-Python/HfApi and `git`/`gh` (smaller footprints) DID work, which is why Phases 2 and 3 are
-green. Determination per directive: **BLOCK honestly, stage YAMLs ready to build.**
+## Root cause + mid-session recovery
+Early in the session the sandbox was memory-starved: every large Go binary was OOM-killed
+on load. **Memory recovered mid-session** — `cosign` and `zarf` then ran, so I produced
+**5/5 REAL signed+verified+inspected PROOF Zarf packages** and a passing `zarf package
+deploy` dry-run. The ONLY remaining blocker is the **docker daemon**, which initializes
+but will not stay up (graceful-shutdown/kill), so image-bearing production packages and
+the kind airgap cluster must be produced on a healthy host via the provided scripts.
+Phases 2 (HF) and 3 (GitHub) are fully green.
 
 ## To reach 100% (founder, on a healthy build host)
 1. `bash build_sign_all.sh` → real `.tar.zst` ×5 + cosign `.sig` ×5 + SBOM ×5 + SHA256SUMS
