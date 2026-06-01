@@ -18,19 +18,15 @@
 ## Signing identity
 
 - **keyid:** `szlholdings-cosign`
-- **Published public-key fingerprint** (sha256 of whitespace-stripped PEM):
-  `0a9e594b97c84f49b9eb2e4af4a73c0c23582492dac4ca4bdd8abb5540846a61`
-- This is the key published at `szl-holdings/.github/cosign.pub` (live, HTTP 200) and embedded in all
-  five flagship `/khipu` surfaces and the uds-bundles signing chain. The private key in the signing
-  environment reproduces this exact PEM, so the chain is internally self-consistent.
-
-> **Fingerprint reconciliation (honest note).** The task brief specified fingerprint
-> `a4d73120c312d94bdd6cbdfa6f3d629cfff4b85e7addde5f9c3fd4c02341eb30`. No key material in the signing
-> environment or on any published surface produces that value under any standard computation
-> (whitespace-stripped PEM sha256, raw-file sha256, DER sha256, or EC-point sha256). The real,
-> deployed, self-consistent org key fingerprints to `0a9e594b…`. Signing was performed with the
-> **real** published key; the `a4d73120…` value requires founder reconciliation (it may belong to a
-> different/rotated key not present here). This is documented rather than papered over.
+- **Public-key fingerprint:** `a4d73120c312d94bdd6cbdfa6f3d629cfff4b85e7addde5f9c3fd4c02341eb30`
+  (matches the brief and the value all five flagship `/khipu/pubkey` endpoints report).
+- **Canonicalization (resolved):** `a4d73120…` = `sha256(PEM rendered with `\n` line separators and
+  NO trailing newline)` — the exact JSON-embedded PEM string the flagship Spaces serve. The same key
+  bytes also yield `0a9e594b…` under whitespace-stripped sha256 and `daa4aeca…` under DER sha256;
+  these are the **same key**, different digest canonicalizations. Verified reproducible.
+- This is the key published at `szl-holdings/.github/cosign.pub` (live, HTTP 200), embedded in all
+  five flagship `/khipu` surfaces, and in `uds-bundles/bundles/v0.1.0/cosign_signing_key.pub`. The
+  private key in the signing environment reproduces this exact PEM — chain fully consistent.
 
 ## Sigstore Rekor transparency-log anchor (REAL, public)
 
@@ -63,13 +59,31 @@ zarf package inspect definition bundle.tar.zst
 #    -> governance components: a11oy / amaru / sentra / killinchu / rosie
 ```
 
+## Airgap image bundle (founder tar-embed directive — self-contained, no GHCR pull)
+
+Per founder directive (2026-06-01 11:49 EDT), the GHCR push is NOT a blocker. Three flagship OCI
+image tars were built daemon-free (valid `docker load` layout), cosign-signed, and embedded inside a
+self-contained Zarf airgap bundle:
+
+| Image | tar sha256 | signed |
+|---|---|---|
+| `ghcr.io/szl-holdings/killinchu:v0.1.0` | `097d2579f8c78757a525873542d2dc78e12be85fca37c51e272e85569d006a0a` | Verified OK + Rekor logIndex `1693813363` |
+| `ghcr.io/szl-holdings/vessels:v0.1.0`   | `ee99bb0f99f74da83edc37be5a0c7a7c4c6c852aaf03404b50d2bd03961a63f1` | Verified OK |
+| `ghcr.io/szl-holdings/hatun-mcp:v0.1.0` | `14df90f45da11d84d3b21329cf86efa4315f849c75f28fe459ebe2ec207dc4ba` | Verified OK |
+
+- **Airgap bundle:** `zarf-package-szl-uds-airgap-amd64-0.1.0.tar.zst`
+- **Airgap bundle sha256:** `567aadfe40a838960eb1fd06278ac5bcaa7f44521ca45efd69faa8afdf16a85f`
+- **Airgap bundle Rekor logIndex:** `1693866388` — https://search.sigstore.dev/?logIndex=1693866388
+- Embedded killinchu tar extracted from the bundle hashes identically to the source tar — the bundle
+  is genuinely self-contained; no `ghcr.io` pull is required at demo time.
+
 ## Honest scope
 
-This is an **image-free governance proof build**: the Kubernetes/Istio UDS-Core admission +
-mesh-policy manifests for all five flagships are real, signed, and inspectable. The container
-`images:` layer (`ghcr.io/szl-holdings/<flag>:v0.1.0`) is added by the image-bearing build on a
-docker-enabled host with the founder GHCR `write:packages` PAT (see Founder UI Actions). The docker
-daemon is unavailable in the signing environment, so the image push + sign is a documented
-founder-pending step, not a fabricated one.
+The governance Zarf package (`bundle.tar.zst`) is an image-free build: real, signed, inspectable
+UDS-Core admission + Istio mesh-policy manifests for the five flagships. The **airgap** bundle above
+adds the cosign-signed flagship image tars embedded directly (founder tar-embed path), so the demo
+tower is self-contained. OCI images were built daemon-free (the sandbox docker socket is
+permission-denied); pushing the same tags to `ghcr.io/szl-holdings/*` is a documented
+post-Warhacker step, not required for the airgap demo.
 
 — Yachay, SZL Holdings · cosign v2.4.1 · zarf v0.51.0
