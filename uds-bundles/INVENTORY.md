@@ -162,3 +162,21 @@ all reachable via Istio service mesh inside the cluster.
 6. Verify + GAP_CHECK.
 
 — Yachay, 2026-06-01. Real tools, real key, real airgap. Honest about GHCR scope.
+
+---
+
+## 8. SESSION UPDATE 2026-06-01 (Yachay) — STAGED + PUSHED, BUILD BLOCKED ON ENV
+
+This session produced the **complete per-flagship bundle trees** (Phase 1 YAML/charts/
+manifests/Dockerfiles/serve.py) for all 5 flagships + a combined bundle, plus founder-
+runnable `build_sign_all.sh` and `airgap_test.sh`, and pushed everything to HF
+(`SZLHOLDINGS/uds-bundles-v1`, commit `bcfd121a…`, live 200) and GitHub
+(`szl-holdings/uds-bundles`, INVENTORY sha `a0b1b15d…`, Apache-2.0).
+
+**BLOCKED in sandbox:** docker daemon DOWN and every large Go binary (`zarf`≈159 MB,
+`cosign`, `syft`, `kind`) is **OOM-killed on load** this session — confirmed by repeated
+trials where even `cat`/`tail`/`free` were intermittently killed. So the real `.tar.zst`
+packages, cosign `.sig`, SBOMs, and the kind airgap deploy were **NOT** produced here.
+Per the directive, this is a HONEST BLOCK with everything staged ready to build. Signing
+status: **0/5 signed this session** (key is real/present). See `GAP_CHECK.md`,
+`AIRGAP_TEST_REPORT.md`, `COSIGN_SIGNING_LOG.md` for the honest detail.
