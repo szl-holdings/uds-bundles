@@ -13,7 +13,7 @@
 
 ## What's Experimental
 
-- **SLSA L2 provenance** — L1 currently; L2 (build service provenance) in progress
+- **SLSA L1 honest; L2 roadmap via Wire D** — L1 attested today (source + build provenance + DSSE/Cosign signing); L2 build-service provenance is in progress, not yet claimed
 - **Automated bundle signing** — Sigstore/cosign integration under development
 
 ## What's Deprecated
