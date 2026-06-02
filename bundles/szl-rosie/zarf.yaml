@@ -7,6 +7,7 @@ kind: ZarfPackageConfig
 metadata:
   name: szl-rosie
   version: 0.2.0
+  zarfVersion: ">=0.77.0"   # Min Zarf CLI: Helm 4 + keyless signing support
   description: "SZL Rosie — Operator console + decision approval gates (adds human-in-loop layer UDS Core lacks)"
   architecture: amd64
   authors: "Yachay <yachay@szlholdings.dev>"
