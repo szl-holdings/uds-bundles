@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: Apache-2.0
+# UDS Core declarative bundle spec — szl-sentra
+# Author: Yachay <yachay@szlholdings.dev> (DCO signed)
+# Doctrine v11 LOCKED 749/14/163
+# Operational drop: fills the UDS Core gap — adds fail-CLOSED defensive screen UDS Core lacks.
+kind: UDSBundle
+metadata:
+  name: szl-sentra
+  description: "SZL Sentra operational UDS drop — 8-gate immune system + verdict pipeline"
+  version: "0.1.0"
+  architecture: amd64
+  authors: "Yachay <yachay@szlholdings.dev>"
+
+packages:
+  - name: szl-sentra
+    # Local path for air-gap create; OCI ref for registry-backed deploy.
+    path: .
+    ref: 0.1.0
+    # Cosign: verify the package signature against the published public key
+    # (see README — cosign verify-blob). Private key lives in HF Space secrets.
+    optionalComponents:
+      - sentra-sbom-attest
+    overrides:
+      sentra:
+        sentra:
+          values:
+            - path: image.tag
+              value: "uds-v0.1.0"
+            - path: namespace
+              value: "szl-sentra"
