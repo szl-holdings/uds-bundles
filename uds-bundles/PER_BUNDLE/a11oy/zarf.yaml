@@ -12,6 +12,7 @@ metadata:
   name: a11oy-runtime
   description: "a11oy orchestration kernel — L1-L7 receipt chain, 5 anchor formula policy gates, PURIQ reasoning backend (open-LLM unified router). Doctrine v11 LOCKED: 749 decls / 14 axioms / 163 sorries / 13-axis yuyay_v3."
   version: "0.3.1"
+  zarfVersion: ">=0.77.0"   # Min Zarf CLI: Helm 4 + keyless signing
   url: "https://szlholdings.com"
   authors: "Stephen Paul Lutar JR <stephen@szlholdings.com>"
   documentation: "https://github.com/szl-holdings/uds-bundles"
