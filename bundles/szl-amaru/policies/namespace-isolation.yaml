@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: Apache-2.0
+# Pepr policy — namespace isolation for szl-amaru (UDS Core native admission).
+# Author: Yachay <yachay@szlholdings.dev> (DCO signed). Doctrine v11 LOCKED 749/14/163.
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: szl-amaru-isolation
+  namespace: szl-amaru
+spec:
+  network:
+    # Default-deny: only same-namespace + Istio mesh ingress allowed.
+    allow:
+      - direction: Ingress
+        remoteNamespace: istio-system
+        port: 8080
+        description: "Allow Istio mesh ingress only"
+      - direction: Ingress
+        remoteNamespace: szl-amaru
+        description: "Allow same-namespace traffic"

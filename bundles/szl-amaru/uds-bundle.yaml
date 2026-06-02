@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: Apache-2.0
+# UDS Core declarative bundle spec — szl-amaru
+# Author: Yachay <yachay@szlholdings.dev> (DCO signed)
+# Doctrine v11 LOCKED 749/14/163
+# Operational drop: fills the UDS Core gap — adds signed-decisions chain UDS Core lacks.
+kind: UDSBundle
+metadata:
+  name: szl-amaru
+  description: "SZL Amaru operational UDS drop — Cortex memory + DSSE receipts + Khipu DAG"
+  version: "0.1.0"
+  architecture: amd64
+  authors: "Yachay <yachay@szlholdings.dev>"
+
+packages:
+  - name: szl-amaru
+    # Local path for air-gap create; OCI ref for registry-backed deploy.
+    path: .
+    ref: 0.1.0
+    # Cosign: verify the package signature against the published public key
+    # (see README — cosign verify-blob). Private key lives in HF Space secrets.
+    optionalComponents:
+      - amaru-sbom-attest
+    overrides:
+      amaru:
+        amaru:
+          values:
+            - path: image.tag
+              value: "uds-v0.1.0"
+            - path: namespace
+              value: "szl-amaru"
