@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: Apache-2.0
+# UDS Core declarative bundle spec — szl-killinchu
+# Author: Yachay <yachay@szlholdings.dev> (DCO signed)
+# Doctrine v11 LOCKED 749/14/163
+# Operational drop: fills the UDS Core gap — the mission-ready defensive application on top of UDS Core.
+kind: UDSBundle
+metadata:
+  name: szl-killinchu
+  description: "SZL Killinchu operational UDS drop — Counter-UAS + Λ-gate + defensive scope"
+  version: "0.1.0"
+  architecture: amd64
+  authors: "Yachay <yachay@szlholdings.dev>"
+
+packages:
+  - name: szl-killinchu
+    # Local path for air-gap create; OCI ref for registry-backed deploy.
+    path: .
+    ref: 0.1.0
+    # Cosign: verify the package signature against the published public key
+    # (see README — cosign verify-blob). Private key lives in HF Space secrets.
+    optionalComponents:
+      - killinchu-sbom-attest
+    overrides:
+      killinchu:
+        killinchu:
+          values:
+            - path: image.tag
+              value: "uds-v0.1.0"
+            - path: namespace
+              value: "szl-killinchu"
