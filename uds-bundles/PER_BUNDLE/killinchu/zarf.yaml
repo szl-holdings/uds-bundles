@@ -6,6 +6,7 @@ metadata:
   name: killinchu-bundle
   description: "killinchu drone flagship — PURIQ core + anatomy libs + digital twin, 2-person gate (Pepr), drone registry + audit. Doctrine v11 LOCKED preserved."
   version: "0.3.1"
+  zarfVersion: ">=0.77.0"   # Min Zarf CLI: Helm 4 + keyless signing
   url: "https://szlholdings.com"
   authors: "Stephen Paul Lutar JR <stephen@szlholdings.com>"
   documentation: "https://github.com/szl-holdings/uds-bundles"
