@@ -1,0 +1,31 @@
+# SPDX-License-Identifier: Apache-2.0
+# Sample KhipuReceipt — one governed a11oy decision as cluster-state evidence.
+# Doctrine v11 LOCKED 749/14/163. rekorInclusion is 'pending' when air-gapped
+# (DOCTRINE_NO_HALLUCINATION — never claim Rekor inclusion offline).
+apiVersion: szl.dev/v1alpha1
+kind: KhipuReceipt
+metadata:
+  name: a11oy-decision-7f3a2b
+  namespace: szl-a11oy
+  labels:
+    dsse-receipt: required
+    lambda.szl.dev/axis: "Lambda-7"
+spec:
+  predicateType: "https://szl.dev/khipu/receipt/v1"
+  subject:
+    - name: "decision/a11oy/counter-uas-engage"
+      digest:
+        sha256: "0000000000000000000000000000000000000000000000000000000000000000"  # placeholder decision-content hash
+  dsseEnvelope: "<BASE64_DSSE_ENVELOPE>"
+  signer:
+    mode: keyed                                  # or keyless (Fulcio)
+    publicKeyRef:
+      secretName: szl-cosign-pub                 # ECDSA-P256 (cosign default)
+  rekorRef:
+    logIndex: 0                                  # transparency-log inclusion (when online)
+  chainPrev: a11oy-decision-6e2d19               # SHA-256 receipt-chain link
+status:
+  verified: true
+  verifiedAt: "2026-06-02T15:41:02Z"
+  verifyMethod: "cosign-v3 DSSE + identity binding"
+  rekorInclusion: pending                        # honest: 'pending' when air-gapped
