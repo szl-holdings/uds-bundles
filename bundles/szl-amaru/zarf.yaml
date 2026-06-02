@@ -7,6 +7,7 @@ kind: ZarfPackageConfig
 metadata:
   name: szl-amaru
   version: 0.2.0
+  zarfVersion: ">=0.77.0"   # Min Zarf CLI: Helm 4 + keyless signing support
   description: "SZL Amaru — Cortex memory + DSSE receipts + Khipu DAG (adds signed-decisions chain UDS Core lacks)"
   architecture: amd64
   authors: "Yachay <yachay@szlholdings.dev>"
