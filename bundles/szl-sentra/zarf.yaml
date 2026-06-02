@@ -36,6 +36,9 @@ components:
           - ./policies/namespace-isolation.yaml
           - ./policies/dsse-receipt-egress.yaml
           - ./policies/section889-denylist.yaml
+          # K8s-native additive gates (alongside Pepr; Audit/warn during rollout)
+          - ./policies/lambda-gate.vap.yaml
+          - ./policies/cosign-image-policy.yaml
 
   - name: sentra-sbom-attest
     required: false
