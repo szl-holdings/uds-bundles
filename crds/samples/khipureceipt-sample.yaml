@@ -15,8 +15,10 @@ spec:
   subject:
     - name: "decision/a11oy/counter-uas-engage"
       digest:
-        sha256: "0000000000000000000000000000000000000000000000000000000000000000"  # placeholder decision-content hash
-  dsseEnvelope: "<BASE64_DSSE_ENVELOPE>"
+        sha256: "0000000000000000000000000000000000000000000000000000000000000000"  # sample — real hash from CI at v0.3.0
+  # PENDING: real DSSE envelope injected by CI at uds-bundles v0.3.0 (keyless cosign via slsa-l3-build-zarf.yml)
+  # Run: cosign sign-blob --yes --bundle /tmp/sample.sigstore.json /tmp/decision.json
+  dsseEnvelope: "CI_GENERATED_PENDING_V030"
   signer:
     mode: keyed                                  # or keyless (Fulcio)
     publicKeyRef:
