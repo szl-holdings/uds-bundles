@@ -6,7 +6,7 @@
 kind: ZarfPackageConfig
 metadata:
   name: szl-rosie
-  version: 0.1.0
+  version: 0.2.0
   description: "SZL Rosie — Operator console + decision approval gates (adds human-in-loop layer UDS Core lacks)"
   architecture: amd64
   authors: "Yachay <yachay@szlholdings.dev>"
@@ -23,11 +23,11 @@ components:
       - name: rosie
         namespace: szl-rosie
         localPath: ./chart
-        version: 0.1.0
+        version: 0.2.0
         valuesFiles:
           - ./chart/values.yaml
     images:
-      - "ghcr.io/szl-holdings/rosie:uds-v0.1.0"
+      - "ghcr.io/szl-holdings/rosie:uds-v0.2.0"
     # Pepr admission policies applied as raw manifests at deploy time.
     manifests:
       - name: rosie-pepr-policies

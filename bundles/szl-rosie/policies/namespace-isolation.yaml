@@ -8,6 +8,10 @@ metadata:
   namespace: szl-rosie
 spec:
   network:
+    # UDS Core v1.5.0 canonical: Istio ambient service-mesh mode.
+    # https://github.com/defenseunicorns/uds-core/blob/main/src/grafana/chart/templates/uds-package.yaml
+    serviceMesh:
+      mode: ambient
     # Default-deny: only same-namespace + Istio mesh ingress allowed.
     allow:
       - direction: Ingress
@@ -17,3 +21,10 @@ spec:
       - direction: Ingress
         remoteNamespace: szl-rosie
         description: "Allow same-namespace traffic"
+  # UDS Core monitor block — wire Prometheus scrape through the Package CRD.
+  monitor:
+    - selector:
+        app.kubernetes.io/name: rosie
+      targetPort: 7860
+      portName: http
+      description: "SZL rosie metrics"

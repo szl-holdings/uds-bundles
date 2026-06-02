@@ -6,7 +6,7 @@
 kind: ZarfPackageConfig
 metadata:
   name: szl-sentra
-  version: 0.1.0
+  version: 0.2.0
   description: "SZL Sentra — 8-gate immune system + verdict pipeline (adds fail-CLOSED defensive screen UDS Core lacks)"
   architecture: amd64
   authors: "Yachay <yachay@szlholdings.dev>"
@@ -23,11 +23,11 @@ components:
       - name: sentra
         namespace: szl-sentra
         localPath: ./chart
-        version: 0.1.0
+        version: 0.2.0
         valuesFiles:
           - ./chart/values.yaml
     images:
-      - "ghcr.io/szl-holdings/sentra:uds-v0.1.0"
+      - "ghcr.io/szl-holdings/sentra:uds-v0.2.0"
     # Pepr admission policies applied as raw manifests at deploy time.
     manifests:
       - name: sentra-pepr-policies

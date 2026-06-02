@@ -5,8 +5,8 @@ apiVersion: v2
 name: killinchu
 description: "SZL Killinchu — Counter-UAS + Λ-gate + defensive scope (the mission-ready defensive application on top of UDS Core)"
 type: application
-version: 0.1.0
-appVersion: "uds-v0.1.0"
+version: 0.2.0
+appVersion: "uds-v0.2.0"
 home: https://github.com/szl-holdings/killinchu
 sources:
   - https://github.com/szl-holdings/killinchu
@@ -17,4 +17,4 @@ maintainers:
     email: yachay@szlholdings.dev
 annotations:
   helm.sh/images: |
-    - ghcr.io/szl-holdings/killinchu:uds-v0.1.0
+    - ghcr.io/szl-holdings/killinchu:uds-v0.2.0

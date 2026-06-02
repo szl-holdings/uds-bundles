@@ -6,7 +6,7 @@
 kind: ZarfPackageConfig
 metadata:
   name: szl-killinchu
-  version: 0.1.0
+  version: 0.2.0
   description: "SZL Killinchu — Counter-UAS + Λ-gate + defensive scope (the mission-ready defensive application on top of UDS Core)"
   architecture: amd64
   authors: "Yachay <yachay@szlholdings.dev>"
@@ -23,11 +23,11 @@ components:
       - name: killinchu
         namespace: szl-killinchu
         localPath: ./chart
-        version: 0.1.0
+        version: 0.2.0
         valuesFiles:
           - ./chart/values.yaml
     images:
-      - "ghcr.io/szl-holdings/killinchu:uds-v0.1.0"
+      - "ghcr.io/szl-holdings/killinchu:uds-v0.2.0"
     # Pepr admission policies applied as raw manifests at deploy time.
     manifests:
       - name: killinchu-pepr-policies
