@@ -17,7 +17,7 @@ spec:
           -----BEGIN PUBLIC KEY-----
           <SZL_COSIGN_PUBLIC_KEY>
           -----END PUBLIC KEY-----
-    # OPTION 2 — keyless (GitHub Actions OIDC), the SLSA-L2 path (commented until L2 verified):
+    # OPTION 2 — keyless (GitHub Actions OIDC) path (commented out; NOT L2 — killinchu stays L1 honest until independently verified):
     # - name: szl-keyless
     #   keyless:
     #     url: https://fulcio.sigstore.dev

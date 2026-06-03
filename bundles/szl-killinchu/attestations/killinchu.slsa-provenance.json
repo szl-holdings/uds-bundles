@@ -2,9 +2,9 @@
   "_type": "https://in-toto.io/Statement/v1",
   "subject": [
     {
-      "name": "ghcr.io/szl-holdings/killinchu:uds-v0.1.0",
+      "name": "ghcr.io/szl-holdings/killinchu:uds-v0.2.0",
       "digest": {
-        "sha256": "PENDING-cosign-attest-at-build"
+        "sha256": "e872344f2fc8e7d8085042d5b5660c8bd62887a7d2f2353f44f882d782e8cd75"
       }
     }
   ],
@@ -82,8 +82,8 @@
     "_honest_disclosure": {
       "claimed": "SLSA Build L1 \u2014 Provenance showing how the package was built (slsa.dev/spec/v1.0/levels).",
       "NOT_claimed": [
-        "SLSA Build L2",
-        "SLSA Build L3",
+        "SLSA Build L2 — not claimed (honest: killinchu is L1)",
+        "SLSA Build L3 — not claimed (honest: killinchu is L1)",
         "Iron Bank certified",
         "SWFT-listed",
         "FedRAMP authorized"

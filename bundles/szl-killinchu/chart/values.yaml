@@ -6,7 +6,9 @@ replicas: 1
 
 image:
   repository: ghcr.io/szl-holdings/killinchu
-  tag: "uds-v0.1.0"
+  tag: "uds-v0.2.0"
+  # Digest-pinned for supply-chain integrity (cosign-verified, keyless OIDC).
+  digest: "sha256:e872344f2fc8e7d8085042d5b5660c8bd62887a7d2f2353f44f882d782e8cd75"
   pullPolicy: IfNotPresent
 
 service:
