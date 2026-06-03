@@ -78,7 +78,7 @@ kubectl get doctrinelock -n szl-a11oy
 
 ## Honest disclosure
 
-- **SLSA L1 honest** — L2 in progress via build-service provenance (see SLSA L3 migration plan)
+- **SLSA L1 honest** — build provenance generated; isolated-builder L2 + Sigstore signing are roadmap. L3 is NOT claimed (doctrine: L3 is banned).
 - **Λ = Conjecture 1**, NOT a theorem — Lake Verifier testing the proof now; 163 sorries open
 - **Section 889** = exactly 5 banned vendors: Huawei, ZTE, Hytera, Hikvision, Dahua
 - **v0.2.0 is a source-only release** — run `zarf package create bundles/szl-<flagship>/` locally to build deployable `.tar.zst`; v0.3.0 targets signed packages via CI
