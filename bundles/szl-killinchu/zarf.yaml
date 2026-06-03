@@ -27,7 +27,7 @@ components:
         valuesFiles:
           - ./chart/values.yaml
     images:
-      - "ghcr.io/szl-holdings/killinchu:uds-v0.1.0"
+      - "ghcr.io/szl-holdings/killinchu:uds-v0.2.0"
     # Pepr admission policies applied as raw manifests at deploy time.
     manifests:
       - name: killinchu-pepr-policies

@@ -16,7 +16,7 @@
       "type": "application",
       "name": "killinchu",
       "version": "0.1.0",
-      "purl": "pkg:oci/killinchu@uds-v0.1.0"
+      "purl": "pkg:oci/killinchu@uds-v0.2.0"
     },
     "supplier": {
       "name": "SZL Holdings",
@@ -28,10 +28,10 @@
   "components": [
     {
       "type": "application",
-      "bom-ref": "pkg:oci/killinchu@uds-v0.1.0",
+      "bom-ref": "pkg:oci/killinchu@uds-v0.2.0",
       "name": "killinchu",
       "version": "0.1.0",
-      "purl": "pkg:oci/killinchu@uds-v0.1.0",
+      "purl": "pkg:oci/killinchu@uds-v0.2.0",
       "licenses": [
         {
           "license": {

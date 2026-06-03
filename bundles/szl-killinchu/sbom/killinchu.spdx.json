@@ -26,7 +26,7 @@
         {
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
-          "referenceLocator": "pkg:oci/killinchu@uds-v0.1.0"
+          "referenceLocator": "pkg:oci/killinchu@uds-v0.2.0"
         }
       ]
     },
