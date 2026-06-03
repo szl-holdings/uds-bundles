@@ -51,3 +51,12 @@ components:
         target: ./sbom/rosie.cyclonedx.json
       - source: ./attestations/rosie.slsa-provenance.json
         target: ./attestations/rosie.slsa-provenance.json
+
+  - name: szl-rosie-uds-package
+    required: true
+    description: "UDS Package CR — registers szl-rosie with UDS Operator for Istio, NetworkPolicy, SSO, and monitoring"
+    manifests:
+      - name: szl-rosie-uds-package
+        namespace: szl-rosie
+        files:
+          - ./manifests/uds-package.yaml

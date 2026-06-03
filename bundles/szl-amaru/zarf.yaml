@@ -51,3 +51,12 @@ components:
         target: ./sbom/amaru.cyclonedx.json
       - source: ./attestations/amaru.slsa-provenance.json
         target: ./attestations/amaru.slsa-provenance.json
+
+  - name: szl-amaru-uds-package
+    required: true
+    description: "UDS Package CR — registers szl-amaru with UDS Operator for Istio, NetworkPolicy, SSO, and monitoring"
+    manifests:
+      - name: szl-amaru-uds-package
+        namespace: szl-amaru
+        files:
+          - ./manifests/uds-package.yaml

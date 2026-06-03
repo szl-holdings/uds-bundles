@@ -51,3 +51,12 @@ components:
         target: ./sbom/a11oy.cyclonedx.json
       - source: ./attestations/a11oy.slsa-provenance.json
         target: ./attestations/a11oy.slsa-provenance.json
+
+  - name: szl-a11oy-uds-package
+    required: true
+    description: "UDS Package CR — registers szl-a11oy with UDS Operator for Istio, NetworkPolicy, SSO, and monitoring"
+    manifests:
+      - name: szl-a11oy-uds-package
+        namespace: szl-a11oy
+        files:
+          - ./manifests/uds-package.yaml

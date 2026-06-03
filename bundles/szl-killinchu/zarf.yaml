@@ -51,3 +51,12 @@ components:
         target: ./sbom/killinchu.cyclonedx.json
       - source: ./attestations/killinchu.slsa-provenance.json
         target: ./attestations/killinchu.slsa-provenance.json
+
+  - name: szl-killinchu-uds-package
+    required: true
+    description: "UDS Package CR — registers szl-killinchu with UDS Operator for Istio, NetworkPolicy, SSO, and monitoring"
+    manifests:
+      - name: szl-killinchu-uds-package
+        namespace: szl-killinchu
+        files:
+          - ./manifests/uds-package.yaml
