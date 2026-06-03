@@ -1,38 +1,63 @@
 # Security Policy
 
-> Doctrine v11 LOCKED · 749/14/163 · locked_at `c7c0ba17`
+## Supported Versions
+
+| Version | Supported          |
+| ------- | ------------------ |
+| 1.x     | :white_check_mark: |
+| < 1.0   | :x:                |
 
 ## Reporting a Vulnerability
 
-Please report security vulnerabilities by email to **stephenlutar2@gmail.com**.
+**Do NOT open a public GitHub issue for security vulnerabilities.**
 
-- We operate a **90-day coordinated disclosure window** from the date of acknowledgement.
-- Please do not open public issues for security reports.
-- We will acknowledge receipt within 3 business days.
+Please report security vulnerabilities via email to **security@szlholdings.ai** with:
 
-## PGP
+1. Description of the vulnerability
+2. Steps to reproduce
+3. Potential impact assessment
+4. Any suggested mitigations
 
-A PGP key for encrypted reports is being provisioned. _(Founder action: publish PGP public key fingerprint here.)_
+### Response SLA
 
-## Supported Versions
+| Severity | Initial Response | Resolution Target |
+|---|---|---|
+| Critical | 24 hours | 7 days |
+| High | 48 hours | 30 days |
+| Medium | 5 business days | 90 days |
+| Low | 10 business days | 180 days |
 
-The latest release on the default branch is supported. Older tags are best-effort.
+We follow a **90-day responsible disclosure** policy. After 90 days from initial report, details may be published regardless of patch status (with appropriate notice to reporter).
 
-## Verifying Releases (Sigstore / cosign)
+## Supply-Chain Security
 
-SZL release artifacts are signed with **cosign keyless (OIDC)**. To verify:
+- **SLSA Build Level 1** — build provenance generated per release (honest; not L2/L3)
+- **DCO required** — all commits carry `Signed-off-by:` trailers per [Linux Foundation DCO](https://developercertificate.org/)
+- **Cosign keyless signing** — containers signed via Sigstore OIDC keyless mode; verify with `cosign verify ghcr.io/szl-holdings/<repo>:<tag>`
+- **SBOM** — CycloneDX SBOM attached to each GitHub Release
 
-```bash
-cosign verify-blob \
-  --certificate <artifact>.crt \
-  --signature <artifact>.sig \
-  --certificate-identity-regexp 'https://github.com/szl-holdings/uds-bundles/.github/workflows/.+' \
-  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  <artifact>
-```
+## Section 889 Attestation
 
-SBOMs (SPDX JSON) are published per release and on the `attestations` branch.
+SZL Holdings attests that no covered telecommunications equipment or services from the following vendors are used in this software:
 
-## Compliance
+1. Huawei Technologies Company
+2. ZTE Corporation
+3. Hytera Communications Corporation
+4. Hangzhou Hikvision Digital Technology Company
+5. Dahua Technology Company
 
-See the organization compliance posture: <https://github.com/szl-holdings/compliance-posture>.
+Per NDAA Section 889, 41 U.S.C. § 4713.
+
+## Doctrine
+
+- Doctrine v11 LOCKED — kernel commit `c7c0ba17` (749 declarations / 14 axioms / 163 sorries)
+- Λ = Conjecture 1 (never a theorem)
+- No Iron Bank, FedRAMP, CMMC, or SWFT claims
+
+## Contact
+
+- **Security disclosures:** security@szlholdings.ai
+- **General:** hello@szlholdings.ai
+- **Website:** https://szlholdings.ai
+
+*This policy follows [OpenSSF Vulnerability Disclosure Guide](https://github.com/ossf/oss-vulnerability-guide).*
