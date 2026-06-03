@@ -99,20 +99,35 @@ jobs:
           zarf tools registry login "${REGISTRY}" \
             -u "${{ github.actor }}" -p "${{ secrets.GITHUB_TOKEN }}" || true
 
-      - name: Build per-flagship Zarf packages (bake live GHCR images)
+      - name: Probe flagship image pullability (diagnostic)
         run: |
-          set -euo pipefail
-          # uds-cli `path:` packages must contain a pre-built zarf-package tarball.
-          # Build each flagship Zarf package INTO its own bundle dir so `uds create`
-          # finds zarf-package-<name>-amd64-0.2.0.tar.zst alongside its zarf.yaml.
-          for fs in ${FLAGSHIPS}; do
-            dir="bundles/${fs}"
-            echo "::group::zarf package create ${dir}"
-            zarf package create "${dir}" --confirm --no-progress -o "${dir}"
-            echo "::endgroup::"
+          set +e
+          for organ in a11oy sentra amaru rosie killinchu; do
+            IMG="${REGISTRY}/${ORG}/${organ}:${BUNDLE_TAG}"
+            if zarf tools registry digest "${IMG}" >/dev/null 2>&1; then
+              echo "PULLABLE  ${IMG}"
+            else
+              echo "NOT-PULLABLE  ${IMG}  (will fail zarf package create)"
+            fi
           done
-          echo "Built Zarf packages:"
-          find bundles -name 'zarf-package-*.tar.zst' -print
+
+      - name: Build Zarf package — szl-a11oy
+        run: zarf package create bundles/szl-a11oy --confirm -o bundles/szl-a11oy
+
+      - name: Build Zarf package — szl-sentra
+        run: zarf package create bundles/szl-sentra --confirm -o bundles/szl-sentra
+
+      - name: Build Zarf package — szl-amaru
+        run: zarf package create bundles/szl-amaru --confirm -o bundles/szl-amaru
+
+      - name: Build Zarf package — szl-rosie
+        run: zarf package create bundles/szl-rosie --confirm -o bundles/szl-rosie
+
+      - name: Build Zarf package — szl-killinchu
+        run: zarf package create bundles/szl-killinchu --confirm -o bundles/szl-killinchu
+
+      - name: List built Zarf packages
+        run: find bundles -name 'zarf-package-*.tar.zst' -print
 
       - name: uds create (bundle from root uds-bundle.yaml)
         run: |
