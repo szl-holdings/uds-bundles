@@ -7,7 +7,7 @@ kind: ZarfPackageConfig
 metadata:
   name: szl-sentra
   version: 0.2.0
-  zarfVersion: ">=0.77.0"   # Min Zarf CLI: Helm 4 + keyless signing support
+  # zarfVersion: ">=0.77.0" removed — not a valid Zarf metadata field; enforce via CI --no-progress check
   description: "SZL Sentra — 8-gate immune system + verdict pipeline (adds fail-CLOSED defensive screen UDS Core lacks)"
   architecture: amd64
   authors: "Yachay <yachay@szlholdings.dev>"
