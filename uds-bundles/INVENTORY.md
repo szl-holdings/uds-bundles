@@ -95,7 +95,7 @@ packages** today:
 Plus static assets (per directive): **anatomy-3d, rosie-3d, README/szl-constellation**.
 
 UDS Core ref pinned: **1.5.0-upstream** (public images, no DoD registry). Init:
-`ghcr.io/zarf-dev/packages/init@v0.76.0`.
+`ghcr.io/zarf-dev/packages/init@v0.77.0`.
 
 ---
 
