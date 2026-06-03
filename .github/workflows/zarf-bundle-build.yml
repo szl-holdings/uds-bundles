@@ -50,11 +50,33 @@ jobs:
           echo "PKG=$PKG" >> "$GITHUB_ENV"
           for p in dist/zarf-package-*.tar.zst; do sha256sum "$p" | tee "$p.sha256"; done
 
+      # LOUD GUARD (no silent green): COSIGN_KEY is REQUIRED for key-based signing.
+      # If it is missing/empty we FAIL the job here with an actionable founder
+      # message rather than writing an empty cosign.key and shipping an
+      # effectively-unsigned bundle behind an opaque cosign error.
+      - name: Require COSIGN_KEY (fail loudly if missing)
+        if: ${{ secrets.COSIGN_KEY == '' }}
+        run: |
+          echo "::error title=COSIGN_KEY missing::This workflow signs the Zarf bundle with a key-based cosign signature, but the COSIGN_KEY secret is not set."
+          echo "::error::Founder action required: add the repo/org secret COSIGN_KEY (the cosign PRIVATE key PEM) and COSIGN_PASSWORD."
+          echo "::error::Generate with: cosign generate-key-pair  (store ONLY the private cosign.key in secrets; commit/publish cosign.pub)."
+          echo "::error::See szl-holdings FOUNDER_SECRETS_RUNBOOK.md. Refusing to emit an unsigned/falsely-signed bundle."
+          exit 1
+
       - name: Cosign sign-blob (key from secret; Rekor anchor optional)
+        if: ${{ secrets.COSIGN_KEY != '' }}
         env:
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+          COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
         run: |
-          echo "${{ secrets.COSIGN_KEY }}" > cosign.key
+          set -euo pipefail
+          # Belt-and-braces runtime guard in addition to the step-level `if:`.
+          if [ -z "${COSIGN_KEY:-}" ]; then
+            echo "::error::COSIGN_KEY resolved empty at runtime — refusing to write an empty key. Failing loudly."
+            exit 1
+          fi
+          printf '%s' "$COSIGN_KEY" > cosign.key
+          trap 'rm -f cosign.key' EXIT
           if [ "${{ inputs.anchor_rekor }}" = "true" ]; then
             cosign sign-blob --key cosign.key --tlog-upload=true \
               --rekor-url=https://rekor.sigstore.dev \
