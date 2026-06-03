@@ -1,0 +1,38 @@
+# SZL Holdings — Top-level UDS bundle
+# Authored by: Lutar, Stephen P. · ORCID 0009-0001-0110-4173 · SZL Holdings
+# Status: Real bundle. Promoted from docs/proposals/defense-unicorns/skeletons/uds-bundle.yaml
+#         per Plane 1 of the mesh plan (§04). Intended for commit to the new
+#         external szl-holdings/uds-mesh repository at the repo root.
+#
+# Build:  uds-cli bundle create . --confirm
+# Deploy: uds-cli bundle deploy uds-bundle-szl-mesh-amd64-0.1.0.tar.zst --confirm
+# Verify: uds-cli bundle inspect uds-bundle-szl-mesh-amd64-0.1.0.tar.zst
+
+kind: UDSBundle
+metadata:
+  name: szl-mesh
+  version: 0.1.0
+  description: |
+    A11oy + Sentra + Amaru composed as a single UDS bundle, with an
+    in-bundle hash-chained attestations sidecar verifiable offline
+    (no registry round-trip) per §05 Fix A.
+  authors: "Lutar, Stephen P. · ORCID 0009-0001-0110-4173 · SZL Holdings"
+  architecture: amd64
+
+packages:
+  - name: a11oy
+    repository: ghcr.io/szl-holdings/packages/a11oy
+    ref: 1.0.0-alpha
+    # For local dev against unpublished packages, swap `repository`+`ref`
+    # for `path: ../a11oy/deploy` (uds-cli will run zarf package create
+    # against the package directory at bundle-build time).
+    optionalComponents:
+      - a11oy-attestations
+
+  - name: sentra
+    repository: ghcr.io/szl-holdings/packages/sentra
+    ref: 1.0.0-alpha
+
+  - name: amaru
+    repository: ghcr.io/szl-holdings/packages/amaru
+    ref: 1.0.0-alpha
