@@ -1,0 +1,368 @@
+# SZL Holdings — amaru.sync.* OTEL Span Schema (v17.2)
+# Author: Lutar, Stephen P. · ORCID 0009-0001-0110-4173 · SZL Holdings
+#
+# OTEL semantic-convention schema for convergent data-sync spans emitted by the
+# amaru memory cortex (KL-drift bounded replication + hash-chained proof receipts).
+#
+# Specification follows:
+#   OpenTelemetry Specification v1.29+ (https://opentelemetry.io/docs/specs/otel/)
+#   OpenTelemetry Semantic Conventions v1.25+ (https://opentelemetry.io/docs/specs/semconv/)
+#   DSSE envelope: https://github.com/secure-systems-lab/dsse
+#   in-toto attestation: https://github.com/in-toto/attestation
+#
+# Origins:
+#   - Convergent replication (CRDT-style merge) with a KL-divergence drift bound.
+#   - Hash-chained proof receipts (Khipu Merkle DAG) binding each merge to provenance.
+#
+# UDS mesh wiring (cross-organ):
+#   namespace:        szl-amaru
+#   service:          szl-amaru  (Istio sidecar mTLS via UDS Operator / uds-core)
+#   service discovery: UDS Package CR `Package/szl-amaru` (memory cortex; answers a11oy)
+#   DSSE receipt sink: szl-receipts (Egress NetworkPolicy, port 8080)
+#   SSO:              Keycloak OIDC client uds-szl-amaru (machine identity only)
+#
+# SLSA provenance: L1 (honest) — receipts bind spans to extended-attestations.jsonl
+
+schema_url: https://github.com/szl-holdings/uds-mesh/blob/main/schemas/spans/amaru.sync.yaml
+version: 17.2.0
+organ: amaru
+mesh_namespace: szl-amaru
+mesh_service: szl-amaru
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Common fields — shared by EVERY organ span across the UDS mesh
+# (cross-organ receipt envelope: any organ can read any other organ's spans)
+# ─────────────────────────────────────────────────────────────────────────────
+
+common_fields:
+  description: |
+    All amaru.sync.* spans share the standard OTEL span envelope plus the
+    SZL cross-organ DSSE governance-receipt attributes (prefix szl.mesh.*).
+    These shared attributes are IDENTICAL across all five organs (a11oy, sentra,
+    amaru, killinchu, rosie) so that the mesh can correlate a single decision as
+    it crosses organ boundaries.
+
+  otel_fields:
+    - name: trace_id
+      type: string
+      required: true
+      description: "W3C TraceContext trace-id (32 hex chars). Stable across organs."
+      example: "4bf92f3577b34da6a3ce929d0e0e4736"
+    - name: span_id
+      type: string
+      required: true
+      description: "W3C TraceContext span-id (16 hex chars)."
+      example: "00f067aa0ba902b7"
+    - name: parent_span_id
+      type: string
+      required: false
+      description: "Parent span-id; may belong to a DIFFERENT organ (cross-organ edge)."
+      example: "00f067aa0ba902b6"
+    - name: name
+      type: string
+      required: true
+      description: "Span name — one of the amaru.sync.* names below."
+    - name: start_time
+      type: string
+      format: "RFC 3339 / ISO 8601 UTC"
+      required: true
+      example: "2026-06-03T12:00:00.000000000Z"
+    - name: end_time
+      type: string
+      format: "RFC 3339 / ISO 8601 UTC"
+      required: true
+      example: "2026-06-03T12:00:00.042000000Z"
+    - name: status
+      type: object
+      required: true
+      description: "OTEL SpanStatus: {code: OK | ERROR | UNSET, message?: string}."
+      properties:
+        code:
+          type: string
+          enum: [OK, ERROR, UNSET]
+        message:
+          type: string
+          required: false
+
+  # Cross-organ DSSE governance-receipt attributes. Present on EVERY mesh span
+  # regardless of organ. These bind each span to the Khipu Merkle DAG receipt
+  # chain and to the per-organ cosign-signed image that emitted it.
+  szl_mesh_attributes:
+    - name: szl.mesh.organ
+      type: string
+      required: true
+      description: "Emitting organ: a11oy | sentra | amaru | killinchu | rosie."
+      example: "amaru"
+    - name: szl.mesh.receipt_hash
+      type: string
+      required: true
+      description: |
+        SHA-256 hex digest of the canonical DSSE receipt for this span. Binds the
+        span to the cross-organ provenance chain in extended-attestations.jsonl.
+      example: "a3f2e1d4b8c7094f6e5d2c1b0a9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1a"
+    - name: szl.mesh.dsse_payload_type
+      type: string
+      required: true
+      description: "DSSE payloadType. Always application/vnd.in-toto+json for mesh receipts."
+      example: "application/vnd.in-toto+json"
+    - name: szl.mesh.image_digest
+      type: string
+      required: true
+      description: |
+        Digest of the cosign-signed ghcr.io image that emitted the span,
+        e.g. ghcr.io/szl-holdings/amaru@sha256:... (key-based P-256 signature).
+      example: "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+    - name: szl.mesh.lambda_value
+      type: string
+      required: true
+      description: |
+        Governance Λ for this span as a decimal string (Λ Conjecture 1: Λ ∈ [0,1]).
+        Shared governance scalar so the mesh can gate any organ's output uniformly.
+      example: "0.813472"
+    - name: szl.mesh.governance_drift
+      type: boolean
+      required: true
+      description: |
+        True iff Λ fell below the Doctrine Λ floor (LAMBDA_FLOOR = 0.1) or exceeded 1.0.
+      example: false
+    - name: szl.mesh.upstream_organ
+      type: string
+      required: false
+      description: |
+        For cross-organ edges: the organ that produced the parent span. Enables the
+        mesh to reconstruct the inter-organ call graph from spans alone.
+      example: "a11oy"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Span definitions (organ-specific)
+# ─────────────────────────────────────────────────────────────────────────────
+
+spans:
+
+  - name: amaru.sync.merge
+    stability: experimental
+    brief: |
+      Emitted on every convergent merge of a memory delta into the local replica.
+    description: |
+      Covers one CRDT-style convergent merge: an incoming memory delta is folded
+      into the local state, the merge is commutative/associative/idempotent
+      (convergence), and the resulting state hash is recorded. One span per merge.
+    attributes:
+      - name: szl.sync.delta_id
+        type: string
+        required: true
+        description: "Identifier of the incoming memory delta being merged."
+        example: "delta-7a2f"
+      - name: szl.sync.state_hash
+        type: string
+        required: true
+        description: "SHA-256 hex of the post-merge convergent state."
+        example: "c1d2e3f4a5b6978089a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2"
+      - name: szl.sync.converged
+        type: boolean
+        required: true
+        description: "True iff the merge reached a convergent (stable) state."
+        example: true
+
+  - name: amaru.sync.drift_alert
+    stability: experimental
+    brief: |
+      Emitted when the KL-divergence between replicas exceeds the drift bound.
+    description: |
+      amaru bounds replica divergence by a KL-divergence threshold. When measured
+      drift exceeds the bound, a drift_alert span is emitted so the mesh can gate
+      or reconcile before the divergence corrupts downstream decisions.
+    attributes:
+      - name: szl.sync.kl_divergence
+        type: string
+        required: true
+        description: "Measured KL divergence between replicas as a decimal string (≥ 0)."
+        example: "0.184200"
+      - name: szl.sync.kl_bound
+        type: string
+        required: true
+        description: "Configured KL-divergence drift bound (decimal string)."
+        example: "0.100000"
+      - name: szl.sync.drift_exceeded
+        type: boolean
+        required: true
+        description: "True iff kl_divergence > kl_bound (drift bound violated)."
+        example: true
+
+  - name: amaru.sync.receipt
+    stability: experimental
+    brief: |
+      Emitted when a memory-write is bound to a hash-chained proof receipt.
+    description: |
+      Binds a memory write (merge result) to the cross-organ Khipu DAG receipt
+      chain so downstream organs (a11oy, rosie) can verify the memory state offline.
+    attributes:
+      - name: szl.sync.chain_index
+        type: integer
+        required: true
+        description: "Position of this receipt in the hash chain (monotonic, ≥ 0)."
+        example: 4192
+      - name: szl.sync.prev_receipt_hash
+        type: string
+        required: false
+        description: "SHA-256 hex of the previous chain receipt (absent for genesis)."
+        example: "b0a9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0d9c8b7a6f5e4d3c2b1a0f9"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# JSON Schema (canonical wire format — shared mesh envelope + organ fields)
+# ─────────────────────────────────────────────────────────────────────────────
+
+json_schema:
+  type: object
+  required:
+    - trace_id
+    - span_id
+    - name
+    - start_time
+    - end_time
+    - status
+    - attributes
+  properties:
+    trace_id:
+      type: string
+      pattern: "^[0-9a-f]{32}$"
+    span_id:
+      type: string
+      pattern: "^[0-9a-f]{16}$"
+    parent_span_id:
+      type: string
+      pattern: "^[0-9a-f]{16}$"
+    name:
+      type: string
+      enum:
+        - "amaru.sync.merge"
+        - "amaru.sync.drift_alert"
+        - "amaru.sync.receipt"
+    start_time:
+      type: string
+      format: "date-time"
+    end_time:
+      type: string
+      format: "date-time"
+    status:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+          enum: [OK, ERROR, UNSET]
+        message:
+          type: string
+    attributes:
+      type: object
+      required:
+        - "szl.mesh.organ"
+        - "szl.mesh.receipt_hash"
+        - "szl.mesh.dsse_payload_type"
+        - "szl.mesh.image_digest"
+        - "szl.mesh.lambda_value"
+        - "szl.mesh.governance_drift"
+      properties:
+        "szl.mesh.organ":
+          type: string
+          enum: ["a11oy", "sentra", "amaru", "killinchu", "rosie"]
+        "szl.mesh.receipt_hash":
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+        "szl.mesh.dsse_payload_type":
+          type: string
+        "szl.mesh.image_digest":
+          type: string
+          pattern: "^sha256:[0-9a-f]{64}$"
+        "szl.mesh.lambda_value":
+          type: string
+          description: "Λ ∈ [0,1] decimal string (Λ Conjecture 1)"
+        "szl.mesh.governance_drift":
+          type: boolean
+        "szl.mesh.upstream_organ":
+          type: string
+        "szl.sync.delta_id":
+          type: string
+        "szl.sync.state_hash":
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+        "szl.sync.converged":
+          type: boolean
+        "szl.sync.kl_divergence":
+          type: string
+          description: "Measured KL divergence as decimal string (≥ 0)"
+        "szl.sync.kl_bound":
+          type: string
+          description: "Configured KL drift bound as decimal string"
+        "szl.sync.drift_exceeded":
+          type: boolean
+        "szl.sync.chain_index":
+          type: integer
+          minimum: 0
+        "szl.sync.prev_receipt_hash":
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Example spans
+# ─────────────────────────────────────────────────────────────────────────────
+
+examples:
+
+  - span: amaru.sync.merge
+    body:
+      trace_id: "4bf92f3577b34da6a3ce929d0e0e4736"
+      span_id: "00f067aa0ba902b7"
+      parent_span_id: "00f067aa0ba902b6"
+      name: "amaru.sync.merge"
+      start_time: "2026-06-03T12:00:00.000000000Z"
+      end_time: "2026-06-03T12:00:00.040000000Z"
+      status: {code: OK}
+      attributes:
+        szl.mesh.organ: "amaru"
+        szl.mesh.receipt_hash: "a3f2e1d4b8c7094f6e5d2c1b0a9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1a"
+        szl.mesh.dsse_payload_type: "application/vnd.in-toto+json"
+        szl.mesh.image_digest: "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        szl.mesh.lambda_value: "0.813472"
+        szl.mesh.governance_drift: false
+        szl.mesh.upstream_organ: "a11oy"
+        szl.sync.delta_id: "delta-7a2f"
+        szl.sync.state_hash: "c1d2e3f4a5b6978089a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2"
+        szl.sync.converged: true
+  - span: amaru.sync.drift_alert
+    body:
+      trace_id: "4bf92f3577b34da6a3ce929d0e0e4736"
+      span_id: "11e167bb1cb913c8"
+      parent_span_id: "00f067aa0ba902b7"
+      name: "amaru.sync.drift_alert"
+      start_time: "2026-06-03T12:00:00.000000000Z"
+      end_time: "2026-06-03T12:00:00.040000000Z"
+      status: {code: OK}
+      attributes:
+        szl.mesh.organ: "amaru"
+        szl.mesh.receipt_hash: "a3f2e1d4b8c7094f6e5d2c1b0a9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1a"
+        szl.mesh.dsse_payload_type: "application/vnd.in-toto+json"
+        szl.mesh.image_digest: "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        szl.mesh.lambda_value: "0.092000"
+        szl.mesh.governance_drift: true
+        szl.sync.kl_divergence: "0.184200"
+        szl.sync.kl_bound: "0.100000"
+        szl.sync.drift_exceeded: true
+  - span: amaru.sync.receipt
+    body:
+      trace_id: "4bf92f3577b34da6a3ce929d0e0e4736"
+      span_id: "22d278cc2dc024d9"
+      parent_span_id: "00f067aa0ba902b7"
+      name: "amaru.sync.receipt"
+      start_time: "2026-06-03T12:00:00.045000000Z"
+      end_time: "2026-06-03T12:00:00.061000000Z"
+      status: {code: OK}
+      attributes:
+        szl.mesh.organ: "amaru"
+        szl.mesh.receipt_hash: "a3f2e1d4b8c7094f6e5d2c1b0a9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1a"
+        szl.mesh.dsse_payload_type: "application/vnd.in-toto+json"
+        szl.mesh.image_digest: "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        szl.mesh.lambda_value: "0.813472"
+        szl.mesh.governance_drift: false
+        szl.sync.chain_index: 4192
+        szl.sync.prev_receipt_hash: "b0a9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0d9c8b7a6f5e4d3c2b1a0f9"
