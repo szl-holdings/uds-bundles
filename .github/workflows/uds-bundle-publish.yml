@@ -5,16 +5,14 @@
 #
 # Produces: oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.0
 #
-# Triggers:
-#   - push tag matching uds-v*
-#   - workflow_dispatch (manual)
+# uds-cli v0.27.0 API:
+#   uds create . --confirm           (was: uds bundle create)
+#   uds publish <tarball> <oci://..> (was: uds bundle publish)
 #
-# Requires:
-#   - All 5 flagship images in GHCR (ghcr.io/szl-holdings/{a11oy,sentra,amaru,rosie,killinchu}:uds-v0.2.0)
-#   - org-level packages: write permission for GITHUB_TOKEN (or GHCR_TOKEN secret)
-#
-# HONEST DISCLOSURE: if flagship images are not in GHCR, `uds bundle create` will
-# fail at image reference resolution. See FINAL_REPORT.md Task 1 blocker.
+# HONEST DISCLOSURE: `uds create` will fail if referenced Zarf packages
+# embed images that don't resolve (a11oy/sentra/amaru GHCR blocker).
+# This workflow is wired and ready; the GHCR org setting must be fixed
+# by the founder before it can fully succeed.
 #
 # Doctrine v11 LOCKED 749/14/163 at kernel commit c7c0ba17
 # SLSA L1 honest — not L3
@@ -53,7 +51,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - name: Install uds-cli
+      - name: Install uds-cli v0.27.0
         run: |
           set -euo pipefail
           curl -sLo /usr/local/bin/uds \
@@ -61,7 +59,7 @@ jobs:
           chmod +x /usr/local/bin/uds
           uds version
 
-      - name: Install Zarf
+      - name: Install Zarf v0.77.0
         run: |
           set -euo pipefail
           curl -sLo /usr/local/bin/zarf \
@@ -86,24 +84,31 @@ jobs:
           echo "BUNDLE_TAG=${BUNDLE_TAG}" >> "$GITHUB_ENV"
           echo "Bundle tag: ${BUNDLE_TAG}"
 
-      - name: uds bundle create
+      - name: uds create (bundle from root uds-bundle.yaml)
         run: |
           set -euo pipefail
-          # Create from root uds-bundle.yaml
-          uds bundle create . --confirm --no-progress
-          echo "Created bundle files:"
-          ls -la *.tar.zst 2>/dev/null || echo "No .tar.zst found"
+          # uds-cli v0.27.0: `uds create` for bundle creation (not `uds bundle create`)
+          uds create . --confirm --no-progress
+          echo "Bundle tarballs:"
+          ls -la *.tar.zst 2>/dev/null || echo "WARNING: No .tar.zst created"
 
-      - name: uds bundle publish
+      - name: uds publish (bundle to OCI)
         run: |
           set -euo pipefail
+          PUBLISHED=0
           for tarball in *.tar.zst; do
             if [ -f "$tarball" ]; then
               echo "Publishing $tarball to oci://${REGISTRY}/${ORG}"
-              uds bundle publish "$tarball" "oci://${REGISTRY}/${ORG}"
+              # uds-cli v0.27.0: `uds publish` (not `uds bundle publish`)
+              uds publish "$tarball" "oci://${REGISTRY}/${ORG}"
               echo "Published: oci://${REGISTRY}/${ORG}/${BUNDLE_NAME}:${BUNDLE_TAG}"
+              PUBLISHED=$((PUBLISHED + 1))
             fi
           done
+          if [ "$PUBLISHED" -eq 0 ]; then
+            echo "ERROR: No tarballs to publish"
+            exit 1
+          fi
 
       - name: Install cosign
         uses: sigstore/cosign-installer@053f9b74638557590800a301da1ba82351507e2c # v3.8.1
@@ -113,29 +118,32 @@ jobs:
           COSIGN_EXPERIMENTAL: "1"
         run: |
           set -euo pipefail
-          # Sign the published OCI bundle artifact
           TARGET="${REGISTRY}/${ORG}/${BUNDLE_NAME}:${BUNDLE_TAG}"
           echo "Signing: ${TARGET}"
           cosign sign --yes "${TARGET}" || {
-            echo "cosign sign failed for ${TARGET}"
-            echo "This may occur if the package is private or OIDC token scope is insufficient."
-            echo "Bundle is published; signing failure is non-blocking."
+            echo "WARNING: cosign sign failed for ${TARGET} — non-blocking"
+            echo "Bundle is published but not signed. Likely causes:"
+            echo "  - Package visibility (private) prevents cosign OIDC"
+            echo "  - GHCR org write_package setting"
           }
 
-      - name: Attest build provenance
+      - name: Attest build provenance (SLSA L1)
         uses: actions/attest-build-provenance@v2
+        if: hashFiles('*.tar.zst') != ''
         with:
           subject-path: '*.tar.zst'
 
-      - name: Bundle summary
+      - name: Summary
+        if: always()
         run: |
-          echo "### UDS Bundle Published" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "**Artifact:** \`oci://${REGISTRY}/${ORG}/${BUNDLE_NAME}:${BUNDLE_TAG}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "**Verify:**" >> "$GITHUB_STEP_SUMMARY"
-          echo '```bash' >> "$GITHUB_STEP_SUMMARY"
-          echo "cosign verify ${REGISTRY}/${ORG}/${BUNDLE_NAME}:${BUNDLE_TAG} \\" >> "$GITHUB_STEP_SUMMARY"
-          echo '  --certificate-identity-regexp="^https://github.com/szl-holdings/" \' >> "$GITHUB_STEP_SUMMARY"
-          echo '  --certificate-oidc-issuer="https://token.actions.githubusercontent.com"' >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "### UDS Bundle Publish"
+            echo "**Artifact:** \`oci://${REGISTRY}/${ORG}/${BUNDLE_NAME}:${BUNDLE_TAG}\`"
+            echo ""
+            echo "**Verify cosign signature:**"
+            echo '```bash'
+            echo "cosign verify ${REGISTRY}/${ORG}/${BUNDLE_NAME}:${BUNDLE_TAG} \\"
+            echo '  --certificate-identity-regexp="^https://github.com/szl-holdings/" \'
+            echo '  --certificate-oidc-issuer="https://token.actions.githubusercontent.com"'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
