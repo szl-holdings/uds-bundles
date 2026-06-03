@@ -6,6 +6,53 @@ Operational tone: deploy in 60s, pull the cable, it works. No booth, no complian
 > **Not** Iron Bank certified · **Not** SWFT-listed · **Not** FedRAMP authorized — we don't need any of them for it to work.
 > Λ is **Conjecture 1**, not a theorem. SLSA **L1 honest** (L2 in progress). 163 sorries open in the Lean kernel (disclosed).
 
+## Bundle release — v0.2.0 (Fleet-native)
+
+All 5 bundles are now **v0.2.0**, targeting **Unified Defense Stack (UDS) Core v1.5.0** and
+**Zarf v0.77.0** (keyless sign + offline verify). "UDS" expands to **Unified Defense Stack**
+throughout (UDS Core renamed it; see uds-core README). Each `uds-bundle.yaml` now declares
+Fleet/DDIL edge metadata (`fleet-deployable`, `deployable-to-edge`, `ddil-ok`, `min-ram-gb=4`)
+so a bundle drops into the **Mission Applications tier of a UDS System Image** and runs on a
+4 GB tactical-edge node.
+
+- UDS Fleet (Package → Deploy → Manage): https://defenseunicorns.com/products/uds-fleet/
+- UDS Core v1.5.0: https://github.com/defenseunicorns/uds-core/releases/tag/v1.5.0
+- Zarf v0.77.0: https://github.com/zarf-dev/zarf/releases/tag/v0.77.0
+- Tactical Edge (4 GB floor): https://uds.defenseunicorns.com/tactical-edge-deployments/overview/
+
+**Fleet signs the package; we sign the decision.** This bundle adds the governed, signed
+*decision* layer Fleet doesn't — built on the same substrate (Zarf, Pepr admission, the
+`uds.dev/v1alpha1` Package CRD).
+
+## K8s-native hardening (additive, alongside Pepr)
+
+Each bundle now also ships upstream-K8s-native gates **beside** the existing Pepr `Package` policies
+(UDS Core compatibility preserved):
+
+- **PSA `restricted`** namespace labels (`pod-security.kubernetes.io/enforce: restricted`, pinned
+  `enforce-version: v1.36`) — our STIG `securityContext` already satisfies it.
+- **ValidatingAdmissionPolicy `szl-lambda-gate`** (K8s VAP GA v1.30, in-API-server, `failurePolicy: Fail`),
+  shipped in **Audit** mode; promote to **Deny** after a green dress rehearsal.
+- **sigstore `ClusterImagePolicy`** (policy-controller v0.15.1) requiring a cosign signature on every
+  `ghcr.io/szl-holdings` image; shipped in `mode: warn`.
+- **Cilium L7 `CiliumNetworkPolicy`** template, gated on `networkPolicy.cilium`, pinning DSSE-receipt
+  egress to the KhipuReceipt POST path (Cilium edges only).
+- **SLSA provenance** annotated to spec **v1.2** — level **stays L1 (honest)**; no L2 claim until
+  `slsa-verifier` is green.
+
+The SZL governance overlay is also expressed as first-class CRDs under `crds/`
+(`LambdaGate`, `KhipuReceipt`, `DoctrineLock`) — a **design** built on Apache-2.0/MIT upstreams,
+not yet a live claim. See `crds/README.md`.
+
+Verification gates (every claim backed by a live command, per NO HALLUCINATION):
+```bash
+zarf package verify szl-<flagship>-v0.2.0.tar.zst \
+  --certificate-identity "<CI workflow identity>" \
+  --certificate-oidc-issuer "https://token.actions.githubusercontent.com"   # Zarf v0.77.0 offline verify
+kubectl get lambdagates,doctrinelocks -A          # governance overlay (once operator deployed)
+kubectl get khipureceipts -n szl-<flagship>       # signed decision receipts as cluster state
+```
+
 ---
 
 ## The 5 bundles (each fills a UDS Core gap)
@@ -22,7 +69,7 @@ Operational tone: deploy in 60s, pull the cable, it works. No booth, no complian
 
 ## Prerequisites (the box in the room)
 - A UDS Core / k3s cluster (the NVIDIA 4060 Ti tower works fine — CPU-only images, GPU optional)
-- `zarf` v0.51+ and `uds` v0.27+ on the box
+- `zarf` v0.77.0+ and `uds` v0.27+ on the box (Zarf v0.77.0 = keyless sign + offline `zarf package verify`)
 - The bundle tarballs on a USB stick (air-gap: no registry pull needed at deploy time)
 - The published cosign public key: `bundles/v0.1.0/cosign_signing_key.pub`
 

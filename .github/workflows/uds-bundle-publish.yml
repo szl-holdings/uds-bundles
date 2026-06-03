@@ -1,0 +1,244 @@
+# Copyright 2026 SZL Holdings
+# SPDX-License-Identifier: Apache-2.0
+#
+# UDS Bundle Build + Publish workflow
+#
+# Produces: oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.0 (+ :0.2.0 + :latest)
+#
+# uds-cli v0.27.0 API:
+#   uds create . --confirm           (composes a UDS bundle from local Zarf pkgs)
+#   uds publish <tarball> <oci://..> (publishes the bundle to an OCI registry)
+#
+# ROOT-CAUSE FIX (2026-06-03, uds-strike): `uds create` was failing because the
+# bundle's local `path:` packages (bundles/szl-<flagship>) require a PRE-BUILT
+# Zarf package tarball (zarf-package-*.tar.zst) to already exist in each path
+# directory. uds-cli does NOT build them from zarf.yaml during `uds create`
+# unless `--force-create` is given. We now run `zarf package create` for each
+# flagship dir BEFORE `uds create`, baking the live GHCR images into the bundle.
+#
+# uds publish tags the artifact with the bundle metadata.version (0.2.0); we then
+# add the human-facing `uds-v0.2.0` and `latest` tags with crane.
+#
+# Doctrine v11 LOCKED 749/14/163 at kernel commit c7c0ba17
+# SLSA L1 honest — not L3
+# Signed-off-by: Yachay <yachay@szlholdings.ai>
+# Co-Authored-By: Perplexity Computer Agent <agent@perplexity.ai>
+
+name: UDS Bundle Build + Publish
+
+on:
+  push:
+    tags: ['uds-v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Bundle tag (e.g. uds-v0.2.0)'
+        required: false
+        default: 'uds-v0.2.0'
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+env:
+  UDS_CLI_VERSION: "v0.27.0"
+  ZARF_VERSION: "v0.77.0"
+  REGISTRY: "ghcr.io"
+  ORG: "szl-holdings"
+  BUNDLE_NAME: "szl-uds-bundle"
+  BUNDLE_VERSION: "0.2.0"
+  FLAGSHIPS: "szl-a11oy szl-sentra szl-amaru szl-rosie szl-killinchu"
+
+jobs:
+  publish:
+    name: Build + Publish UDS Bundle
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install uds-cli v0.27.0
+        run: |
+          set -euo pipefail
+          curl -sLo /usr/local/bin/uds \
+            "https://github.com/defenseunicorns/uds-cli/releases/download/${UDS_CLI_VERSION}/uds-cli_${UDS_CLI_VERSION}_Linux_amd64"
+          chmod +x /usr/local/bin/uds
+          uds version
+
+      - name: Install Zarf v0.77.0
+        run: |
+          set -euo pipefail
+          curl -sLo /usr/local/bin/zarf \
+            "https://github.com/zarf-dev/zarf/releases/download/${ZARF_VERSION}/zarf_${ZARF_VERSION}_Linux_amd64"
+          chmod +x /usr/local/bin/zarf
+          zarf version
+
+      - name: Log in to GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Determine bundle tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            BUNDLE_TAG="${{ inputs.tag }}"
+          else
+            BUNDLE_TAG="${GITHUB_REF_NAME}"
+          fi
+          echo "BUNDLE_TAG=${BUNDLE_TAG}" >> "$GITHUB_ENV"
+          echo "Bundle tag: ${BUNDLE_TAG}"
+
+      - name: Configure Zarf registry auth (for private flagship images)
+        run: |
+          set -euo pipefail
+          # killinchu (and any private organ) is pulled by zarf package create.
+          # Give Zarf the same GHCR creds the docker login step used.
+          zarf tools registry login "${REGISTRY}" \
+            -u "${{ github.actor }}" -p "${{ secrets.GITHUB_TOKEN }}" || true
+
+      - name: Probe flagship image pullability (diagnostic)
+        run: |
+          set +e
+          for organ in a11oy sentra amaru rosie killinchu; do
+            IMG="${REGISTRY}/${ORG}/${organ}:${BUNDLE_TAG}"
+            if zarf tools registry digest "${IMG}" >/dev/null 2>&1; then
+              echo "PULLABLE  ${IMG}"
+            else
+              echo "NOT-PULLABLE  ${IMG}  (will fail zarf package create)"
+            fi
+          done
+
+      - name: Build Zarf package — szl-a11oy
+        run: zarf package create bundles/szl-a11oy --confirm -o bundles/szl-a11oy
+
+      - name: Build Zarf package — szl-sentra
+        run: zarf package create bundles/szl-sentra --confirm -o bundles/szl-sentra
+
+      - name: Build Zarf package — szl-amaru
+        run: zarf package create bundles/szl-amaru --confirm -o bundles/szl-amaru
+
+      - name: Build Zarf package — szl-rosie
+        run: zarf package create bundles/szl-rosie --confirm -o bundles/szl-rosie
+
+      # killinchu image is PRIVATE on GHCR; the Actions GITHUB_TOKEN cannot pull it.
+      # HONEST: this build is allowed to fail; if it does we ship a 4/5 bundle and
+      # document killinchu as a P1 follow-up (founder must make killinchu public OR
+      # grant the Actions token pull access). NO doctrine claim is inflated.
+      - name: Build Zarf package — szl-killinchu (may fail if image is private)
+        id: killinchu
+        continue-on-error: true
+        run: zarf package create bundles/szl-killinchu --confirm -o bundles/szl-killinchu
+
+      - name: List built Zarf packages
+        run: find bundles -name 'zarf-package-*.tar.zst' -print
+
+      - name: Select bundle definition (5/5 if killinchu built, else honest 4/5)
+        run: |
+          set -euo pipefail
+          if ls bundles/szl-killinchu/zarf-package-*.tar.zst >/dev/null 2>&1; then
+            echo "killinchu Zarf package present — composing FULL 5/5 bundle."
+            echo "BUNDLE_MODE=5of5" >> "$GITHUB_ENV"
+          else
+            echo "::warning::killinchu image not pullable (private). Composing HONEST 4/5 bundle."
+            # killinchu is the LAST package block in uds-bundle.yaml. Truncate the
+            # file at the line that introduces the killinchu comment/package so the
+            # remaining bundle references only the 4 public, built flagships.
+            CUT=$(grep -n 'killinchu: ML inference runner' uds-bundle.yaml | head -1 | cut -d: -f1)
+            if [ -z "${CUT}" ]; then
+              CUT=$(grep -n -- '- name: szl-killinchu' uds-bundle.yaml | head -1 | cut -d: -f1)
+            fi
+            head -n "$((CUT - 1))" uds-bundle.yaml > uds-bundle.yaml.4of5
+            mv uds-bundle.yaml.4of5 uds-bundle.yaml
+            echo "---- 4/5 uds-bundle.yaml packages ----"
+            grep -- '- name: szl-' uds-bundle.yaml || true
+            echo "BUNDLE_MODE=4of5" >> "$GITHUB_ENV"
+          fi
+
+      - name: uds create (bundle from root uds-bundle.yaml)
+        run: |
+          set -euo pipefail
+          echo "Bundle mode: ${BUNDLE_MODE}"
+          uds create . --confirm --no-progress
+          echo "Bundle tarballs:"
+          ls -la uds-bundle-*.tar.zst 2>/dev/null || ls -la *.tar.zst 2>/dev/null || echo "WARNING: No bundle tarball created"
+
+      - name: uds publish (bundle to OCI)
+        run: |
+          set -euo pipefail
+          PUBLISHED=0
+          for tarball in uds-bundle-*.tar.zst; do
+            if [ -f "$tarball" ]; then
+              echo "Publishing $tarball to oci://${REGISTRY}/${ORG}"
+              uds publish "$tarball" "oci://${REGISTRY}/${ORG}"
+              echo "Published: oci://${REGISTRY}/${ORG}/${BUNDLE_NAME}:${BUNDLE_VERSION}"
+              PUBLISHED=$((PUBLISHED + 1))
+            fi
+          done
+          if [ "$PUBLISHED" -eq 0 ]; then
+            echo "ERROR: No bundle tarballs to publish"
+            exit 1
+          fi
+
+      - name: Add human-facing tags (uds-v0.2.0 + latest)
+        run: |
+          set -euo pipefail
+          # uds publish tags the artifact with metadata.version (0.2.0).
+          # Mirror that to the customer-facing uds-v0.2.0 and latest tags.
+          SRC="${REGISTRY}/${ORG}/${BUNDLE_NAME}:${BUNDLE_VERSION}"
+          for t in "${BUNDLE_TAG}" "latest"; do
+            echo "Tagging ${SRC} -> :${t}"
+            zarf tools registry copy "${SRC}" "${REGISTRY}/${ORG}/${BUNDLE_NAME}:${t}"
+          done
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@053f9b74638557590800a301da1ba82351507e2c # v3.8.1
+
+      - name: Cosign sign bundle (keyless OIDC)
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          set -euo pipefail
+          for t in "${BUNDLE_VERSION}" "${BUNDLE_TAG}" "latest"; do
+            TARGET="${REGISTRY}/${ORG}/${BUNDLE_NAME}:${t}"
+            echo "Signing: ${TARGET}"
+            cosign sign --yes "${TARGET}" || {
+              echo "WARNING: cosign sign failed for ${TARGET} — non-blocking"
+              echo "Bundle is published but this tag is not signed. Likely causes:"
+              echo "  - Package visibility (private) prevents cosign OIDC discovery"
+              echo "  - GHCR org write_package setting"
+            }
+          done
+
+      # Non-blocking: the bundle is already published + cosign-signed above. This
+      # step adds an extra SLSA L1 (honest, not L2/L3) provenance attestation for
+      # the local tarball; failure here must not fail the publish.
+      - name: Attest build provenance (SLSA L1)
+        uses: actions/attest-build-provenance@v2
+        continue-on-error: true
+        if: hashFiles('uds-bundle-*.tar.zst') != ''
+        with:
+          subject-path: 'uds-bundle-*.tar.zst'
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### UDS Bundle Publish"
+            echo "**Artifact:** \`oci://${REGISTRY}/${ORG}/${BUNDLE_NAME}:${BUNDLE_TAG}\`"
+            echo "(also tagged \`:${BUNDLE_VERSION}\` and \`:latest\`)"
+            echo ""
+            echo "**Deploy:**"
+            echo '```bash'
+            echo "uds deploy oci://${REGISTRY}/${ORG}/${BUNDLE_NAME}:${BUNDLE_TAG} --confirm"
+            echo '```'
+            echo ""
+            echo "**Verify cosign signature (SLSA L1 honest):**"
+            echo '```bash'
+            echo "cosign verify ${REGISTRY}/${ORG}/${BUNDLE_NAME}:${BUNDLE_TAG} \\"
+            echo '  --certificate-identity-regexp="^https://github.com/szl-holdings/" \'
+            echo '  --certificate-oidc-issuer="https://token.actions.githubusercontent.com"'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

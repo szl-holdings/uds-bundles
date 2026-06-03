@@ -6,6 +6,7 @@ metadata:
   name: sentra-gates
   description: "sentra immune/threat gates — fail-closed asset-scoped Safety Gate (Sentra-V1, NIST CSF 2.0 + D3FEND), 8 gates, L7 forecast engine. Doctrine v11 LOCKED preserved."
   version: "0.3.1"
+  zarfVersion: ">=0.77.0"   # Min Zarf CLI: Helm 4 + keyless signing
   url: "https://szlholdings.com"
   authors: "Stephen Paul Lutar JR <stephen@szlholdings.com>"
   documentation: "https://github.com/szl-holdings/uds-bundles"

@@ -63,7 +63,7 @@
         "startedOn": "2026-06-02T00:00:00Z"
       }
     },
-    "slsaLevel": "SLSA Build L1 (honest)",
+    "slsaLevel": "SLSA Build L1 (honest) \u2014 spec v1.2",
     "_honest_disclosure": {
       "claimed": "SLSA Build L1 \u2014 Provenance showing how the package was built (slsa.dev/spec/v1.0/levels).",
       "NOT_claimed": [
@@ -75,7 +75,9 @@
       ],
       "L2_status": "in progress via Wire D (build-service provenance); not yet claimed",
       "lambda": "\u039b is Conjecture 1, NOT a theorem",
-      "lean_kernel": "163 sorries open in the Lean kernel (disclosed, never hidden)"
-    }
+      "lean_kernel": "163 sorries open in the Lean kernel (disclosed, never hidden)",
+      "spec_version": "SLSA v1.2 (https://slsa.dev/spec/) \u2014 predicate slsa.dev/provenance/v1; level remains L1"
+    },
+    "slsaSpecVersion": "v1.2"
   }
 }

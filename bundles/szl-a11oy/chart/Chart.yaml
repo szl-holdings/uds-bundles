@@ -5,8 +5,8 @@ apiVersion: v2
 name: a11oy
 description: "SZL a11oy — Governance + policy overlay + agentic /code (adds the governance layer UDS Core lacks)"
 type: application
-version: 0.1.0
-appVersion: "uds-v0.1.0"
+version: 0.2.0
+appVersion: "uds-v0.2.0"
 home: https://github.com/szl-holdings/a11oy
 sources:
   - https://github.com/szl-holdings/a11oy
@@ -17,4 +17,4 @@ maintainers:
     email: yachay@szlholdings.dev
 annotations:
   helm.sh/images: |
-    - ghcr.io/szl-holdings/a11oy:uds-v0.1.0
+    - ghcr.io/szl-holdings/a11oy:uds-v0.2.0

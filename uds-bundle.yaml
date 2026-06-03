@@ -1,0 +1,68 @@
+# Copyright 2026 SZL Holdings
+# SPDX-License-Identifier: Apache-2.0
+#
+# SZL Warhacker UDS Bundle — top-level meta-bundle for CI publish workflow
+#
+# Produces: oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.0
+#
+# This bundle references the per-flagship Zarf packages by their OCI coordinates.
+# The flagship images (ghcr.io/szl-holdings/{a11oy,sentra,amaru,rosie,killinchu}:uds-v0.2.0)
+# must exist in GHCR before `uds bundle create` can succeed.
+#
+# Doctrine v11 LOCKED 749/14/163 at kernel commit c7c0ba17
+# SLSA L1 honest — not L3
+# Λ = Conjecture 1 (NEVER theorem)
+# Section 889 = 5 vendors (Huawei, ZTE, Hytera, Hikvision, Dahua)
+#
+# Signed-off-by: Yachay <yachay@szlholdings.ai>
+# Co-Authored-By: Perplexity Computer Agent <agent@perplexity.ai>
+
+kind: UDSBundle
+metadata:
+  name: szl-uds-bundle
+  description: "SZL Holdings governed-AI substrate — 5 flagship modules + governance receipts"
+  version: "0.2.0"
+  architecture: amd64
+  authors: "Yachay <yachay@szlholdings.ai>"
+
+  annotations:
+    szl.ai/doctrine-version: "v11"
+    szl.ai/doctrine-locked: "749/14/163"
+    szl.ai/kernel-commit: "c7c0ba17"
+    szl.ai/slsa-level: "L1"
+    szl.ai/lambda: "Conjecture 1"
+    szl.ai/section889-vendors: "Huawei,ZTE,Hytera,Hikvision,Dahua"
+
+packages:
+  # ── a11oy: governance + policy overlay ─────────────────────────────────────
+  # HONEST STATUS: ghcr.io/szl-holdings/a11oy:uds-v0.2.0 is blocked by
+  # org-level Actions write_package setting (see FINAL_REPORT.md Task 1 blocker).
+  # Package ref will resolve once founder enables org GHCR creation.
+  - name: szl-a11oy
+    path: bundles/szl-a11oy
+    ref: "0.2.0"
+
+  # ── sentra: security gate ──────────────────────────────────────────────────
+  # HONEST STATUS: same blocker as a11oy
+  - name: szl-sentra
+    path: bundles/szl-sentra
+    ref: "0.2.0"
+
+  # ── amaru: memory cortex ───────────────────────────────────────────────────
+  # HONEST STATUS: same blocker as a11oy
+  - name: szl-amaru
+    path: bundles/szl-amaru
+    ref: "0.2.0"
+
+  # ── rosie: operator console ────────────────────────────────────────────────
+  # STATUS: ghcr.io/szl-holdings/rosie:uds-v0.2.0 EXISTS AND IS PUBLIC ✅
+  - name: szl-rosie
+    path: bundles/szl-rosie
+    ref: "0.2.0"
+
+  # ── killinchu: ML inference runner ────────────────────────────────────────
+  # STATUS: ghcr.io/szl-holdings/killinchu:uds-v0.2.0 EXISTS (PRIVATE)
+  # visibility change required (see FINAL_REPORT.md Task 1 blocker)
+  - name: szl-killinchu
+    path: bundles/szl-killinchu
+    ref: "0.2.0"

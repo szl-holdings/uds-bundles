@@ -11,6 +11,8 @@ metadata:
   namespace: a11oy
 spec:
   network:
+    serviceMesh:
+      mode: ambient   # UDS Core v1.5.0 canonical — Istio ambient mode default since v1.2.0
     expose:
       - service: a11oy-runtime
         selector:

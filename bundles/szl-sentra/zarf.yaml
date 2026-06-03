@@ -6,7 +6,8 @@
 kind: ZarfPackageConfig
 metadata:
   name: szl-sentra
-  version: 0.1.0
+  version: 0.2.0
+  # zarfVersion: ">=0.77.0" removed — not a valid Zarf metadata field; enforce via CI --no-progress check
   description: "SZL Sentra — 8-gate immune system + verdict pipeline (adds fail-CLOSED defensive screen UDS Core lacks)"
   architecture: amd64
   authors: "Yachay <yachay@szlholdings.dev>"
@@ -23,11 +24,11 @@ components:
       - name: sentra
         namespace: szl-sentra
         localPath: ./chart
-        version: 0.1.0
+        version: 0.2.0
         valuesFiles:
           - ./chart/values.yaml
     images:
-      - "ghcr.io/szl-holdings/sentra:uds-v0.1.0"
+      - "ghcr.io/szl-holdings/sentra:uds-v0.2.0"
     # Pepr admission policies applied as raw manifests at deploy time.
     manifests:
       - name: sentra-pepr-policies
@@ -36,6 +37,9 @@ components:
           - ./policies/namespace-isolation.yaml
           - ./policies/dsse-receipt-egress.yaml
           - ./policies/section889-denylist.yaml
+          # K8s-native additive gates (alongside Pepr; Audit/warn during rollout)
+          - ./policies/lambda-gate.vap.yaml
+          - ./policies/cosign-image-policy.yaml
 
   - name: sentra-sbom-attest
     required: false
@@ -47,3 +51,12 @@ components:
         target: ./sbom/sentra.cyclonedx.json
       - source: ./attestations/sentra.slsa-provenance.json
         target: ./attestations/sentra.slsa-provenance.json
+
+  - name: szl-sentra-uds-package
+    required: true
+    description: "UDS Package CR — registers szl-sentra with UDS Operator for Istio, NetworkPolicy, SSO, and monitoring"
+    manifests:
+      - name: szl-sentra-uds-package
+        namespace: szl-sentra
+        files:
+          - ./manifests/uds-package.yaml

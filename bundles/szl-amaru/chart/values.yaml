@@ -26,6 +26,7 @@ monitoring:
 networkPolicy:
   enabled: true
   defaultDeny: true
+  cilium: false   # set true on Cilium-CNI edges to enable L7 CiliumNetworkPolicy
 
 securityContext:
   runAsNonRoot: true

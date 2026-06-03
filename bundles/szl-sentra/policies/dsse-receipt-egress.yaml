@@ -11,9 +11,12 @@ metadata:
 spec:
   network:
     allow:
+    # @lulaStart d2acc774-9e5c-26f2-6c11-b124aa0db850   # NIST SP 800-53 AC-4 / AU-10 mapping (validate with Lula, Apache-2.0)
+    # https://github.com/defenseunicorns/lula
       - direction: Egress
         selector:
           dsse-receipt: required
         remoteGenerated: KubeAPI
         description: "Egress permitted ONLY for workloads emitting cosign-signed DSSE receipts"
+    # @lulaEnd d2acc774-9e5c-26f2-6c11-b124aa0db850
   # Workloads without the dsse-receipt label inherit default-deny egress (fail-CLOSED).
