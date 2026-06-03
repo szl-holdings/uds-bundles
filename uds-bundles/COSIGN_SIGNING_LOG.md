@@ -56,4 +56,4 @@ time. For a public transparency record, drop the flag on an internet-connected h
 --tlog-upload=false --yes <image@digest>` (after image push). Commented in build script
 step 7 because it requires a registry-resolvable digest.
 
-— Yachay, 2026-06-01. Signing migrated to GitHub Actions keyless (Fulcio/Rekor) via slsa-l3-build-zarf.yml (planned v0.3.0). See SLSA L3 Migration Plan at /team/slsa-l3/MIGRATION_PLAN.md. Production Zarf packages will be built and signed by CI at v0.3.0 release. v0.2.0 is a source-only release — build locally with: zarf package create bundles/szl-<flagship>/
+— Yachay, 2026-06-01. Signing roadmap: migrate to GitHub Actions keyless (Fulcio/Rekor) CI signing at v0.3.0. Target is honest SLSA L1 provenance + Sigstore-signed packages; isolated-builder L2 is roadmap. L3 is NOT claimed (doctrine: L3 is banned). Production Zarf packages will be built and signed by CI at v0.3.0 release. v0.2.0 is a source-only release — build locally with: zarf package create bundles/szl-<flagship>/
