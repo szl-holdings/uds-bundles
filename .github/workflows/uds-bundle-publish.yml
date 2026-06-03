@@ -212,8 +212,12 @@ jobs:
             }
           done
 
+      # Non-blocking: the bundle is already published + cosign-signed above. This
+      # step adds an extra SLSA L1 (honest, not L2/L3) provenance attestation for
+      # the local tarball; failure here must not fail the publish.
       - name: Attest build provenance (SLSA L1)
         uses: actions/attest-build-provenance@v2
+        continue-on-error: true
         if: hashFiles('uds-bundle-*.tar.zst') != ''
         with:
           subject-path: 'uds-bundle-*.tar.zst'
