@@ -3,16 +3,21 @@
 #
 # UDS Bundle Build + Publish workflow
 #
-# Produces: oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.0
+# Produces: oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.0 (+ :0.2.0 + :latest)
 #
 # uds-cli v0.27.0 API:
-#   uds create . --confirm           (was: uds bundle create)
-#   uds publish <tarball> <oci://..> (was: uds bundle publish)
+#   uds create . --confirm           (composes a UDS bundle from local Zarf pkgs)
+#   uds publish <tarball> <oci://..> (publishes the bundle to an OCI registry)
 #
-# HONEST DISCLOSURE: `uds create` will fail if referenced Zarf packages
-# embed images that don't resolve (a11oy/sentra/amaru GHCR blocker).
-# This workflow is wired and ready; the GHCR org setting must be fixed
-# by the founder before it can fully succeed.
+# ROOT-CAUSE FIX (2026-06-03, uds-strike): `uds create` was failing because the
+# bundle's local `path:` packages (bundles/szl-<flagship>) require a PRE-BUILT
+# Zarf package tarball (zarf-package-*.tar.zst) to already exist in each path
+# directory. uds-cli does NOT build them from zarf.yaml during `uds create`
+# unless `--force-create` is given. We now run `zarf package create` for each
+# flagship dir BEFORE `uds create`, baking the live GHCR images into the bundle.
+#
+# uds publish tags the artifact with the bundle metadata.version (0.2.0); we then
+# add the human-facing `uds-v0.2.0` and `latest` tags with crane.
 #
 # Doctrine v11 LOCKED 749/14/163 at kernel commit c7c0ba17
 # SLSA L1 honest — not L3
@@ -42,6 +47,8 @@ env:
   REGISTRY: "ghcr.io"
   ORG: "szl-holdings"
   BUNDLE_NAME: "szl-uds-bundle"
+  BUNDLE_VERSION: "0.2.0"
+  FLAGSHIPS: "szl-a11oy szl-sentra szl-amaru szl-rosie szl-killinchu"
 
 jobs:
   publish:
@@ -84,31 +91,63 @@ jobs:
           echo "BUNDLE_TAG=${BUNDLE_TAG}" >> "$GITHUB_ENV"
           echo "Bundle tag: ${BUNDLE_TAG}"
 
+      - name: Configure Zarf registry auth (for private flagship images)
+        run: |
+          set -euo pipefail
+          # killinchu (and any private organ) is pulled by zarf package create.
+          # Give Zarf the same GHCR creds the docker login step used.
+          zarf tools registry login "${REGISTRY}" \
+            -u "${{ github.actor }}" -p "${{ secrets.GITHUB_TOKEN }}" || true
+
+      - name: Build per-flagship Zarf packages (bake live GHCR images)
+        run: |
+          set -euo pipefail
+          # uds-cli `path:` packages must contain a pre-built zarf-package tarball.
+          # Build each flagship Zarf package INTO its own bundle dir so `uds create`
+          # finds zarf-package-<name>-amd64-0.2.0.tar.zst alongside its zarf.yaml.
+          for fs in ${FLAGSHIPS}; do
+            dir="bundles/${fs}"
+            echo "::group::zarf package create ${dir}"
+            zarf package create "${dir}" --confirm --no-progress -o "${dir}"
+            echo "::endgroup::"
+          done
+          echo "Built Zarf packages:"
+          find bundles -name 'zarf-package-*.tar.zst' -print
+
       - name: uds create (bundle from root uds-bundle.yaml)
         run: |
           set -euo pipefail
-          # uds-cli v0.27.0: `uds create` for bundle creation (not `uds bundle create`)
           uds create . --confirm --no-progress
           echo "Bundle tarballs:"
-          ls -la *.tar.zst 2>/dev/null || echo "WARNING: No .tar.zst created"
+          ls -la uds-bundle-*.tar.zst 2>/dev/null || ls -la *.tar.zst 2>/dev/null || echo "WARNING: No bundle tarball created"
 
       - name: uds publish (bundle to OCI)
         run: |
           set -euo pipefail
           PUBLISHED=0
-          for tarball in *.tar.zst; do
+          for tarball in uds-bundle-*.tar.zst; do
             if [ -f "$tarball" ]; then
               echo "Publishing $tarball to oci://${REGISTRY}/${ORG}"
-              # uds-cli v0.27.0: `uds publish` (not `uds bundle publish`)
               uds publish "$tarball" "oci://${REGISTRY}/${ORG}"
-              echo "Published: oci://${REGISTRY}/${ORG}/${BUNDLE_NAME}:${BUNDLE_TAG}"
+              echo "Published: oci://${REGISTRY}/${ORG}/${BUNDLE_NAME}:${BUNDLE_VERSION}"
               PUBLISHED=$((PUBLISHED + 1))
             fi
           done
           if [ "$PUBLISHED" -eq 0 ]; then
-            echo "ERROR: No tarballs to publish"
+            echo "ERROR: No bundle tarballs to publish"
             exit 1
           fi
+
+      - name: Add human-facing tags (uds-v0.2.0 + latest)
+        run: |
+          set -euo pipefail
+          # uds publish tags the artifact with metadata.version (0.2.0).
+          # Mirror that to the customer-facing uds-v0.2.0 and latest tags.
+          SRC="${REGISTRY}/${ORG}/${BUNDLE_NAME}:${BUNDLE_VERSION}"
+          for t in "${BUNDLE_TAG}" "latest"; do
+            echo "Tagging ${SRC} -> :${t}"
+            zarf tools registry copy "${SRC}" "${REGISTRY}/${ORG}/${BUNDLE_NAME}:${t}"
+          done
 
       - name: Install cosign
         uses: sigstore/cosign-installer@053f9b74638557590800a301da1ba82351507e2c # v3.8.1
@@ -118,20 +157,22 @@ jobs:
           COSIGN_EXPERIMENTAL: "1"
         run: |
           set -euo pipefail
-          TARGET="${REGISTRY}/${ORG}/${BUNDLE_NAME}:${BUNDLE_TAG}"
-          echo "Signing: ${TARGET}"
-          cosign sign --yes "${TARGET}" || {
-            echo "WARNING: cosign sign failed for ${TARGET} — non-blocking"
-            echo "Bundle is published but not signed. Likely causes:"
-            echo "  - Package visibility (private) prevents cosign OIDC"
-            echo "  - GHCR org write_package setting"
-          }
+          for t in "${BUNDLE_VERSION}" "${BUNDLE_TAG}" "latest"; do
+            TARGET="${REGISTRY}/${ORG}/${BUNDLE_NAME}:${t}"
+            echo "Signing: ${TARGET}"
+            cosign sign --yes "${TARGET}" || {
+              echo "WARNING: cosign sign failed for ${TARGET} — non-blocking"
+              echo "Bundle is published but this tag is not signed. Likely causes:"
+              echo "  - Package visibility (private) prevents cosign OIDC discovery"
+              echo "  - GHCR org write_package setting"
+            }
+          done
 
       - name: Attest build provenance (SLSA L1)
         uses: actions/attest-build-provenance@v2
-        if: hashFiles('*.tar.zst') != ''
+        if: hashFiles('uds-bundle-*.tar.zst') != ''
         with:
-          subject-path: '*.tar.zst'
+          subject-path: 'uds-bundle-*.tar.zst'
 
       - name: Summary
         if: always()
@@ -139,8 +180,14 @@ jobs:
           {
             echo "### UDS Bundle Publish"
             echo "**Artifact:** \`oci://${REGISTRY}/${ORG}/${BUNDLE_NAME}:${BUNDLE_TAG}\`"
+            echo "(also tagged \`:${BUNDLE_VERSION}\` and \`:latest\`)"
             echo ""
-            echo "**Verify cosign signature:**"
+            echo "**Deploy:**"
+            echo '```bash'
+            echo "uds deploy oci://${REGISTRY}/${ORG}/${BUNDLE_NAME}:${BUNDLE_TAG} --confirm"
+            echo '```'
+            echo ""
+            echo "**Verify cosign signature (SLSA L1 honest):**"
             echo '```bash'
             echo "cosign verify ${REGISTRY}/${ORG}/${BUNDLE_NAME}:${BUNDLE_TAG} \\"
             echo '  --certificate-identity-regexp="^https://github.com/szl-holdings/" \'
