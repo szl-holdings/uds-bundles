@@ -5,25 +5,32 @@
 #
 # Produces: oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.0
 #
-# This bundle references the per-flagship Zarf packages by their OCI coordinates.
-# The flagship images (ghcr.io/szl-holdings/{a11oy,sentra,amaru,rosie,killinchu}:uds-v0.2.0)
-# must exist in GHCR before `uds bundle create` can succeed.
+# Package composition:
+#   szl-receipts  — built from szl-uds-deployment/packages/szl-receipts (local Zarf build)
+#   szl-a11oy     — ghcr.io/szl-holdings/a11oy:uds-v0.2.0    (PUBLIC, cosign-signed)
+#   szl-sentra    — ghcr.io/szl-holdings/sentra:uds-v0.2.0   (PUBLIC, cosign-signed)
+#   szl-amaru     — ghcr.io/szl-holdings/amaru:uds-v0.2.0    (PUBLIC, cosign-signed)
+#   szl-rosie     — ghcr.io/szl-holdings/rosie:uds-v0.2.0    (PUBLIC, cosign-signed)
+#   szl-killinchu — ghcr.io/szl-holdings/killinchu:uds-v0.2.0 (private; honest 4/5 fallback)
+#
+# Tower deploy (one command after CI publishes):
+#   uds deploy oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.0 --confirm
 #
 # Doctrine v11 LOCKED 749/14/163 at kernel commit c7c0ba17
 # SLSA L1 honest — not L3
 # Λ = Conjecture 1 (NEVER theorem)
 # Section 889 = 5 vendors (Huawei, ZTE, Hytera, Hikvision, Dahua)
 #
-# Signed-off-by: Yachay <yachay@szlholdings.ai>
+# Signed-off-by: Stephen P. Lutar Jr. <stephenlutar2@gmail.com>
 # Co-Authored-By: Perplexity Computer Agent <agent@perplexity.ai>
 
 kind: UDSBundle
 metadata:
   name: szl-uds-bundle
-  description: "SZL Holdings governed-AI substrate — 5 flagship modules + governance receipts"
+  description: "SZL Holdings governed-AI substrate — Pepr receipts + 5 flagship modules"
   version: "0.2.0"
   architecture: amd64
-  authors: "Yachay <yachay@szlholdings.ai>"
+  authors: "Stephen P. Lutar Jr. <stephenlutar2@gmail.com>"
 
   annotations:
     szl.ai/doctrine-version: "v11"
@@ -34,35 +41,43 @@ metadata:
     szl.ai/section889-vendors: "Huawei,ZTE,Hytera,Hikvision,Dahua"
 
 packages:
+  # ── szl-receipts: Pepr DSSE receipt webhook + Ed25519 signing ──────────────
+  # Built by workflow from szl-uds-deployment/packages/szl-receipts.
+  # The workflow drops zarf-package-szl-receipts-*.tar.zst into bundles/szl-receipts/
+  # before `uds create` runs. Image: ghcr.io/szl-holdings/szl-receipts-server:uds-v0.3.1
+  - name: szl-receipts
+    path: bundles/szl-receipts
+    ref: "0.3.1"
+
   # ── a11oy: governance + policy overlay ─────────────────────────────────────
-  # HONEST STATUS: ghcr.io/szl-holdings/a11oy:uds-v0.2.0 is blocked by
-  # org-level Actions write_package setting (see FINAL_REPORT.md Task 1 blocker).
-  # Package ref will resolve once founder enables org GHCR creation.
+  # Image ghcr.io/szl-holdings/a11oy:uds-v0.2.0 — PUBLIC, cosign-signed (Rekor anchored)
   - name: szl-a11oy
     path: bundles/szl-a11oy
     ref: "0.2.0"
 
   # ── sentra: security gate ──────────────────────────────────────────────────
-  # HONEST STATUS: same blocker as a11oy
+  # Image ghcr.io/szl-holdings/sentra:uds-v0.2.0 — PUBLIC, cosign-signed
   - name: szl-sentra
     path: bundles/szl-sentra
     ref: "0.2.0"
 
   # ── amaru: memory cortex ───────────────────────────────────────────────────
-  # HONEST STATUS: same blocker as a11oy
+  # Image ghcr.io/szl-holdings/amaru:uds-v0.2.0 — PUBLIC, cosign-signed
   - name: szl-amaru
     path: bundles/szl-amaru
     ref: "0.2.0"
 
   # ── rosie: operator console ────────────────────────────────────────────────
-  # STATUS: ghcr.io/szl-holdings/rosie:uds-v0.2.0 EXISTS AND IS PUBLIC ✅
+  # Image ghcr.io/szl-holdings/rosie:uds-v0.2.0 — PUBLIC, cosign-signed
   - name: szl-rosie
     path: bundles/szl-rosie
     ref: "0.2.0"
 
   # ── killinchu: ML inference runner ────────────────────────────────────────
-  # STATUS: ghcr.io/szl-holdings/killinchu:uds-v0.2.0 EXISTS (PRIVATE)
-  # visibility change required (see FINAL_REPORT.md Task 1 blocker)
+  # Image ghcr.io/szl-holdings/killinchu:uds-v0.2.0 — PRIVATE (BL-006)
+  # CI workflow drops this package only if the image is pullable.
+  # Honest fallback: 4/5 bundle if killinchu image remains private.
+  # Founder action required: set ghcr.io/szl-holdings/killinchu visibility to Public.
   - name: szl-killinchu
     path: bundles/szl-killinchu
     ref: "0.2.0"
