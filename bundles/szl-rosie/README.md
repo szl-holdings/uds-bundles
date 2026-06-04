@@ -19,11 +19,11 @@
 - `Policy Evaluate`
 
 ## WHAT WE'RE NOT CLAIMING
-- Not Iron Bank certified (we don't need it to work)
+- No Iron Bank certification (not required by scope)
 - Not SWFT-listed (we don't need it to work)
 - Not FedRAMP authorized (we don't need it to work)
 - Λ is Conjecture 1, NOT a theorem
-- SLSA L1 honest (L2 in progress)
+- SLSA L1 honest (L2 deferred — not yet proven)
 - 163 sorries open in the Lean kernel (disclosed, never hidden)
 
 ## WHAT WE ASK

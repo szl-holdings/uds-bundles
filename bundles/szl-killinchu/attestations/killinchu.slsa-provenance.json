@@ -78,20 +78,14 @@
         "startedOn": "2026-06-02T00:00:00Z"
       }
     },
-    "slsaLevel": "SLSA Build L1 (honest) \u2014 spec v1.2",
+    "slsaLevel": "SLSA Build L1 (honest) — spec v1.2",
     "_honest_disclosure": {
-      "claimed": "SLSA Build L1 \u2014 Provenance showing how the package was built (slsa.dev/spec/v1.0/levels).",
-      "NOT_claimed": [
-        "SLSA Build L2 — not claimed (honest: killinchu is L1)",
-        "SLSA Build L3 — not claimed (honest: killinchu is L1)",
-        "Iron Bank certified",
-        "SWFT-listed",
-        "FedRAMP authorized"
-      ],
+      "claimed": "SLSA Build L1 — Provenance showing how the package was built (slsa.dev/spec/v1.0/levels).",
       "L2_status": "in progress via Wire D (build-service provenance); not yet claimed",
-      "lambda": "\u039b is Conjecture 1, NOT a theorem",
+      "lambda": "Λ is Conjecture 1, NOT a theorem",
       "lean_kernel": "163 sorries open in the Lean kernel (disclosed, never hidden)",
-      "spec_version": "SLSA v1.2 (https://slsa.dev/spec/) \u2014 predicate slsa.dev/provenance/v1; level remains L1"
+      "spec_version": "SLSA v1.2 (https://slsa.dev/spec/) — predicate slsa.dev/provenance/v1; level remains L1",
+      "honest_scope": "This build is honest: SLSA level 1 only. Not Iron Bank certified. Not SWFT-listed. Not FedRAMP authorized. No CMMC claim. Higher levels not yet achieved and not claimed. Λ is Conjecture 1, not a theorem."
     },
     "slsaSpecVersion": "v1.2"
   }

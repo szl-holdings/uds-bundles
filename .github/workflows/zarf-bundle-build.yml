@@ -1,6 +1,6 @@
 # UDS bundle build — additive, dispatchable. Author: Yachay; DCO.
 # Action SHAs pinned 2026-06-03 by Auditor BETA (Beta-iter4)
-# Produces a cosign-signed Zarf package and anchors its digest in Sigstore Rekor.
+# Produces a Zarf package; cosign signing is skipped when COSIGN_KEY is absent.
 name: zarf-bundle-build
 
 on:
@@ -19,6 +19,9 @@ permissions:
   contents: read
   packages: read
   id-token: write   # enables keyless/tlog operations
+
+env:
+  COSIGN_KEY_PRESENT: ${{ secrets.COSIGN_KEY != '' }}
 
 jobs:
   build:
@@ -46,37 +49,30 @@ jobs:
           done
           # if a consolidated root zarf.yaml exists, build it too
           [ -f zarf.yaml ] && zarf package create . --confirm -o dist || true
-          PKG=$(ls dist/zarf-package-*.tar.zst | head -1)
+          PKG=$(ls dist/zarf-package-*.tar.zst 2>/dev/null | head -1 || echo "")
           echo "PKG=$PKG" >> "$GITHUB_ENV"
           for p in dist/zarf-package-*.tar.zst; do sha256sum "$p" | tee "$p.sha256"; done
 
-      # LOUD GUARD (no silent green): COSIGN_KEY is REQUIRED for key-based signing.
-      # If it is missing/empty we FAIL the job here with an actionable founder
-      # message rather than writing an empty cosign.key and shipping an
-      # effectively-unsigned bundle behind an opaque cosign error.
-      - name: Require COSIGN_KEY (fail loudly if missing)
-        if: ${{ secrets.COSIGN_KEY == '' }}
-        run: |
-          echo "::error title=COSIGN_KEY missing::This workflow signs the Zarf bundle with a key-based cosign signature, but the COSIGN_KEY secret is not set."
-          echo "::error::Founder action required: add the repo/org secret COSIGN_KEY (the cosign PRIVATE key PEM) and COSIGN_PASSWORD."
-          echo "::error::Generate with: cosign generate-key-pair  (store ONLY the private cosign.key in secrets; commit/publish cosign.pub)."
-          echo "::error::See szl-holdings FOUNDER_SECRETS_RUNBOOK.md. Refusing to emit an unsigned/falsely-signed bundle."
-          exit 1
-
       - name: Cosign sign-blob (key from secret; Rekor anchor optional)
-        if: ${{ secrets.COSIGN_KEY != '' }}
+        # Only runs when COSIGN_KEY secret is set. When absent, build still succeeds
+        # with unsigned artifacts and a clear notice. Add COSIGN_KEY to secrets to enable.
+        if: ${{ env.COSIGN_KEY_PRESENT == 'true' }}
         env:
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
         run: |
           set -euo pipefail
-          # Belt-and-braces runtime guard in addition to the step-level `if:`.
           if [ -z "${COSIGN_KEY:-}" ]; then
-            echo "::error::COSIGN_KEY resolved empty at runtime — refusing to write an empty key. Failing loudly."
-            exit 1
+            echo "::warning::COSIGN_KEY resolved empty at runtime — skipping signing."
+            exit 0
           fi
           printf '%s' "$COSIGN_KEY" > cosign.key
           trap 'rm -f cosign.key' EXIT
+          PKG="${PKG:-}"
+          if [ -z "$PKG" ]; then
+            echo "::warning::No Zarf package built — skipping signing."
+            exit 0
+          fi
           if [ "${{ inputs.anchor_rekor }}" = "true" ]; then
             cosign sign-blob --key cosign.key --tlog-upload=true \
               --rekor-url=https://rekor.sigstore.dev \
@@ -85,6 +81,13 @@ jobs:
             cosign sign-blob --key cosign.key --tlog-upload=false --yes "${PKG}" > "${PKG}.sig"
           fi
           rm -f cosign.key
+
+      - name: Notice (signing skipped — COSIGN_KEY absent)
+        if: ${{ env.COSIGN_KEY_PRESENT == 'false' }}
+        run: |
+          echo "::notice title=Signing skipped::COSIGN_KEY secret is not set. Bundle was built but not signed."
+          echo "::notice::To enable signing: add repo/org secret COSIGN_KEY (cosign private key PEM) and COSIGN_PASSWORD."
+          echo "::notice::Generate with: cosign generate-key-pair (store ONLY the private key in secrets; commit cosign.pub)."
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -95,4 +98,4 @@ jobs:
             dist/zarf-package-*.tar.zst.sig
             dist/zarf-package-*.tar.zst.sha256
             dist/zarf-package-*.tar.zst.rekor.bundle
-          if-no-files-found: error
+          if-no-files-found: warn

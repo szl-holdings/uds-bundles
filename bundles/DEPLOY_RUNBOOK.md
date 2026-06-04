@@ -4,7 +4,7 @@
 Operational tone: deploy in 60s, pull the cable, it works. No booth, no compliance pageantry.
 
 > **Not** Iron Bank certified · **Not** SWFT-listed · **Not** FedRAMP authorized — we don't need any of them for it to work.
-> Λ is **Conjecture 1**, not a theorem. SLSA **L1 honest** (L2 in progress). 163 sorries open in the Lean kernel (disclosed).
+> Λ is **Conjecture 1**, not a theorem. SLSA **L1 honest** (L2 deferred (not yet proven)). 163 sorries open in the Lean kernel (disclosed).
 
 ## Bundle release — v0.2.0 (Fleet-native)
 
@@ -37,7 +37,7 @@ Each bundle now also ships upstream-K8s-native gates **beside** the existing Pep
   `ghcr.io/szl-holdings` image; shipped in `mode: warn`.
 - **Cilium L7 `CiliumNetworkPolicy`** template, gated on `networkPolicy.cilium`, pinning DSSE-receipt
   egress to the KhipuReceipt POST path (Cilium edges only).
-- **SLSA provenance** annotated to spec **v1.2** — level **stays L1 (honest)**; no L2 claim until
+- **SLSA provenance** annotated to spec **v1.2** — level **stays L1 (honest)**; no L2 claim — deferred
   `slsa-verifier` is green.
 
 The SZL governance overlay is also expressed as first-class CRDs under `crds/`
