@@ -2,6 +2,8 @@ name: gitleaks
 
 # Secret scanning via gitleaks-action. PR + nightly.
 # Allow-list in .gitleaks.toml (cosign.pub PEM blocks). ADDITIVE. Doctrine v11 LOCKED 749/14/163 locked_at c7c0ba17
+# NOTE: gitleaks-action v2.3.9 requires GITLEAKS_LICENSE for paid scan mode.
+# We run in free/OSS mode: pass GITHUB_TOKEN (no license secret required).
 
 on:
   pull_request:
@@ -24,5 +26,6 @@ jobs:
       - name: Gitleaks scan
         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v2.3.9
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_CONFIG: .gitleaks.toml
-          GITLEAKS_LICENSE: ""  # not required for OSS scans
+          # GITLEAKS_LICENSE not set — OSS repos run in free mode via GITHUB_TOKEN
