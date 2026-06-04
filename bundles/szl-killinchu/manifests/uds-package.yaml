@@ -26,11 +26,11 @@ spec:
   network:
     expose:
       - host: killinchu
-        service: szl-killinchu
-        port: 8080
+        service: killinchu
+        port: 7860
         gateway: tenant
         selector:
-          app: szl-killinchu
+          app.kubernetes.io/name: killinchu
     allow:
       - direction: Egress
         description: "Keycloak OIDC token endpoint"
@@ -58,7 +58,7 @@ spec:
         - "https://killinchu.uds.dev"
       standardFlowEnabled: true
       enableAuthserviceSelector:
-        app: szl-killinchu
+        app.kubernetes.io/name: killinchu
       groups:
         anyOf:
           - /szl-operators
@@ -73,6 +73,6 @@ spec:
       portName: http-metrics
       targetPort: 9090
       selector:
-        app: szl-killinchu
+        app.kubernetes.io/name: killinchu
       path: /metrics
       kind: ServiceMonitor
