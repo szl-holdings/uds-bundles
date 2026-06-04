@@ -42,7 +42,7 @@
 |------|-------------|--------------|-------|
 | Signed cosign attestation | `.sig` + `.pub` on GH release; capstone signs the full-mesh manifest | FA-001 | **[STAGED: awaiting FA-001]** |
 | All 6 organ binaries signed (capstone) | uds-mesh signs the pointer manifest after all organs sign their own tarballs | All organs at v0.3.1 with FA-001 | **[STAGED: awaiting all FA-001]** |
-| in-toto provenance (mesh-level) | Mesh-level SLSA Build L3 attestation | Zarf + cosign | **[STAGED: awaiting Zarf + FA-001]** |
+| in-toto provenance (mesh-level) | Mesh-level SLSA Build L2 attestation (L3 NOT claimed / not pursued) | Zarf + cosign | **[STAGED: awaiting Zarf + FA-001]** |
 | SCITT-Rekor live notarization | Wire scitt-adapter to real Rekor instance | Engineering | Engineering |
 | BFT 2-of-3 skeleton | Add multi-signer skeleton per uds-mesh#46 caveat documentation | Architecture | Engineering (best-effort) |
 | Release tag `uds-v0.3.1` | GitHub release as capstone of all 6 repos | All organs at v0.3.1 | **[STAGED: pending all above]** |
