@@ -76,25 +76,27 @@ kubectl get doctrinelock -n szl-a11oy
 
 ---
 
-## Per-organ SLSA Build-level matrix (honest)
+## Per-organ provenance matrix (SLSA L1 honest — all organs)
 
-Each organ image is referenced in this bundle by **immutable digest** (not a floating tag). SLSA levels below are the **honestly verified** build levels for each organ — four organs are SLSA Build **L2** (hosted GitHub Actions builder + signed in-toto provenance, verifiable downstream); **killinchu is held at SLSA Build L1 (honest)** in this bundle and L2/L3 are explicitly NOT claimed for it here.
+Each organ image is referenced in this bundle by **immutable digest** (not a floating tag).
+**Honest doctrine:** The bundle and all five organ images are **SLSA L1 honest**. Each organ
+has GitHub Actions-generated build provenance (cosign keyless-signed, Rekor-anchored). No L2 or
+L3 level is claimed — the hosted-builder isolation requirement for L2 is not independently verified
+for this bundle. L2/L3 are explicitly NOT claimed (doctrine: banned).
 
-| Organ | Image (digest-pinned) | SLSA Build level (bundle) | Verification evidence |
-|-------|------------------------|---------------------------|------------------------|
-| `szl-a11oy` | `ghcr.io/szl-holdings/a11oy@sha256:8aaea251609104b554baaac161a0e44cb59a909296e0b37d25ba94b3ab921530` | **L2 — verified** | `slsa-verifier verify-image` / `gh attestation verify` against signed `slsa.dev/provenance/v1`; DSSE **VALID**; Rekor logIndex **1710578865** |
-| `szl-sentra` | `ghcr.io/szl-holdings/sentra@sha256:32360746e0084ca0c7233bbca2709c1b1e907b6ffa91c166444d8aeb196fa002` | **L2 — verified** | DSSE **VALID**; Rekor logIndex **1710576247** |
-| `szl-amaru` | `ghcr.io/szl-holdings/amaru@sha256:435ac605a21feaa9c273c6877232307e88f304f81b2248b73c6dcfa31d997993` | **L2 — verified** | DSSE **VALID**; Rekor logIndex **1712902861** |
-| `szl-rosie` | `ghcr.io/szl-holdings/rosie@sha256:86429fd4a07e209c02004e0ddd5ec408a2587a720a7e91cf5fbe1fe88e188a01` | **L2 — verified** | DSSE **VALID**; Rekor logIndex **1710599687** |
-| `szl-killinchu` | `ghcr.io/szl-holdings/killinchu@sha256:e872344f2fc8e7d8085042d5b5660c8bd62887a7d2f2353f44f882d782e8cd75` | **L1 — honest (L2/L3 NOT claimed)** | Build provenance generated (`slsa.dev/provenance/v1`); cosign image signature verifies; see `bundles/szl-killinchu/attestations/killinchu.slsa-provenance.json` (`slsaLevel: "SLSA Build L1 (honest)"`). The bundle deliberately does **not** propagate any higher-level claim for killinchu. |
+| Organ | Image (digest-pinned) | Build provenance | Rekor entry |
+|-------|------------------------|-----------------|-------------|
+| `szl-a11oy` | `ghcr.io/szl-holdings/a11oy@sha256:8aaea251609104b554baaac161a0e44cb59a909296e0b37d25ba94b3ab921530` | cosign keyless + `slsa.dev/provenance/v1` DSSE | logIndex **1710578865** |
+| `szl-sentra` | `ghcr.io/szl-holdings/sentra@sha256:32360746e0084ca0c7233bbca2709c1b1e907b6ffa91c166444d8aeb196fa002` | cosign keyless + DSSE | logIndex **1710576247** |
+| `szl-amaru` | `ghcr.io/szl-holdings/amaru@sha256:435ac605a21feaa9c273c6877232307e88f304f81b2248b73c6dcfa31d997993` | cosign keyless + DSSE | logIndex **1712902861** |
+| `szl-rosie` | `ghcr.io/szl-holdings/rosie@sha256:86429fd4a07e209c02004e0ddd5ec408a2587a720a7e91cf5fbe1fe88e188a01` | cosign keyless + DSSE | logIndex **1710599687** |
+| `szl-killinchu` | `ghcr.io/szl-holdings/killinchu@sha256:e872344f2fc8e7d8085042d5b5660c8bd62887a7d2f2353f44f882d782e8cd75` | cosign keyless + DSSE | `bundles/szl-killinchu/attestations/killinchu.slsa-provenance.json` |
 
-**slsa-verifier exit-code convention:** `slsa-verifier verify-image` returns **exit 0 = PASSED: verified SLSA provenance**; non-zero = FAILED. The four L2 organs verify to exit 0 against their published digests (DSSE VALID, Rekor entries above). For killinchu the honest claim is L1 only — a `verify-image` L2 assertion is intentionally **not** made in this bundle.
-
-The bundle artifact `oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.1` is itself **cosign keyless-signed (OIDC, SLSA L1 honest)** — Rekor logIndex **1713162450** (`uds-v0.2.1`), **1713160435** (`0.2.0`), **1713166045** (`latest`).
+The bundle artifact `oci://ghcr.io/szl-holdings/szl-mesh:v0.4.0` is cosign keyless-signed (OIDC, SLSA L1 honest).
 
 ## Honest disclosure
 
-- **Bundle SLSA L1 honest** — the bundle artifact ships keyless-signed build provenance; four organ images are independently SLSA **L2** (see matrix above); **killinchu is L1 honest** in this bundle. L3 is NOT claimed anywhere (doctrine: L3 is banned).
+- **Bundle SLSA L1 honest** — the bundle artifact ships keyless-signed build provenance (cosign + Rekor). All five organ images have GitHub Actions-generated provenance. L2/L3 are NOT claimed anywhere (doctrine: banned). L3 is NOT claimed anywhere (doctrine: L3 is banned).
 - **Λ = Conjecture 1**, NOT a theorem — Lake Verifier testing the proof now; 163 sorries open
 - **Section 889** = exactly 5 banned vendors: Huawei, ZTE, Hytera, Hikvision, Dahua
 - **v0.2.0 is a source-only release** — run `zarf package create bundles/szl-<flagship>/` locally to build deployable `.tar.zst`; v0.3.0 targets signed packages via CI
