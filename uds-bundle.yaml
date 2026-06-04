@@ -5,13 +5,12 @@
 #
 # Produces: oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.0
 #
-# Package composition:
-#   szl-receipts  — built from szl-uds-deployment/packages/szl-receipts (local Zarf build)
+# Package composition (5 flagship organs — szl-receipts deferred):
 #   szl-a11oy     — ghcr.io/szl-holdings/a11oy:uds-v0.2.0    (PUBLIC, cosign-signed)
 #   szl-sentra    — ghcr.io/szl-holdings/sentra:uds-v0.2.0   (PUBLIC, cosign-signed)
 #   szl-amaru     — ghcr.io/szl-holdings/amaru:uds-v0.2.0    (PUBLIC, cosign-signed)
 #   szl-rosie     — ghcr.io/szl-holdings/rosie:uds-v0.2.0    (PUBLIC, cosign-signed)
-#   szl-killinchu — ghcr.io/szl-holdings/killinchu:uds-v0.2.0 (private; honest 4/5 fallback)
+#   szl-killinchu — ghcr.io/szl-holdings/killinchu:uds-v0.2.0 (PUBLIC, cosign-signed)
 #
 # Tower deploy (one command after CI publishes):
 #   uds deploy oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.0 --confirm
@@ -27,7 +26,7 @@
 kind: UDSBundle
 metadata:
   name: szl-uds-bundle
-  description: "SZL Holdings governed-AI substrate — Pepr receipts + 5 flagship modules"
+  description: "SZL Holdings governed-AI substrate — 5 flagship organs (June 9 tower rehearsal)"
   version: "0.2.0"
   architecture: amd64
   authors: "Stephen P. Lutar Jr. <stephenlutar2@gmail.com>"
@@ -41,13 +40,12 @@ metadata:
     szl.ai/section889-vendors: "Huawei,ZTE,Hytera,Hikvision,Dahua"
 
 packages:
-  # ── szl-receipts: Pepr DSSE receipt webhook + Ed25519 signing ──────────────
-  # Built by workflow from szl-uds-deployment/packages/szl-receipts.
-  # The workflow drops zarf-package-szl-receipts-*.tar.zst into bundles/szl-receipts/
-  # before `uds create` runs. Image: ghcr.io/szl-holdings/szl-receipts-server:uds-v0.3.1
-  - name: szl-receipts
-    path: bundles/szl-receipts
-    ref: "0.3.1"
+  # TODO: re-add szl-receipts once szl-receipts-server image is public + charts vendored
+  # (ghcr.io/szl-holdings/szl-receipts-server:uds-v0.3.1 is not yet a public package;
+  #  requires szl-uds-deployment to be public or a cross-repo PAT to build locally)
+  # - name: szl-receipts
+  #   path: bundles/szl-receipts
+  #   ref: "0.3.1"
 
   # ── a11oy: governance + policy overlay ─────────────────────────────────────
   # Image ghcr.io/szl-holdings/a11oy:uds-v0.2.0 — PUBLIC, cosign-signed (Rekor anchored)
@@ -74,10 +72,7 @@ packages:
     ref: "0.2.0"
 
   # ── killinchu: ML inference runner ────────────────────────────────────────
-  # Image ghcr.io/szl-holdings/killinchu:uds-v0.2.0 — PRIVATE (BL-006)
-  # CI workflow drops this package only if the image is pullable.
-  # Honest fallback: 4/5 bundle if killinchu image remains private.
-  # Founder action required: set ghcr.io/szl-holdings/killinchu visibility to Public.
+  # Image ghcr.io/szl-holdings/killinchu:uds-v0.2.0
   - name: szl-killinchu
     path: bundles/szl-killinchu
     ref: "0.2.0"
