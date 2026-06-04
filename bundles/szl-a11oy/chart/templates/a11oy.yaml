@@ -17,6 +17,7 @@ spec:
       labels:
         app.kubernetes.io/name: a11oy
         app.kubernetes.io/part-of: szl-mesh
+        app: szl-a11oy
         {{- if .Values.istio.enabled }}
         istio.io/rev: default
         {{- end }}

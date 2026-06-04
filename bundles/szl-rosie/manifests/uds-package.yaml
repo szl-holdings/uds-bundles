@@ -26,8 +26,8 @@ spec:
   network:
     expose:
       - host: rosie
-        service: szl-rosie
-        port: 8080
+        service: rosie
+        port: 7860
         gateway: tenant
         selector:
           app: szl-rosie

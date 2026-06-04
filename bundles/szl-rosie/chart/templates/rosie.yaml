@@ -17,6 +17,7 @@ spec:
       labels:
         app.kubernetes.io/name: rosie
         app.kubernetes.io/part-of: szl-mesh
+        app: szl-rosie
         {{- if .Values.istio.enabled }}
         istio.io/rev: default
         {{- end }}

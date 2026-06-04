@@ -17,6 +17,7 @@ spec:
       labels:
         app.kubernetes.io/name: amaru
         app.kubernetes.io/part-of: szl-mesh
+        app: szl-amaru
         {{- if .Values.istio.enabled }}
         istio.io/rev: default
         {{- end }}

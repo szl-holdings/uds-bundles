@@ -17,6 +17,7 @@ spec:
       labels:
         app.kubernetes.io/name: sentra
         app.kubernetes.io/part-of: szl-mesh
+        app: szl-sentra
         {{- if .Values.istio.enabled }}
         istio.io/rev: default
         {{- end }}

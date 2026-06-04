@@ -26,8 +26,8 @@ spec:
   network:
     expose:
       - host: killinchu
-        service: szl-killinchu
-        port: 8080
+        service: killinchu
+        port: 7860
         gateway: tenant
         selector:
           app: szl-killinchu
