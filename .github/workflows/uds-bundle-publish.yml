@@ -1,17 +1,17 @@
 # Copyright 2026 SZL Holdings
 # SPDX-License-Identifier: Apache-2.0
 #
-# UDS Bundle Build + Publish — szl-warhacker (Warhacker 2026)
+# UDS Bundle Build + Publish — szl-mesh v0.4.0 (Warhacker 2026)
 #
 # Produces:
-#   oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.0  (+ :0.2.0 + :latest)
-#   oci://ghcr.io/szl-holdings/szl-mesh:uds-v0.4.0         (canonical USB deploy artifact)
+#   oci://ghcr.io/szl-holdings/szl-mesh:v0.4.0   (+ :0.4.0 + :latest)
+#   USB artifact: szl-mesh-v0.4.0.tar.zst
 #
-# Deploy commands:
-#   USB (Defense Unicorns cluster):
-#     uds-cli bundle deploy szl-mesh-v0.4.0.tar.zst --confirm
-#   OR from GHCR:
-#     uds deploy oci://ghcr.io/szl-holdings/szl-mesh:uds-v0.4.0 --confirm
+# Deploy command (USB into Defense Unicorns' existing UDS Core cluster):
+#   uds-cli bundle deploy szl-mesh-v0.4.0.tar.zst --confirm
+#
+# Deploy command (pull from GHCR):
+#   uds deploy oci://ghcr.io/szl-holdings/szl-mesh:v0.4.0 --confirm
 #
 # Design notes:
 #   - uds-cli v0.32.0 bundles Zarf v0.77.0 (required for init:v0.77.0 compatibility)
@@ -20,12 +20,10 @@
 #     is not yet public; re-add once image is public + charts vendored in this repo.
 #   - All 5 flagship Zarf packages are built from bundles/szl-<organ>/zarf.yaml
 #     which reference ghcr.io/szl-holdings/<organ>:uds-v0.2.0 (images EXIST in GHCR)
-#   - killinchu image is at ghcr.io/szl-holdings/killinchu:uds-v0.2.0; may be private
+#   - killinchu image is at ghcr.io/szl-holdings/killinchu:uds-v0.2.0
 #     → continue-on-error: true; honest 4/5 bundle if unavailable
-#   - Bundle published to oci://ghcr.io/szl-holdings/szl-uds-bundle AND szl-mesh
-#   - SBOM-only regression note: v0.1.0 bundles/v0.1.0/ packages are image-free PROOF
-#     packages (intentional). The szl-a11oy/szl-sentra/etc. packages built here are
-#     REAL deployable packages with baked container images (verified in CI logs).
+#   - Bundle published to oci://ghcr.io/szl-holdings/szl-mesh
+#   - Bundle name: szl-mesh (matches uds-bundle.yaml metadata.name)
 #
 # Doctrine v11 LOCKED 749/14/163 at kernel commit c7c0ba17
 # SLSA L1 honest — not L3
@@ -36,13 +34,13 @@ name: UDS Bundle Build + Publish
 
 on:
   push:
-    tags: ['uds-v*']
+    tags: ['v*']
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Bundle tag (e.g. uds-v0.2.0)'
+        description: 'Bundle tag (e.g. v0.4.0)'
         required: false
-        default: 'uds-v0.2.0'
+        default: 'v0.4.0'
 
 permissions:
   contents: read
@@ -54,11 +52,8 @@ env:
   ZARF_VERSION: "v0.77.0"
   REGISTRY: "ghcr.io"
   ORG: "szl-holdings"
-  BUNDLE_NAME: "szl-uds-bundle"
-  BUNDLE_VERSION: "0.2.0"
-  MESH_NAME: "szl-mesh"
-  MESH_VERSION: "0.4.0"
-  MESH_TAG: "uds-v0.4.0"
+  BUNDLE_NAME: "szl-mesh"
+  BUNDLE_VERSION: "0.4.0"
 
 jobs:
   publish:
@@ -126,10 +121,7 @@ jobs:
 
       # ── Build flagship Zarf packages ───────────────────────────────────────
       # Each bundles/szl-<organ>/zarf.yaml bakes ghcr.io/szl-holdings/<organ>:uds-v0.2.0
-      # (verified public) into the .tar.zst at create time.
-      # NOTE: These are REAL deployable packages with baked container images.
-      # The v0.1.0 bundles/v0.1.0/*-proof-* packages are a separate image-free
-      # provenance artifact and are NOT used by this workflow.
+      # (verified public) into the .tar.zst at create time — no pull on deploy.
       - name: Build Zarf package — szl-a11oy
         run: zarf package create bundles/szl-a11oy --confirm -o bundles/szl-a11oy
 
@@ -143,7 +135,7 @@ jobs:
         run: zarf package create bundles/szl-rosie --confirm -o bundles/szl-rosie
 
       # killinchu image is ghcr.io/szl-holdings/killinchu:uds-v0.2.0.
-      # continue-on-error: true so a private killinchu never blocks the whole bundle.
+      # continue-on-error: true so a private killinchu never blocks the bundle.
       - name: Build Zarf package — szl-killinchu (may fail if image private)
         id: killinchu_build
         continue-on-error: true
@@ -159,15 +151,10 @@ jobs:
             echo "KILLINCHU_BUILT=false" >> "$GITHUB_ENV"
           fi
 
-      - name: List all built Zarf packages (image proof)
-        run: |
-          find bundles -name 'zarf-package-szl-*.tar.zst' 2>/dev/null | sort
-          echo "--- Package sizes (real image content verification) ---"
-          find bundles -name 'zarf-package-szl-*.tar.zst' -exec ls -lh {} \; 2>/dev/null | sort
+      - name: List all built Zarf packages
+        run: find bundles -name 'zarf-package-*.tar.zst' 2>/dev/null | sort
 
       # ── Compose the UDS bundle ─────────────────────────────────────────────
-      # uds create reads uds-bundle.yaml and expects each path: package dir
-      # to contain a pre-built zarf-package-*.tar.zst (placed by steps above).
       # If killinchu did not build, drop it from the bundle manifest.
       - name: Patch bundle manifest if killinchu unavailable (honest 4/5)
         if: env.KILLINCHU_BUILT == 'false'
@@ -177,6 +164,7 @@ jobs:
           import re, sys
           with open('uds-bundle.yaml', 'r') as f:
               content = f.read()
+          # Remove from killinchu comment/package block to end of file
           pattern = r'\n  # ── killinchu.*$'
           result = re.split(pattern, content, maxsplit=1, flags=re.DOTALL)[0]
           if result == content:
@@ -195,8 +183,10 @@ jobs:
           echo "=== Bundle tarballs ==="
           ls -lh uds-bundle-*.tar.zst 2>/dev/null || { echo "ERROR: no bundle tarball produced"; exit 1; }
 
-      # ── Publish as szl-uds-bundle (legacy/compat tag) ─────────────────────
-      - name: uds publish bundle to GHCR (szl-uds-bundle)
+      # ── Publish to GHCR ────────────────────────────────────────────────────
+      # uds publish tags with metadata.version (0.4.0 → oci://...szl-mesh:0.4.0).
+      # Mirror to BUNDLE_TAG (v0.4.0) and :latest via zarf tools registry copy.
+      - name: uds publish bundle to GHCR
         run: |
           set -euo pipefail
           for tarball in uds-bundle-*.tar.zst; do
@@ -206,7 +196,7 @@ jobs:
             echo "Published: oci://${REGISTRY}/${ORG}/${BUNDLE_NAME}:${BUNDLE_VERSION}"
           done
 
-      - name: Tag szl-uds-bundle as BUNDLE_TAG and :latest
+      - name: Tag bundle as BUNDLE_TAG and :latest
         run: |
           set -euo pipefail
           SRC="${REGISTRY}/${ORG}/${BUNDLE_NAME}:${BUNDLE_VERSION}"
@@ -215,39 +205,8 @@ jobs:
             zarf tools registry copy "${SRC}" "${REGISTRY}/${ORG}/${BUNDLE_NAME}:${tag}"
           done
 
-      # ── Publish as szl-mesh (canonical USB deploy artifact — v0.4.0) ───────
-      # The canonical deploy command for Warhacker is:
-      #   uds-cli bundle deploy szl-mesh-v0.4.0.tar.zst --confirm
-      # This step copies the same bundle artifact to the szl-mesh OCI package
-      # under the uds-v0.4.0 tag.
-      - name: Rename bundle tarball for szl-mesh publish
-        run: |
-          set -euo pipefail
-          SRC=$(ls uds-bundle-szl-uds-bundle-*.tar.zst | head -1)
-          DST="uds-bundle-${MESH_NAME}-amd64-${MESH_VERSION}.tar.zst"
-          # uds publish uses the tarball name to derive the OCI repo name.
-          # We need to build a proper mesh-named bundle by patching metadata.
-          # Strategy: use zarf tools registry copy from szl-uds-bundle:0.2.0
-          # to szl-mesh:0.4.0 after first publish.
-          echo "Source tarball: $SRC ($(ls -lh $SRC | awk '{print $5}'))"
-          echo "Will mirror to szl-mesh:${MESH_VERSION} via registry copy"
-
-      - name: Publish szl-mesh:uds-v0.4.0 (mirror from szl-uds-bundle)
-        run: |
-          set -euo pipefail
-          SRC="${REGISTRY}/${ORG}/${BUNDLE_NAME}:${BUNDLE_VERSION}"
-          # Copy all tags to szl-mesh
-          for tag in "${MESH_VERSION}" "${MESH_TAG}" "latest"; do
-            echo "Mirroring :${BUNDLE_VERSION} → ${MESH_NAME}:${tag}"
-            zarf tools registry copy "${SRC}" "${REGISTRY}/${ORG}/${MESH_NAME}:${tag}"
-          done
-          echo "szl-mesh published:"
-          echo "  oci://${REGISTRY}/${ORG}/${MESH_NAME}:${MESH_TAG}"
-          echo "  oci://${REGISTRY}/${ORG}/${MESH_NAME}:${MESH_VERSION}"
-          echo "  oci://${REGISTRY}/${ORG}/${MESH_NAME}:latest"
-
       # ── Keyless cosign sign (OIDC, no COSIGN_KEY secret) ──────────────────
-      - name: Cosign sign szl-uds-bundle (keyless OIDC — no secret required)
+      - name: Cosign sign bundle (keyless OIDC — no secret required)
         env:
           COSIGN_EXPERIMENTAL: "1"
         run: |
@@ -256,20 +215,7 @@ jobs:
             TARGET="${REGISTRY}/${ORG}/${BUNDLE_NAME}:${tag}"
             echo "Signing: ${TARGET}"
             cosign sign --yes "${TARGET}" || {
-              echo "::warning::cosign sign failed for szl-uds-bundle:${tag}."
-            }
-          done
-
-      - name: Cosign sign szl-mesh (keyless OIDC — canonical artifact)
-        env:
-          COSIGN_EXPERIMENTAL: "1"
-        run: |
-          set -euo pipefail
-          for tag in "${MESH_VERSION}" "${MESH_TAG}" "latest"; do
-            TARGET="${REGISTRY}/${ORG}/${MESH_NAME}:${tag}"
-            echo "Signing: ${TARGET}"
-            cosign sign --yes "${TARGET}" || {
-              echo "::warning::cosign sign failed for szl-mesh:${tag}."
+              echo "::warning::cosign sign failed for :${tag}. Bundle published but unsigned for this tag."
             }
           done
 
@@ -286,35 +232,27 @@ jobs:
         if: always()
         run: |
           {
-            echo "### UDS Bundle Build + Publish"
+            echo "### UDS Bundle Build + Publish — szl-mesh v0.4.0"
             echo ""
-            echo "## Canonical deploy artifact (Warhacker USB)"
-            echo "**Bundle:** \`oci://${REGISTRY}/${ORG}/${MESH_NAME}:${MESH_TAG}\`"
-            echo ""
-            echo "**USB deploy command (Defense Unicorns existing cluster):**"
-            echo '```bash'
-            echo "uds-cli bundle deploy szl-mesh-v0.4.0.tar.zst --confirm"
-            echo '```'
-            echo ""
-            echo "**OR pull from GHCR:**"
-            echo '```bash'
-            echo "uds deploy oci://${REGISTRY}/${ORG}/${MESH_NAME}:${MESH_TAG} --confirm"
-            echo '```'
-            echo ""
-            echo "## Also published (compat)"
             echo "**Artifact:** \`oci://${REGISTRY}/${ORG}/${BUNDLE_NAME}:${BUNDLE_TAG}\`"
+            echo "  (also tagged \`:${BUNDLE_VERSION}\` and \`:latest\`)"
+            echo ""
+            echo "**USB deploy command (into Defense Unicorns' existing UDS Core cluster):**"
+            echo '```bash'
+            echo "uds-cli bundle deploy szl-mesh-${BUNDLE_TAG}.tar.zst --confirm"
+            echo '```'
+            echo ""
+            echo "**OCI deploy command (pull from GHCR):**"
+            echo '```bash'
+            echo "uds deploy oci://${REGISTRY}/${ORG}/${BUNDLE_NAME}:${BUNDLE_TAG} --confirm"
+            echo '```'
             echo ""
             echo "**Verify cosign signature (keyless OIDC — SLSA L1 honest):**"
             echo '```bash'
-            echo "cosign verify ${REGISTRY}/${ORG}/${MESH_NAME}:${MESH_TAG} \\"
+            echo "cosign verify ${REGISTRY}/${ORG}/${BUNDLE_NAME}:${BUNDLE_TAG} \\"
             echo '  --certificate-identity-regexp="^https://github.com/szl-holdings/" \'
             echo '  --certificate-oidc-issuer="https://token.actions.githubusercontent.com"'
             echo '```'
             echo ""
             echo "**Doctrine:** v11 LOCKED 749/14/163 @ c7c0ba17 · Λ = Conjecture 1 · SLSA L1"
-            echo ""
-            echo "## SBOM-only regression status"
-            echo "bundles/v0.1.0/*-proof-* = image-free proof packages (intentional — NOT the demo packages)"
-            echo "bundles/szl-*/zarf-package-szl-*-0.2.0.tar.zst = REAL packages with baked images"
-            echo "(see 'List all built Zarf packages' step above for size proof)"
           } >> "$GITHUB_STEP_SUMMARY"
