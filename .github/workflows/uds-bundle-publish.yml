@@ -8,10 +8,12 @@
 # Design notes:
 #   - uds-cli v0.32.0 bundles Zarf v0.77.0 (required for init:v0.77.0 compatibility)
 #   - Keyless cosign OIDC signing — NO COSIGN_KEY secret required
-#   - szl-receipts is built from szl-uds-deployment (cloned as sibling)
+#   - szl-receipts DEFERRED: image ghcr.io/szl-holdings/szl-receipts-server:uds-v0.3.1
+#     is not yet public; re-add once image is public + charts vendored in this repo.
 #   - All 5 flagship Zarf packages are built from bundles/szl-<organ>/zarf.yaml
 #     which reference ghcr.io/szl-holdings/<organ>:uds-v0.2.0 (images EXIST in GHCR)
-#   - killinchu image is private; build is allowed to fail → honest 4/5 bundle
+#   - killinchu image is at ghcr.io/szl-holdings/killinchu:uds-v0.2.0; may be private
+#     → continue-on-error: true; honest 4/5 bundle if unavailable
 #   - Bundle published to oci://ghcr.io/szl-holdings/szl-uds-bundle
 #   - Tower deploy: uds deploy oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.0 --confirm
 #
@@ -52,12 +54,6 @@ jobs:
     steps:
       - name: Checkout uds-bundles
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-
-      - name: Checkout szl-uds-deployment (for szl-receipts package)
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-        with:
-          repository: szl-holdings/szl-uds-deployment
-          path: szl-uds-deployment
 
       - name: Install uds-cli v0.32.0 (bundles Zarf v0.77.0)
         run: |
@@ -115,21 +111,6 @@ jobs:
           done
           set -e
 
-      # ── Build szl-receipts Zarf package ────────────────────────────────────
-      # Cloned to ./szl-uds-deployment; zarf.yaml is at packages/szl-receipts/zarf.yaml.
-      # The chart and manifest references (../../charts/... ../../manifests/...) resolve
-      # correctly when `zarf package create` is run with -o pointing inside the checkout.
-      - name: Build Zarf package — szl-receipts
-        run: |
-          set -euo pipefail
-          cd szl-uds-deployment
-          zarf package create packages/szl-receipts --confirm -o packages/szl-receipts
-          ls -la packages/szl-receipts/zarf-package-*.tar.zst
-          # Copy to the expected path in uds-bundles for the bundle compose step
-          cp packages/szl-receipts/zarf-package-szl-receipts-*.tar.zst \
-             ../bundles/szl-receipts/ 2>/dev/null || true
-          cd ..
-
       # ── Build flagship Zarf packages ───────────────────────────────────────
       # Each bundles/szl-<organ>/zarf.yaml bakes ghcr.io/szl-holdings/<organ>:uds-v0.2.0
       # (verified public) into the .tar.zst at create time — no pull on tower deploy.
@@ -145,9 +126,9 @@ jobs:
       - name: Build Zarf package — szl-rosie
         run: zarf package create bundles/szl-rosie --confirm -o bundles/szl-rosie
 
-      # killinchu image is PRIVATE on GHCR; GITHUB_TOKEN cannot pull it.
+      # killinchu image is ghcr.io/szl-holdings/killinchu:uds-v0.2.0.
       # continue-on-error: true so a private killinchu never blocks the whole bundle.
-      - name: Build Zarf package — szl-killinchu (private image — may fail)
+      - name: Build Zarf package — szl-killinchu (may fail if image private)
         id: killinchu_build
         continue-on-error: true
         run: zarf package create bundles/szl-killinchu --confirm -o bundles/szl-killinchu
@@ -163,7 +144,7 @@ jobs:
           fi
 
       - name: List all built Zarf packages
-        run: find bundles szl-uds-deployment/packages -name 'zarf-package-*.tar.zst' 2>/dev/null | sort
+        run: find bundles -name 'zarf-package-*.tar.zst' 2>/dev/null | sort
 
       # ── Compose the UDS bundle ─────────────────────────────────────────────
       # uds create reads uds-bundle.yaml and expects each path: package dir
