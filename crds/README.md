@@ -1,6 +1,6 @@
 # SZL K8s-Native Governance CRDs (`szl.dev/v1alpha1`)
 
-**Doctrine v11 LOCKED 749/14/163 · Λ Conjecture 1 (NOT a theorem) · SLSA L1 honest · NO HALLUCINATION**
+**Doctrine v11 LOCKED 749/14/163 · Λ Conjecture 1 (NOT a theorem) · SLSA L1 + L2 (L3 not claimed) · NO HALLUCINATION**
 
 This directory expresses the three things SZL governance actually does — **gate, prove, lock** — as
 first-class Kubernetes objects, the same way sigstore expresses image policy as `ClusterImagePolicy`.
@@ -38,7 +38,7 @@ don't touch: *Fleet signs the package; we sign the decision.*
 These CRDs are a **design** grounded in GA upstream primitives (VAP, CRD machinery, cosign v3,
 in-toto DSSE). They are **not yet implemented** — do not claim them "live" until the operator image
 builds, deploys, and `kubectl get` returns the objects with verifying status. Λ stays **Conjecture 1**;
-SLSA stays **L1 honest**; Doctrine **v11 LOCKED 749/14/163**. Built on Apache-2.0/MIT upstreams only —
+SLSA is **L1 + L2** (organ provenance attestations verify; L3 not claimed); Doctrine **v11 LOCKED 749/14/163**. Built on Apache-2.0/MIT upstreams only —
 the `uds.dev` interop is an API *shape*, not copied code. **No GPL/AGPL source.**
 
 ## Upstream references

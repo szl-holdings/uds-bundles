@@ -1,16 +1,16 @@
 # SZL Mesh Deploy Guide
 
-**Bundle:** `szl-mesh:v0.4.0`  
+**Bundle:** `szl-uds-bundle:uds-v0.2.1`  
 **Repo:** `szl-holdings/uds-bundles`  
 **Updated:** 2026-06-05  
-**Doctrine:** v11 LOCKED 749/14/163 · SLSA L1 · Λ = Conjecture 1  
+**Doctrine:** v11 LOCKED 749/14/163 · SLSA L1 + L2 (organs); bundle signed + attested · Λ = Conjecture 1  
 **Signed-off-by:** stephenlutar2-hash \<stephenlutar2@gmail.com\>
 
 ---
 
 ## What This Bundle Does
 
-The `szl-mesh:v0.4.0` bundle deploys **5 flagship organs** of the SZL governed-AI substrate into any UDS Core cluster. These organs run as independent, airgap-safe Kubernetes workloads. Together they implement the Cannonico answer: a permanent, tamper-evident record of AI decisions and counter-UAS actions.
+The `szl-uds-bundle:uds-v0.2.1` bundle deploys **5 flagship organs** of the SZL governed-AI substrate into any UDS Core cluster. These organs run as independent, airgap-safe Kubernetes workloads. Together they implement the Cannonico answer: a permanent, tamper-evident record of AI decisions and counter-UAS actions.
 
 | Organ | What It Does | Port |
 |-------|-------------|------|
@@ -50,18 +50,18 @@ uds zarf version  # → v0.77.0
 The canonical Warhacker deploy. The tarball contains all 5 organ images baked in — no external network pull at deploy time.
 
 ```bash
-# If the tarball from CI is named uds-bundle-szl-mesh-amd64-0.4.0.tar.zst,
+# If the tarball from CI is named uds-bundle-szl-uds-bundle-amd64-0.2.1.tar.zst,
 # rename for cleanliness (both names work):
-mv uds-bundle-szl-mesh-amd64-0.4.0.tar.zst szl-mesh-v0.4.0.tar.zst
+mv uds-bundle-szl-uds-bundle-amd64-0.2.1.tar.zst szl-uds-bundle-uds-v0.2.1.tar.zst
 
 # Deploy into the existing UDS Core cluster:
-uds-cli bundle deploy szl-mesh-v0.4.0.tar.zst --confirm
+uds-cli bundle deploy szl-uds-bundle-uds-v0.2.1.tar.zst --confirm
 ```
 
 ### Option B — OCI Pull (Internet Available)
 
 ```bash
-uds deploy oci://ghcr.io/szl-holdings/szl-mesh:v0.4.0 --confirm
+uds-cli bundle deploy oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.1 --confirm
 ```
 
 ---
@@ -105,10 +105,13 @@ curl -sf http://localhost:7860/api/killinchu/healthz && echo "killinchu OK"
 kill %1
 
 # 5. Verify cosign signature (supply chain proof)
-cosign verify ghcr.io/szl-holdings/szl-mesh:v0.4.0 \
+cosign verify ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.1 \
   --certificate-identity-regexp="^https://github.com/szl-holdings/" \
   --certificate-oidc-issuer="https://token.actions.githubusercontent.com"
 # Expected: Verified OK
+
+# Bundle build-provenance attestation (run from a non-GHES host):
+gh attestation verify oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.1 --owner szl-holdings
 ```
 
 ---
@@ -151,7 +154,7 @@ timedatectl status | grep "NTP synchronized"
 
 ## Honesty Doctrine
 
-- SLSA **L1** honest (not L2/L3). GitHub Actions keyless provenance exists.
+- Organs = SLSA **L1 + L2** — GitHub Actions keyless provenance exists and the L2 SLSA provenance attestation verifies via `cosign verify-attestation`. The mesh bundle is cosign-signed + build-provenance attested. **L3 is NOT claimed.**
 - Λ = **Conjecture 1** (NEVER a theorem).
 - **No Iron Bank** — organ images are not in Iron Bank registry.
 - **No FedRAMP / CMMC**.

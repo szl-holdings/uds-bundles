@@ -22,7 +22,7 @@
 - Not SWFT-listed (we don't need it to work)
 - Not FedRAMP authorized (we don't need it to work)
 - Λ is Conjecture 1, NOT a theorem
-- SLSA L1 honest (L2 deferred — not yet proven)
+- SLSA L1 + L2 (provenance attestation verifies via cosign verify-attestation); L3 not claimed
 - 163 sorries open in the Lean kernel (disclosed, never hidden)
 
 ## WHAT WE ASK
@@ -43,7 +43,7 @@
 | Helm chart | `chart/` |
 | SBOM (SPDX 2.3) | `sbom/killinchu.spdx.json` |
 | SBOM (CycloneDX 1.4) | `sbom/killinchu.cyclonedx.json` |
-| SLSA L1 provenance | `attestations/killinchu.slsa-provenance.json` |
+| SLSA provenance (L1+L2) | `attestations/killinchu.slsa-provenance.json` |
 | Cosign verify guide | `attestations/killinchu.cosign-verify.txt` |
 | Pepr policies | `policies/` (namespace isolation · DSSE-receipt egress · Section 889 denylist) |
 
