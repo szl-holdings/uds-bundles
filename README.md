@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Doctrine v11 LOCKED](https://img.shields.io/badge/Doctrine-v11_LOCKED-d4a444.svg)](https://github.com/szl-holdings/lutar-lean)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19944926.svg)](https://doi.org/10.5281/zenodo.19944926)
-[![SLSA L1](https://img.shields.io/badge/SLSA-L1_honest-22c55e.svg)](https://slsa.dev/spec/v1.0/levels)
+[![SLSA L1+L2](https://img.shields.io/badge/SLSA-L1_+_L2-22c55e.svg)](https://slsa.dev/spec/v1.0/levels)
 [![Security Policy](https://img.shields.io/badge/Security-Policy-red.svg)](SECURITY.md)
 
 **Five airgap-deployable Zarf bundles for the SZL governed agentic mesh — built on Unified Defense Stack (UDS) Core v1.5.0.**
@@ -76,13 +76,15 @@ kubectl get doctrinelock -n szl-a11oy
 
 ---
 
-## Per-organ provenance matrix (SLSA L1 honest — all organs)
+## Per-organ provenance matrix (SLSA L1 + L2 — all organs)
 
 Each organ image is referenced in this bundle by **immutable digest** (not a floating tag).
-**Honest doctrine:** The bundle and all five organ images are **SLSA L1 honest**. Each organ
-has GitHub Actions-generated build provenance (cosign keyless-signed, Rekor-anchored). No L2 or
-L3 level is claimed — the hosted-builder isolation requirement for L2 is not independently verified
-for this bundle. L2/L3 are explicitly NOT claimed (doctrine: banned).
+**Honest doctrine:** All five organ images are **SLSA L1 + L2**. Each organ has GitHub
+Actions-generated build provenance (cosign keyless-signed, Rekor-anchored), and its L2 SLSA
+provenance attestation cryptographically verifies via `cosign verify-attestation --type
+slsaprovenance <organ-image> --certificate-identity-regexp "https://github.com/szl-holdings/<organ>/"
+--certificate-oidc-issuer "https://token.actions.githubusercontent.com"`. **L3 is NOT claimed**
+(no FedRAMP, Iron Bank, or CMMC).
 
 | Organ | Image (digest-pinned) | Build provenance | Rekor entry |
 |-------|------------------------|-----------------|-------------|
@@ -92,14 +94,14 @@ for this bundle. L2/L3 are explicitly NOT claimed (doctrine: banned).
 | `szl-rosie` | `ghcr.io/szl-holdings/rosie@sha256:86429fd4a07e209c02004e0ddd5ec408a2587a720a7e91cf5fbe1fe88e188a01` | cosign keyless + DSSE | logIndex **1710599687** |
 | `szl-killinchu` | `ghcr.io/szl-holdings/killinchu@sha256:e872344f2fc8e7d8085042d5b5660c8bd62887a7d2f2353f44f882d782e8cd75` | cosign keyless + DSSE | `bundles/szl-killinchu/attestations/killinchu.slsa-provenance.json` |
 
-The bundle artifact `oci://ghcr.io/szl-holdings/szl-mesh:v0.4.0` is cosign keyless-signed (OIDC, SLSA L1 honest).
+The mesh bundle artifact `oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.1` is cosign keyless-signed (OIDC, Fulcio+Rekor) and carries a build-provenance attestation from `actions/attest-build-provenance` — verifiable with `gh attestation verify oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.1 --owner szl-holdings`.
 
 ## Honest disclosure
 
-- **Bundle SLSA L1 honest** — the bundle artifact ships keyless-signed build provenance (cosign + Rekor). All five organ images have GitHub Actions-generated provenance. L2/L3 are NOT claimed anywhere (doctrine: banned). L3 is NOT claimed anywhere (doctrine: L3 is banned).
+- **Bundle signed + build-provenance attested** — the mesh bundle artifact is cosign keyless-signed (Fulcio+Rekor) and carries a build-provenance attestation from `actions/attest-build-provenance`. All five organ images are **SLSA L1 + L2** (provenance attestations verify via `cosign verify-attestation`). **L3 is NOT claimed anywhere** (doctrine: L3 is banned; no FedRAMP, Iron Bank, or CMMC).
 - **Λ = Conjecture 1**, NOT a theorem — Lake Verifier testing the proof now; 163 sorries open
 - **Section 889** = exactly 5 banned vendors: Huawei, ZTE, Hytera, Hikvision, Dahua
-- **v0.2.0 is a source-only release** — run `zarf package create bundles/szl-<flagship>/` locally to build deployable `.tar.zst`; v0.3.0 targets signed packages via CI
+- **`uds-v0.2.1` is the published, signed mesh bundle** — `oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.1` is cosign-signed and build-provenance attested. The per-flagship Zarf source packages under `bundles/szl-<flagship>/` can also be built locally with `zarf package create bundles/szl-<flagship>/`.
 - No Iron Bank, no FedRAMP, no CMMC — deploy on YOUR operational hardware
 
 ---
