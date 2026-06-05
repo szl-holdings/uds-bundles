@@ -21,7 +21,7 @@
 | `szl-a11oy` | Governance gate | Policy overlay + Λ-gate + agentic /code orchestrator |
 | `szl-sentra` | Immune system | 8-gate fail-CLOSED verdict pipeline |
 | `szl-amaru` | Memory cortex | Khipu Merkle DAG + DSSE-signed receipt chain |
-| `szl-rosie` | Operator console | Human-in-loop decision approval gates |
+| `szl-rosie` | Operator application | Human-on-the-loop decision approval gates (full 10-view operator app) |
 | `szl-killinchu` | Counter-UAS | Λ-gate defensive application (ADS-B + MAVLink) |
 
 Each bundle ships: `uds-bundle.yaml` · `zarf.yaml` · Helm chart · Pepr policies + ValidatingAdmissionPolicy + Cilium NetworkPolicy · SPDX + CycloneDX SBOMs · SLSA v1.2 provenance · `serviceMesh.mode: ambient`.
@@ -94,14 +94,16 @@ slsaprovenance <organ-image> --certificate-identity-regexp "https://github.com/s
 | `szl-rosie` | `ghcr.io/szl-holdings/rosie@sha256:86429fd4a07e209c02004e0ddd5ec408a2587a720a7e91cf5fbe1fe88e188a01` | cosign keyless + DSSE | logIndex **1710599687** |
 | `szl-killinchu` | `ghcr.io/szl-holdings/killinchu@sha256:e872344f2fc8e7d8085042d5b5660c8bd62887a7d2f2353f44f882d782e8cd75` | cosign keyless + DSSE | `bundles/szl-killinchu/attestations/killinchu.slsa-provenance.json` |
 
-The mesh bundle artifact `oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.1` is cosign keyless-signed (OIDC, Fulcio+Rekor) and carries a build-provenance attestation from `actions/attest-build-provenance` — verifiable with `gh attestation verify oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.1 --owner szl-holdings`.
+The published mesh bundle artifact is `oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.0`. It composes all five organ Zarf packages. **Honest scope:** the L2 SLSA build-provenance attestation that cryptographically verifies is on the **five organ images** (above), **not on the bundle artifact itself** — bundle-level attestation is not yet published (blocked on an owner-only GHCR `szl-uds-bundle` package-write grant). Do not claim the bundle is L2-attested until `cosign verify-attestation` returns a provenance payload for the bundle.
 
 ## Honest disclosure
 
-- **Bundle signed + build-provenance attested** — the mesh bundle artifact is cosign keyless-signed (Fulcio+Rekor) and carries a build-provenance attestation from `actions/attest-build-provenance`. All five organ images are **SLSA L1 + L2** (provenance attestations verify via `cosign verify-attestation`). **L3 is NOT claimed anywhere** (doctrine: L3 is banned; no FedRAMP, Iron Bank, or CMMC).
-- **Λ = Conjecture 1**, NOT a theorem — Lake Verifier testing the proof now; 163 sorries open
+- **Organ images: SLSA Build L2.** All five organ images are **SLSA Build L1 + L2** — each has GitHub Actions-generated build provenance (cosign keyless-signed, Rekor-anchored) and its L2 SLSA provenance attestation verifies via `cosign verify-attestation --type slsaprovenance` under strict per-organ identity. **L3 is NOT claimed anywhere** (doctrine: L3 is banned; no FedRAMP, Iron Bank, or CMMC).
+- **Bundle artifact: signed, NOT yet attested.** The mesh bundle `szl-uds-bundle:uds-v0.2.0` is real and deployable, but the **bundle artifact itself is not yet SLSA-attested** (owner-only GHCR package-write grant pending). The attestations that verify are on the organ images, not the bundle.
+- **Λ = Conjecture 1**, NOT a theorem — Lake Verifier testing the proof; 163 sorries open
+- **Proved PURIQ formulas = exactly 5** — F1, F11, F12, F18, F19 (Lean 4, zero-sorry); the remaining 18 are Roadmap
 - **Section 889** = exactly 5 banned vendors: Huawei, ZTE, Hytera, Hikvision, Dahua
-- **`uds-v0.2.1` is the published, signed mesh bundle** — `oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.1` is cosign-signed and build-provenance attested. The per-flagship Zarf source packages under `bundles/szl-<flagship>/` can also be built locally with `zarf package create bundles/szl-<flagship>/`.
+- **`uds-v0.2.0` is the published, signed mesh bundle** — the per-flagship Zarf source packages under `bundles/szl-<flagship>/` can also be built locally with `zarf package create bundles/szl-<flagship>/`.
 - No Iron Bank, no FedRAMP, no CMMC — deploy on YOUR operational hardware
 
 ---
@@ -120,4 +122,5 @@ The mesh bundle artifact `oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.1` 
 **Doctrine v11 LOCKED 749/14/163 · Λ = Conjecture 1 (NOT a theorem) · Apache-2.0**
 
 *Signed-off-by: Yachay <yachay@szlholdings.ai>*
+
 
