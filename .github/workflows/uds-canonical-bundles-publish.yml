@@ -124,7 +124,9 @@ jobs:
       - name: uds create canonical bundle
         run: |
           set -euo pipefail
-          uds create "bundles/${BUNDLE_NAME}" --confirm --no-progress
+          # -o . writes the composed bundle tarball to the repo root (otherwise
+          # uds writes it next to the bundle definition under bundles/<name>/).
+          uds create "bundles/${BUNDLE_NAME}" -o . --confirm --no-progress
           echo "=== Bundle tarballs ==="
           ls -lh uds-bundle-*.tar.zst
 
