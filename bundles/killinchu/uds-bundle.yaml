@@ -58,15 +58,15 @@ metadata:
   description: "SZL killinchu field node — counter-UAS + vessels + inherited a11oy orchestration, with sentra/amaru governance prerequisites, one self-contained edge bundle"
   version: "0.5.0"
   architecture: amd64
-  authors: "Stephen P. Lutar Jr. <stephenlutar2@gmail.com>"
-  x-uds-core-compat: ">=1.5.0"
-  x-zarf-compat: ">=0.77.0"
-  annotations:
-    szl.dev/role: "field-node"
-    szl.dev/deployable-to-edge: "true"
-    szl.dev/ddil-ok: "true"
-    szl.dev/fleet-tier: "mission-application"
-    szl.dev/edge-profile: "ddil"
+  # NOTE: uds-cli v0.32.0 strict UDSBundle metadata schema accepts ONLY
+  #   name/description/version/architecture. The following were moved to
+  #   comments (strict unmarshalling rejects unknown fields):
+  #     authors: "Stephen P. Lutar Jr. <stephenlutar2@gmail.com>"
+  #     x-uds-core-compat: ">=1.5.0"   x-zarf-compat: ">=0.77.0"
+  #     szl.dev/role: "field-node"
+  #     szl.dev/deployable-to-edge: "true"   szl.dev/ddil-ok: "true"
+  #     szl.dev/fleet-tier: "mission-application"
+  #     szl.dev/edge-profile: "ddil"
 
 packages:
   # ── killinchu: THE field surface (drones + vessels + inherited a11oy brain) ─
