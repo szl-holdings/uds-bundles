@@ -62,13 +62,14 @@ metadata:
   description: "SZL a11oy command platform — orchestrating brain + backend organs (sentra/amaru/rosie) + mesh interconnect, one self-contained bundle"
   version: "0.5.0"
   architecture: amd64
-  authors: "Stephen P. Lutar Jr. <stephenlutar2@gmail.com>"
-  x-uds-core-compat: ">=1.5.0"
-  x-zarf-compat: ">=0.77.0"
-  annotations:
-    szl.dev/role: "command-platform"
-    szl.dev/fleet-deployable: "true"
-    szl.dev/fleet-tier: "mission-application"
+  # NOTE: uds-cli v0.32.0 strict UDSBundle metadata schema accepts ONLY
+  #   name/description/version/architecture. The following were moved to
+  #   comments (strict unmarshalling rejects unknown fields):
+  #     authors: "Stephen P. Lutar Jr. <stephenlutar2@gmail.com>"
+  #     x-uds-core-compat: ">=1.5.0"   x-zarf-compat: ">=0.77.0"
+  #     szl.dev/role: "command-platform"
+  #     szl.dev/fleet-deployable: "true"
+  #     szl.dev/fleet-tier: "mission-application"
 
 packages:
   # ── a11oy: THE command platform (front door / orchestrating brain) ─────────
