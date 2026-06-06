@@ -10,6 +10,8 @@
 
 **Airgap-deployable Zarf bundles for the SZL governed agentic mesh — built on Unified Defense Stack (UDS) Core v1.5.0.**
 
+**Deployment story:** this repo holds the **Zarf bundle manifests**. The UDS Operator entry point is [szl-fleet-overlay](https://github.com/szl-holdings/szl-fleet-overlay); CRDT coordination is [szl-mesh](https://github.com/szl-holdings/szl-mesh); the observability spine is [uds-mesh](https://github.com/szl-holdings/uds-mesh); the live reference deployment is [szl-uds-deployment](https://github.com/szl-holdings/szl-uds-deployment).
+
 ---
 
 ## What this is
