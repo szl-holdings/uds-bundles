@@ -8,21 +8,21 @@
 [![SLSA L1+L2](https://img.shields.io/badge/SLSA-L1_+_L2-22c55e.svg)](https://slsa.dev/spec/v1.0/levels)
 [![Security Policy](https://img.shields.io/badge/Security-Policy-red.svg)](SECURITY.md)
 
-**Five airgap-deployable Zarf bundles for the SZL governed agentic mesh — built on Unified Defense Stack (UDS) Core v1.5.0.**
+**Airgap-deployable Zarf bundles for the SZL governed agentic mesh — built on Unified Defense Stack (UDS) Core v1.5.0.**
 
 ---
 
 ## What this is
 
-`uds-bundles` packages the five SZL flagship organs as Unified Defense Stack (UDS)-compatible Zarf bundles:
+`uds-bundles` packages the SZL governed agentic mesh as Unified Defense Stack (UDS)-compatible Zarf bundles. The two products — **a11oy** (governed command platform) and **killinchu** (drones & vessels) — are composed from internal capability services (policy, immune-gate, memory, operator console), each shipped as its own Zarf package:
 
-| Bundle | Organ | Role |
-|--------|-------|------|
-| `szl-a11oy` | Governance gate | Policy overlay + Λ-gate + agentic /code orchestrator |
-| `szl-sentra` | Immune system | 8-gate fail-CLOSED verdict pipeline |
-| `szl-amaru` | Memory cortex | Khipu Merkle DAG + DSSE-signed receipt chain |
-| `szl-rosie` | Operator application | Human-on-the-loop decision approval gates (full 10-view operator app) |
-| `szl-killinchu` | Counter-UAS | Λ-gate defensive application (ADS-B + MAVLink) |
+| Bundle | Product / capability | Role |
+|--------|----------------------|------|
+| `szl-a11oy` | a11oy — governance gate | Policy overlay + Λ-gate + agentic /code orchestrator |
+| `szl-sentra` | a11oy — policy / immune-gate | 8-gate fail-CLOSED verdict pipeline |
+| `szl-amaru` | a11oy — memory / receipt chain | Khipu Merkle DAG + DSSE-signed receipt chain |
+| `szl-rosie` | a11oy — operator console | Human-on-the-loop decision approval gates (full 10-view operator app) |
+| `szl-killinchu` | killinchu — counter-UAS | Λ-gate defensive application (ADS-B + MAVLink) |
 
 Each bundle ships: `uds-bundle.yaml` · `zarf.yaml` · Helm chart · Pepr policies + ValidatingAdmissionPolicy + Cilium NetworkPolicy · SPDX + CycloneDX SBOMs · SLSA v1.2 provenance · `serviceMesh.mode: ambient`.
 
@@ -57,7 +57,7 @@ zarf package create bundles/szl-sentra/ --confirm
 zarf package deploy zarf-package-szl-sentra-amd64-0.2.0.tar.zst --confirm
 ```
 
-See `bundles/DEPLOY_RUNBOOK.md` for Scenario A (single organ), B (sentra + amaru), C (full mesh).
+See `bundles/DEPLOY_RUNBOOK.md` for Scenario A (single capability bundle), B (policy + memory), C (full mesh).
 
 ---
 
@@ -76,17 +76,17 @@ kubectl get doctrinelock -n szl-a11oy
 
 ---
 
-## Per-organ provenance matrix (SLSA L1 + L2 — all organs)
+## Per-bundle provenance matrix (SLSA L1 + L2 — all images)
 
-Each organ image is referenced in this bundle by **immutable digest** (not a floating tag).
-**Honest doctrine:** All five organ images are **SLSA L1 + L2**. Each organ has GitHub
+Each capability image is referenced in this bundle by **immutable digest** (not a floating tag).
+**Honest doctrine:** All five capability images are **SLSA L1 + L2**. Each image has GitHub
 Actions-generated build provenance (cosign keyless-signed, Rekor-anchored), and its L2 SLSA
 provenance attestation cryptographically verifies via `cosign verify-attestation --type
-slsaprovenance <organ-image> --certificate-identity-regexp "https://github.com/szl-holdings/<organ>/"
+slsaprovenance <image> --certificate-identity-regexp "https://github.com/szl-holdings/<name>/"
 --certificate-oidc-issuer "https://token.actions.githubusercontent.com"`. **L3 is NOT claimed**
 (no FedRAMP, Iron Bank, or CMMC).
 
-| Organ | Image (digest-pinned) | Build provenance | Rekor entry |
+| Bundle | Image (digest-pinned) | Build provenance | Rekor entry |
 |-------|------------------------|-----------------|-------------|
 | `szl-a11oy` | `ghcr.io/szl-holdings/a11oy@sha256:8aaea251609104b554baaac161a0e44cb59a909296e0b37d25ba94b3ab921530` | cosign keyless + `slsa.dev/provenance/v1` DSSE | logIndex **1710578865** |
 | `szl-sentra` | `ghcr.io/szl-holdings/sentra@sha256:32360746e0084ca0c7233bbca2709c1b1e907b6ffa91c166444d8aeb196fa002` | cosign keyless + DSSE | logIndex **1710576247** |
@@ -94,16 +94,16 @@ slsaprovenance <organ-image> --certificate-identity-regexp "https://github.com/s
 | `szl-rosie` | `ghcr.io/szl-holdings/rosie@sha256:86429fd4a07e209c02004e0ddd5ec408a2587a720a7e91cf5fbe1fe88e188a01` | cosign keyless + DSSE | logIndex **1710599687** |
 | `szl-killinchu` | `ghcr.io/szl-holdings/killinchu@sha256:e872344f2fc8e7d8085042d5b5660c8bd62887a7d2f2353f44f882d782e8cd75` | cosign keyless + DSSE | `bundles/szl-killinchu/attestations/killinchu.slsa-provenance.json` |
 
-The published mesh bundle artifact is `oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.0`. It composes all five organ Zarf packages. **Honest scope:** the L2 SLSA build-provenance attestation that cryptographically verifies is on the **five organ images** (above), **not on the bundle artifact itself** — bundle-level attestation is not yet published (blocked on an owner-only GHCR `szl-uds-bundle` package-write grant). Do not claim the bundle is L2-attested until `cosign verify-attestation` returns a provenance payload for the bundle.
+The published mesh bundle artifact is `oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.0`. It composes all five capability Zarf packages. **Honest scope:** the L2 SLSA build-provenance attestation that cryptographically verifies is on the **five capability images** (above), **not on the bundle artifact itself** — bundle-level attestation is not yet published (blocked on an owner-only GHCR `szl-uds-bundle` package-write grant). Do not claim the bundle is L2-attested until `cosign verify-attestation` returns a provenance payload for the bundle.
 
 ## Honest disclosure
 
-- **Organ images: SLSA Build L2.** All five organ images are **SLSA Build L1 + L2** — each has GitHub Actions-generated build provenance (cosign keyless-signed, Rekor-anchored) and its L2 SLSA provenance attestation verifies via `cosign verify-attestation --type slsaprovenance` under strict per-organ identity. **L3 is NOT claimed anywhere** (doctrine: L3 is banned; no FedRAMP, Iron Bank, or CMMC).
-- **Bundle artifact: signed, NOT yet attested.** The mesh bundle `szl-uds-bundle:uds-v0.2.0` is real and deployable, but the **bundle artifact itself is not yet SLSA-attested** (owner-only GHCR package-write grant pending). The attestations that verify are on the organ images, not the bundle.
+- **Capability images: SLSA Build L2.** All five capability images are **SLSA Build L1 + L2** — each has GitHub Actions-generated build provenance (cosign keyless-signed, Rekor-anchored) and its L2 SLSA provenance attestation verifies via `cosign verify-attestation --type slsaprovenance` under strict per-image identity. **L3 is NOT claimed anywhere** (doctrine: L3 is banned; no FedRAMP, Iron Bank, or CMMC).
+- **Bundle artifact: signed, NOT yet attested.** The mesh bundle `szl-uds-bundle:uds-v0.2.0` is real and deployable, but the **bundle artifact itself is not yet SLSA-attested** (owner-only GHCR package-write grant pending). The attestations that verify are on the capability images, not the bundle.
 - **Λ = Conjecture 1**, NOT a theorem — Lake Verifier testing the proof; 163 sorries open
 - **Proved PURIQ formulas = exactly 5** — F1, F11, F12, F18, F19 (Lean 4, zero-sorry); the remaining 18 are Roadmap
 - **Section 889** = exactly 5 banned vendors: Huawei, ZTE, Hytera, Hikvision, Dahua
-- **`uds-v0.2.0` is the published, signed mesh bundle** — the per-flagship Zarf source packages under `bundles/szl-<flagship>/` can also be built locally with `zarf package create bundles/szl-<flagship>/`.
+- **`uds-v0.2.0` is the published, signed mesh bundle** — the per-capability Zarf source packages under `bundles/szl-<name>/` can also be built locally with `zarf package create bundles/szl-<name>/`.
 - No Iron Bank, no FedRAMP, no CMMC — deploy on YOUR operational hardware
 
 ---
@@ -120,7 +120,5 @@ The published mesh bundle artifact is `oci://ghcr.io/szl-holdings/szl-uds-bundle
 ---
 
 **Doctrine v11 LOCKED 749/14/163 · Λ = Conjecture 1 (NOT a theorem) · Apache-2.0**
-
-*Signed-off-by: Yachay <yachay@szlholdings.ai>*
 
 
