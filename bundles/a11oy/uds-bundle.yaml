@@ -1,0 +1,125 @@
+# Copyright 2026 SZL Holdings
+# SPDX-License-Identifier: Apache-2.0
+#
+# ============================================================================
+#  a11oy.uds  —  THE SZL command platform, fully self-contained
+# ============================================================================
+#
+# UDSBundle name: a11oy   version: 0.5.0   arch: amd64
+#
+# Produces (once built + published via the uds-bundle-publish workflow):
+#   oci://ghcr.io/szl-holdings/a11oy-bundle:0.5.0   (see PUBLISH NOTE below)
+#
+# WHAT THIS BUNDLE IS
+#   a11oy is THE orchestrating brain / command platform. It ingested the organ
+#   source and now runs as the front door. This bundle deploys a11oy together
+#   with the backend organs it depends on AND the mesh interconnect that wires
+#   them — everything a11oy needs to run as the orchestrating brain, in ONE
+#   air-gap-deployable bundle:
+#     - a11oy     (command platform + 26-tab console + orchestration)
+#     - sentra    (policy / immune system — BACKEND a11oy depends on)
+#     - amaru     (reasoning / memory cortex — BACKEND a11oy depends on)
+#     - rosie     (operator console / ask-&-act — BACKEND a11oy depends on)
+#   The mesh interconnect (Istio AuthorizationPolicy + NetworkPolicy + strict
+#   PeerAuthentication) is carried INSIDE each per-organ Zarf package as a UDS
+#   Package CR (manifests/uds-package.yaml). The UDS Operator reconciles those
+#   CRs into the cross-organ allow/expose matrix at deploy time, so the mesh
+#   wiring deploys WITH the bundle. The cross-organ allow/expose matrix is the
+#   one authored in szl-uds-deployment/packages/*/uds-package.yaml.
+#
+# PUBLISH NOTE (HONEST — read before claiming anything):
+#   The GHCR repo `ghcr.io/szl-holdings/a11oy` ALREADY holds the a11oy ORGAN
+#   IMAGE (a11oy:uds-v0.2.0, verified pullable). A UDSBundle published to that
+#   same repo path would collide image-vs-bundle. This bundle is therefore
+#   intended to publish to a DISTINCT path: oci://ghcr.io/szl-holdings/a11oy-bundle:0.5.0.
+#   As of authoring, a11oy-bundle:0.5.0 is NOT YET PUBLISHED — build it via the
+#   uds-bundle-publish workflow (a11oy target). Do not claim it is published or
+#   signed until verified on GHCR. The existing szl-mesh:0.4.0 meta-bundle stays
+#   the canonical published full-mesh artifact and is NOT changed by this file.
+#
+# IMAGE PINS — VERIFIED PULLABLE (anonymous GHCR token + manifest HEAD, 2026-06-05):
+#   ghcr.io/szl-holdings/a11oy:uds-v0.2.0      200  sha256:45fa2365c2fc6cda4ed2d1387478980d173f7f8cdd80a6e7aaa4082f7b276f0b
+#   ghcr.io/szl-holdings/sentra:uds-v0.2.0     200  sha256:60a0efc14366ba392bfe3f3cd4196863fe148bb87a17428be6a57f0a05ac3639
+#   ghcr.io/szl-holdings/amaru:uds-v0.2.0      200  sha256:53301e26adcde49e73df28d8c3b790f2496da9d495307fe8587ffa7452b289ff
+#   ghcr.io/szl-holdings/rosie:uds-v0.2.0      200  sha256:1984a15f53c2e1b91c7dafaa0ed5df9148d57e3e86eb73db879c2b0443302848
+#   ghcr.io/szl-holdings/hatun-mcp:latest      200  sha256:fba23f0e26886d6c6b99dfb834c72a0af89f83382ceaaeedfeedaab0feb8f247
+#
+# HONESTY HEADER
+#   Doctrine v11 LOCKED 749/14/163 at kernel commit c7c0ba17
+#   Λ = Conjecture 1 (NEVER a theorem)
+#   SLSA L2 on the ORGAN IMAGES (.att = slsa.dev/provenance/v0.2, cosign-verifiable).
+#     NOT SLSA L3, and the BUNDLE-LEVEL build-provenance attestation is NOT earned
+#     (CI token lacks attestations:write) — the cosign SIGNATURE is the real bundle
+#     provenance. No FedRAMP / CMMC / Iron Bank.
+#   Section 889 = exactly 5 vendors (Huawei, ZTE, Hytera, Hikvision, Dahua).
+#
+# Signed-off-by: Stephen P. Lutar Jr. <stephenlutar2@gmail.com>
+# Co-Authored-By: Perplexity Computer Agent <agent@perplexity.ai>
+
+kind: UDSBundle
+metadata:
+  name: a11oy
+  description: "SZL a11oy command platform — orchestrating brain + backend organs (sentra/amaru/rosie) + mesh interconnect, one self-contained bundle"
+  version: "0.5.0"
+  architecture: amd64
+  authors: "Stephen P. Lutar Jr. <stephenlutar2@gmail.com>"
+  x-uds-core-compat: ">=1.5.0"
+  x-zarf-compat: ">=0.77.0"
+  annotations:
+    szl.dev/role: "command-platform"
+    szl.dev/fleet-deployable: "true"
+    szl.dev/fleet-tier: "mission-application"
+
+packages:
+  # ── a11oy: THE command platform (front door / orchestrating brain) ─────────
+  # Reuses the verified bundles/szl-a11oy Zarf package (zarf.yaml bakes
+  # ghcr.io/szl-holdings/a11oy:uds-v0.2.0 + the a11oy UDS Package CR that
+  # exposes the platform on the tenant gateway).
+  - name: szl-a11oy
+    path: ../szl-a11oy
+    ref: "0.2.0"
+
+  # ── sentra: policy / immune BACKEND (a11oy depends on it) ──────────────────
+  - name: szl-sentra
+    path: ../szl-sentra
+    ref: "0.2.0"
+
+  # ── amaru: reasoning / memory cortex BACKEND (a11oy depends on it) ─────────
+  - name: szl-amaru
+    path: ../szl-amaru
+    ref: "0.2.0"
+
+  # ── rosie: operator console BACKEND (a11oy depends on it) ──────────────────
+  - name: szl-rosie
+    path: ../szl-rosie
+    ref: "0.2.0"
+
+  # ── MESH INTERCONNECT ──────────────────────────────────────────────────────
+  # NOT a separate package: the cross-organ mesh (Istio AuthorizationPolicy,
+  # NetworkPolicy, strict PeerAuthentication) ships INSIDE each per-organ Zarf
+  # package above as its UDS Package CR (manifests/uds-package.yaml). The UDS
+  # Operator reconciles the allow/expose matrix
+  #   a11oy <-> amaru (8080) · a11oy <-> sentra (8080) · a11oy -> rosie (7860)
+  # so the mesh wiring deploys with this bundle. Span schemas (governance fabric)
+  # live in szl-holdings/uds-mesh + uds-bundles/mesh/schemas/spans/*.yaml.
+
+  # ── ROADMAP PREREQUISITES (authored as TODO — image NOT yet public) ────────
+  # These are real prerequisites of the full a11oy platform but their GHCR
+  # images are NOT anonymously pullable as of authoring (HTTP 403 = private or
+  # not published). They are listed honestly as roadmap, NOT fake-pinned. Add a
+  # bundles/szl-<svc> Zarf package + uncomment once the image is public + verified.
+  #
+  # OTEL — observability/telemetry collector (vsp-otel)
+  #   image: ghcr.io/szl-holdings/vsp-otel:<tag>   STATUS: 403 (not public) — TODO
+  # MCP — tool/agent gateway (hatun-mcp)  IMAGE IS PUBLIC (latest, pinned by digest
+  #   above) but no Zarf package vendored yet in this repo — TODO: add bundles/szl-hatun-mcp.
+  #   image: ghcr.io/szl-holdings/hatun-mcp@sha256:fba23f0e26886d6c6b99dfb834c72a0af89f83382ceaaeedfeedaab0feb8f247
+  # RECEIPTS / LAKE — DSSE receipt server + evidence lake (szl-lake / szl-receipts-server)
+  #   image: ghcr.io/szl-holdings/szl-lake:<tag>            STATUS: 403 — TODO
+  #   image: ghcr.io/szl-holdings/szl-receipts-server:<tag> STATUS: 403 — TODO
+  #   (the a11oy/amaru/sentra/rosie UDS Package CRs ALREADY carry permissive allow
+  #    rules to the szl-receipts namespace; traffic simply does not flow until the
+  #    receipts service is deployed — see DEPLOY.md troubleshooting.)
+  # KNOWLEDGE / DOCTRINE — knowledge.json + 100 formula LaTeX + 10 policy yamls are
+  #   already BAKED INTO the a11oy image (ingested into the a11oy repo), so they
+  #   deploy with szl-a11oy above — no separate package required.

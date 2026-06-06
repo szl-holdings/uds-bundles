@@ -1,0 +1,160 @@
+# Copyright 2026 SZL Holdings
+# SPDX-License-Identifier: Apache-2.0
+#
+# Canonical UDS Bundles — Build + Publish (a11oy.uds + killinchu.uds)
+#
+# This workflow builds the TWO canonical INGEST bundles authored under
+# bundles/a11oy/ and bundles/killinchu/. It is SEPARATE from
+# uds-bundle-publish.yml (which publishes the still-working szl-mesh:0.4.0
+# meta-bundle) — that proven workflow is intentionally left UNCHANGED so the
+# szl-mesh publish never breaks.
+#
+# Produces (workflow_dispatch only — never on tag push, to avoid colliding with
+# the szl-mesh tag-push trigger):
+#   a11oy     -> oci://ghcr.io/szl-holdings/a11oy-bundle:0.5.0     (+ :latest)
+#   killinchu -> oci://ghcr.io/szl-holdings/killinchu-bundle:0.5.0 (+ :latest)
+#
+# NOTE on the -bundle suffix: ghcr.io/szl-holdings/{a11oy,killinchu} already hold
+# the organ IMAGES; publishing a UDSBundle to the same path would collide. The
+# bundles therefore publish to the *-bundle repos. HONEST: until this workflow
+# runs successfully and the tag is verified on GHCR, the bundles are AUTHORED-ONLY.
+#
+# Doctrine v11 LOCKED 749/14/163 @ c7c0ba17 · Λ = Conjecture 1 · SLSA L2 on images
+# (bundle build-provenance attestation NOT earned — cosign sig is the provenance).
+# Signed-off-by: Stephen P. Lutar Jr. <stephenlutar2@gmail.com>
+
+name: Canonical UDS Bundles (a11oy + killinchu)
+
+on:
+  workflow_dispatch:
+    inputs:
+      bundle:
+        description: 'Which canonical bundle to build'
+        required: true
+        type: choice
+        default: a11oy
+        options: [a11oy, killinchu]
+      version:
+        description: 'Bundle version'
+        required: false
+        default: '0.5.0'
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write   # keyless cosign OIDC signing
+
+env:
+  UDS_CLI_VERSION: "v0.32.0"
+  ZARF_VERSION: "v0.77.0"
+  REGISTRY: "ghcr.io"
+  ORG: "szl-holdings"
+
+jobs:
+  publish:
+    name: Build + Publish ${{ inputs.bundle }}.uds
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout uds-bundles
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Resolve bundle params
+        run: |
+          set -euo pipefail
+          BUNDLE_NAME="${{ inputs.bundle }}"          # a11oy | killinchu
+          BUNDLE_VERSION="${{ inputs.version }}"
+          PUBLISH_REPO="${BUNDLE_NAME}-bundle"        # avoid image-vs-bundle collision
+          echo "BUNDLE_NAME=${BUNDLE_NAME}"       >> "$GITHUB_ENV"
+          echo "BUNDLE_VERSION=${BUNDLE_VERSION}" >> "$GITHUB_ENV"
+          echo "PUBLISH_REPO=${PUBLISH_REPO}"     >> "$GITHUB_ENV"
+          echo "Building bundles/${BUNDLE_NAME} -> oci://${REGISTRY}/${ORG}/${PUBLISH_REPO}:${BUNDLE_VERSION}"
+
+      - name: Install uds-cli (bundles Zarf v0.77.0)
+        run: |
+          set -euo pipefail
+          curl -sLo /usr/local/bin/uds \
+            "https://github.com/defenseunicorns/uds-cli/releases/download/${UDS_CLI_VERSION}/uds-cli_${UDS_CLI_VERSION}_Linux_amd64"
+          chmod +x /usr/local/bin/uds
+          uds version
+
+      - name: Install Zarf (standalone, for package create)
+        run: |
+          set -euo pipefail
+          curl -sLo /usr/local/bin/zarf \
+            "https://github.com/zarf-dev/zarf/releases/download/${ZARF_VERSION}/zarf_${ZARF_VERSION}_Linux_amd64"
+          chmod +x /usr/local/bin/zarf
+          zarf version
+
+      - name: Install cosign (keyless OIDC)
+        uses: sigstore/cosign-installer@d7d6bc7722e3daa8354c50bcb52f4837da5e9b6a # v3.8.1
+
+      - name: Log in to GHCR
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Zarf GHCR auth
+        run: zarf tools registry login "${REGISTRY}" -u "${{ github.actor }}" -p "${{ secrets.GITHUB_TOKEN }}" || true
+
+      # The canonical bundle composes the existing, verified per-organ Zarf
+      # packages via relative paths (bundles/a11oy/uds-bundle.yaml references
+      # ../szl-a11oy, ../szl-sentra, ...). uds create builds each referenced
+      # package then composes the bundle.
+      - name: uds create canonical bundle
+        run: |
+          set -euo pipefail
+          uds create "bundles/${BUNDLE_NAME}" --confirm --no-progress
+          echo "=== Bundle tarballs ==="
+          ls -lh uds-bundle-*.tar.zst
+
+      - name: uds publish bundle to *-bundle repo
+        run: |
+          set -euo pipefail
+          for tarball in uds-bundle-*.tar.zst; do
+            [ -f "$tarball" ] || continue
+            # uds publish targets the ORG; uds tags by metadata.name. We then copy
+            # to the collision-safe ${PUBLISH_REPO} path.
+            uds publish "$tarball" "oci://${REGISTRY}/${ORG}"
+          done
+          SRC="${REGISTRY}/${ORG}/${BUNDLE_NAME}:${BUNDLE_VERSION}"
+          DST="${REGISTRY}/${ORG}/${PUBLISH_REPO}:${BUNDLE_VERSION}"
+          zarf tools registry copy "${SRC}" "${DST}"
+          zarf tools registry copy "${SRC}" "${REGISTRY}/${ORG}/${PUBLISH_REPO}:latest"
+
+      - name: Cosign sign (keyless OIDC — real bundle provenance)
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          set -euo pipefail
+          for tag in "${BUNDLE_VERSION}" "latest"; do
+            cosign sign --yes "${REGISTRY}/${ORG}/${PUBLISH_REPO}:${tag}" || \
+              echo "::warning::cosign sign failed for :${tag} — published but unsigned for this tag."
+          done
+
+      # HONEST: this attestation step requires org-level attestations:write, which
+      # the default token LACKS. It is non-blocking and is EXPECTED to fail —
+      # the cosign signature above is the real provenance. NOT a bundle SLSA attestation.
+      - name: Attest build provenance (EXPECTED to fail — non-blocking)
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        continue-on-error: true
+        if: hashFiles('uds-bundle-*.tar.zst') != ''
+        with:
+          subject-path: 'uds-bundle-*.tar.zst'
+
+      - name: Job summary
+        if: always()
+        run: |
+          {
+            echo "### Canonical bundle: ${BUNDLE_NAME}.uds v${BUNDLE_VERSION}"
+            echo ""
+            echo "**Published:** \`oci://${REGISTRY}/${ORG}/${PUBLISH_REPO}:${BUNDLE_VERSION}\` (+ :latest)"
+            echo ""
+            echo "**Deploy:**"
+            echo '```bash'
+            echo "uds deploy oci://${REGISTRY}/${ORG}/${PUBLISH_REPO}:${BUNDLE_VERSION} --confirm"
+            echo '```'
+            echo ""
+            echo "Doctrine v11 LOCKED 749/14/163 @ c7c0ba17 · Λ = Conjecture 1 · SLSA L2 (images), bundle cosign-signed (no bundle SLSA attestation)."
+          } >> "$GITHUB_STEP_SUMMARY"

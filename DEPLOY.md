@@ -1,165 +1,115 @@
-# SZL Mesh Deploy Guide
+# SZL UDS Deploy Guide
 
-**Bundle:** `szl-mesh:0.4.0` (current published OCI; also tagged `v0.4.0`/`latest`). Legacy alias: `szl-uds-bundle:uds-v0.2.x`.  
-**Repo:** `szl-holdings/uds-bundles`  
-**Updated:** 2026-06-05  
-**Doctrine:** v11 LOCKED 749/14/163 · SLSA L1 + L2 (organ images, `.att` = slsa.dev/provenance/v0.2); bundle cosign-**signed** (build-provenance attestation NOT yet earned on the bundle) · Λ = Conjecture 1  
-**Signed-off-by:** stephenlutar2-hash \<stephenlutar2@gmail.com\>
-
----
-
-## What This Bundle Does
-
-The `szl-mesh:0.4.0` bundle (legacy alias `szl-uds-bundle`) deploys **5 flagship organs** of the SZL governed-AI substrate into any UDS Core cluster. These organs run as independent, airgap-safe Kubernetes workloads. Together they implement the Cannonico answer: a permanent, tamper-evident record of AI decisions and counter-UAS actions.
-
-| Organ | What It Does | Port |
-|-------|-------------|------|
-| **szl-a11oy** | Governance policy gate + DSSE receipt substrate. Every agent action emits a Khipu receipt; `receipts.in ≡ receipts.out` audit-fiber continuity. | 8080 |
-| **szl-sentra** | 8-gate fail-CLOSED immune screen. Deny-by-default; signed ALLOW/DENY verdicts. | 8080 |
-| **szl-amaru** | 13-axis memory cortex. Every decision hashed into a Khipu DAG with DSSE/cosign receipt. | 8080 |
-| **szl-rosie** | Operator console. Human-in-the-loop confirmation, receipt review, mesh health. | 7860 |
-| **szl-killinchu** | Counter-UAS organ. Decodes ADS-B/MAVLink/OpenDroneID, scores threats through the 13-axis Λ-gate, signs every interdiction verdict. | 7860 |
+**Canonical bundles (going forward):** `a11oy:0.5.0` (command platform) and `killinchu:0.5.0` (field node).
+**Still-working full-mesh bundle:** `szl-mesh:0.4.0` (published + cosign-signed; NOT changed).
+**Repo:** `szl-holdings/uds-bundles`
+**Updated:** 2026-06-05
+**Doctrine:** v11 LOCKED 749/14/163 @ kernel `c7c0ba17` · Λ = Conjecture 1 · SLSA **L2 on organ images** (`.att` = `slsa.dev/provenance/v0.2`, cosign-verifiable); **bundle-level build-provenance attestation NOT earned** — the cosign **signature** is the bundle provenance. **No L3 / FedRAMP / CMMC / Iron Bank.** Section 889 = 5 vendors.
+**Signed-off-by:** Stephen P. Lutar Jr. \<stephenlutar2@gmail.com\>
 
 ---
 
-## Prerequisites
+## The Two Canonical Bundles (INGEST model)
 
-The bundle deploys **into an existing UDS Core cluster**. It does NOT bring its own cluster.
+The fleet consolidated onto **two self-contained UDS bundles**. Each ingests everything it needs into one air-gap-deployable artifact.
 
-1. **UDS Core v1.x running** — Istio (ambient or sidecar), Pepr UDS Operator, Keycloak, Prometheus must be up.
-2. **uds-cli v0.32.0** installed on the deploy machine (bundles Zarf v0.77.0):
+| Bundle | Name / version | What it is | Composes |
+|--------|----------------|-----------|----------|
+| **a11oy.uds** | `a11oy` 0.5.0 | The command platform / orchestrating brain + its backend organs + mesh interconnect | a11oy + sentra + amaru + rosie (+ mesh CRs; OTEL/MCP/receipts roadmap) |
+| **killinchu.uds** | `killinchu` 0.5.0 | Self-contained field node (drones + vessels) with inherited a11oy orchestration + governance prerequisites | killinchu + sentra + amaru (+ mesh CRs; rosie optional; OTEL/receipts roadmap) |
 
-```bash
-UDS_VERSION="v0.32.0"
-curl -sLo /usr/local/bin/uds \
-  "https://github.com/defenseunicorns/uds-cli/releases/download/${UDS_VERSION}/uds-cli_${UDS_VERSION}_Linux_amd64"
-chmod +x /usr/local/bin/uds
-uds version       # → v0.32.0
-uds zarf version  # → v0.77.0
-```
+The **mesh interconnect** (Istio AuthorizationPolicy + NetworkPolicy + strict PeerAuthentication) is not a separate package — it ships inside each per-organ Zarf package as its **UDS Package CR** (`manifests/uds-package.yaml`). The UDS Operator reconciles the cross-organ allow/expose matrix at deploy time, so the mesh wiring deploys with the bundle. Governance span schemas live in `szl-holdings/uds-mesh` + `uds-bundles/mesh/schemas/spans/*.yaml`.
 
-3. **kubectl** with cluster access.
-4. **Cluster must NOT use namespaces** `szl-a11oy`, `szl-sentra`, `szl-amaru`, `szl-rosie`, `szl-killinchu` already. These will be created by the deploy.
+---
+
+## ⚠️ PUBLISH STATUS — READ THIS (honest)
+
+| OCI ref | Status |
+|---------|--------|
+| `oci://ghcr.io/szl-holdings/szl-mesh:0.4.0` | **PUBLISHED + cosign-SIGNED** (verified on GHCR: tags `0.4.0`/`v0.4.0`/`latest` + 3 `.sig`). |
+| `oci://ghcr.io/szl-holdings/a11oy-bundle:0.5.0` | **AUTHORED-ONLY — NOT yet published.** Build via the `uds-bundle-publish` workflow (a11oy target). |
+| `oci://ghcr.io/szl-holdings/killinchu-bundle:0.5.0` | **AUTHORED-ONLY — NOT yet published.** Build via the `uds-bundle-publish` workflow (killinchu target). |
+
+> **Why `-bundle` suffix?** `ghcr.io/szl-holdings/a11oy` and `.../killinchu` already hold the organ **IMAGES** (verified pullable at `:uds-v0.2.0`). A UDSBundle pushed to the same repo path would collide image-vs-bundle, so the bundles publish to `a11oy-bundle` / `killinchu-bundle`. The CEO-facing deploy commands below use the conceptual names; the actual published OCI path is the `-bundle` repo. Do **not** claim `a11oy:0.5.0` is published — only `szl-mesh:0.4.0` is verified published today.
 
 ---
 
 ## Deploy Commands
 
-### Option A — USB Tarball (Airgap / Warhacker San Diego)
-
-The canonical Warhacker deploy. The tarball contains all 5 organ images baked in — no external network pull at deploy time.
-
+### Platform — a11oy.uds
 ```bash
-# If the tarball from CI is named uds-bundle-szl-uds-bundle-amd64-0.2.1.tar.zst,
-# rename for cleanliness (both names work):
-mv uds-bundle-szl-uds-bundle-amd64-0.2.1.tar.zst szl-uds-bundle-uds-v0.2.1.tar.zst
-
-# Deploy into the existing UDS Core cluster:
-uds-cli bundle deploy szl-uds-bundle-uds-v0.2.1.tar.zst --confirm
+# CANONICAL (once built + published via the workflow):
+uds deploy oci://ghcr.io/szl-holdings/a11oy-bundle:0.5.0 --confirm
+# USB / air-gap tarball (after `uds create bundles/a11oy`):
+uds-cli bundle deploy uds-bundle-a11oy-amd64-0.5.0.tar.zst --confirm
 ```
 
-### Option B — OCI Pull (Internet Available)
+### Field — killinchu.uds
+```bash
+# CANONICAL (once built + published via the workflow):
+uds deploy oci://ghcr.io/szl-holdings/killinchu-bundle:0.5.0 --confirm
+# USB / air-gap tarball (after `uds create bundles/killinchu`):
+uds-cli bundle deploy uds-bundle-killinchu-amd64-0.5.0.tar.zst --confirm
+```
 
+### Full 5-organ mesh — szl-mesh (PUBLISHED, still works)
 ```bash
 uds deploy oci://ghcr.io/szl-holdings/szl-mesh:0.4.0 --confirm
 ```
 
 ---
 
-## Deploy Order
+## GHCR Image Verification (anonymous token + manifest HEAD, 2026-06-05)
 
-The bundle deploys organs in this order (defined in `uds-bundle.yaml`):
+All organ images pinned by the bundles are **verified pullable** (HTTP 200):
 
-```
-1. szl-a11oy     ← governance gate; must be first (other organs depend on its receipt substrate)
-2. szl-sentra    ← policy immune system
-3. szl-amaru     ← memory cortex
-4. szl-rosie     ← operator console
-5. szl-killinchu ← counter-UAS (last; depends on policy verdicts from sentra)
-```
+| Image | Tag | HTTP | Digest |
+|-------|-----|------|--------|
+| `ghcr.io/szl-holdings/a11oy` | `uds-v0.2.0` | 200 | `sha256:45fa2365…f276f0b` |
+| `ghcr.io/szl-holdings/sentra` | `uds-v0.2.0` | 200 | `sha256:60a0efc1…05ac3639` |
+| `ghcr.io/szl-holdings/amaru` | `uds-v0.2.0` | 200 | `sha256:53301e26…52b289ff` |
+| `ghcr.io/szl-holdings/rosie` | `uds-v0.2.0` | 200 | `sha256:1984a15f…43302848` |
+| `ghcr.io/szl-holdings/killinchu` | `uds-v0.2.0` | 200 | `sha256:e0fb6c3a…5f29ca548` |
+| `ghcr.io/szl-holdings/hatun-mcp` | `latest` | 200 | `sha256:fba23f0e…aab0feb8f247` |
+
+**Roadmap prerequisites — NOT yet anonymously pullable (HTTP 403; listed as TODO, never fake-pinned):**
+`vsp-otel` (OTEL), `szl-lake`, `szl-receipts-server`, `vessels`, `khipu-consensus`. Add the Zarf package + uncomment the bundle entry once the image is public + verified.
 
 ---
 
-## Verify After Deploy
+## Verify Signatures / Provenance
 
 ```bash
-# 1. Check all 5 namespaces exist
-kubectl get namespaces | grep szl-
-
-# 2. Wait for all deployments to be Available
-for ns in szl-a11oy szl-sentra szl-amaru szl-rosie szl-killinchu; do
-  echo "=== $ns ==="
-  kubectl wait --for=condition=Available deploy -n $ns --all --timeout=120s
-done
-
-# 3. Check UDS Package CRs reconciled by UDS Operator
-kubectl get packages -A | grep szl-
-
-# 4. Health checks
-kubectl port-forward -n szl-a11oy svc/a11oy 8080:8080 &
-curl -sf http://localhost:8080/api/a11oy/healthz && echo "a11oy OK"
-kill %1
-
-kubectl port-forward -n szl-killinchu svc/killinchu 7860:7860 &
-curl -sf http://localhost:7860/api/killinchu/healthz && echo "killinchu OK"
-kill %1
-
-# 5. Verify cosign signature (supply chain proof)
+# Bundle signature — szl-mesh is cosign-SIGNED (PASSES today):
 cosign verify ghcr.io/szl-holdings/szl-mesh:0.4.0 \
   --certificate-identity-regexp="^https://github.com/szl-holdings/" \
   --certificate-oidc-issuer="https://token.actions.githubusercontent.com"
-# Expected: Verified OK
 
-# NOTE: the BUNDLE itself is cosign-SIGNED but does NOT yet carry a GitHub build-provenance
-# attestation (the CI attest step needs org-level attestations:write). Verify the SIGNATURE
-# (above) for the bundle; the slsa.dev/provenance/v0.2 ATTESTATIONS live on the 5 ORGAN IMAGES:
-#   cosign verify-attestation --type slsaprovenance ghcr.io/szl-holdings/a11oy:uds-v0.2.0 \
-#     --certificate-identity-regexp='^https://github.com/szl-holdings/' \
-#     --certificate-oidc-issuer='https://token.actions.githubusercontent.com'
+# Organ-image SLSA L2 provenance attestation (.att):
+cosign verify-attestation --type slsaprovenance \
+  ghcr.io/szl-holdings/a11oy:uds-v0.2.0 \
+  --certificate-identity-regexp='^https://github.com/szl-holdings/' \
+  --certificate-oidc-issuer='https://token.actions.githubusercontent.com'
 ```
+
+> **Honest provenance statement.** Organ images carry SLSA **L2** `.att` provenance (verified). The **bundle** carries a cosign **signature** only — the GitHub `attest-build-provenance` step does **NOT** succeed on the bundle (CI token lacks `attestations: write`), so there is **no bundle-level SLSA attestation**. The cosign signature is the real bundle provenance. **L3 is not claimed.** Once `a11oy-bundle:0.5.0` / `killinchu-bundle:0.5.0` are published, re-run the `cosign verify` above against those refs to confirm their signatures.
 
 ---
 
-## Airgap Notes
+## Prerequisites & Verify-After-Deploy
 
-- All 5 organ images are baked into the `.tar.zst` at CI create time — no external pull at deploy time.
-- Zarf rewrites image refs from `ghcr.io/szl-holdings/...` to the Zarf internal registry before pods start.
-- Cosign signature verification (`cosign verify`) DOES require internet access (Rekor transparency log). In full airgap, skip the verify step or pre-cache the Rekor entry.
-- NTP/clock sync: cosign timestamp validation can fail if the cluster clock is skewed by more than ~5 minutes. Validate time sync before deploy in airgap:
+Same as the full mesh: an existing **UDS Core v1.x** cluster (Istio + Pepr UDS Operator + Keycloak + Prometheus), `uds-cli v0.32.0` (bundles Zarf v0.77.0), and `kubectl`. After deploy, check namespaces, wait for `Available` deployments, confirm UDS `packages` reconciled, and port-forward `/healthz`:
 
 ```bash
-# On cluster nodes, ensure clock is within 5 minutes of actual time:
-timedatectl status | grep "NTP synchronized"
-# or manually: date -u
+kubectl get packages -A | grep szl-
+kubectl port-forward -n szl-a11oy svc/a11oy 8080:8080 &
+curl -sf http://localhost:8080/api/a11oy/healthz && echo "a11oy OK"; kill %1
 ```
-
----
-
-## Troubleshooting
-
-| Symptom | Likely Cause | Fix |
-|---------|-------------|-----|
-| `ImagePullBackOff` on any organ | Zarf internal registry not running (Zarf init not done) | Run `uds zarf package deploy oci://defenseunicorns/uds-k3d:0.14.0 --confirm` or ensure UDS Core was deployed first |
-| UDS Package CR stuck in `Pending` | Pepr UDS Operator not running | `kubectl get pods -n pepr-system` — ensure all pods Running |
-| `Connection refused` on health check | Pod not yet Ready (rosie/killinchu load models at startup) | Wait 60–120s and retry |
-| `certificate verify failed` on cosign | Clock skew or no internet for Rekor | Check NTP sync; in airgap, skip verify or pre-cache |
-| Keycloak SSO not provisioned | `keycloak` namespace missing from UDS Core install | Ensure UDS Core was installed with SSO component; `kubectl get ns keycloak` |
-| `szl-receipts` allow rules fail | `szl-receipts-server` not deployed (deferred from bundle) | Expected — UDS Package CR has allow rules to `szl-receipts` namespace; the allow rule is permissive (no traffic flows if namespace absent) |
-
----
-
-## What Is NOT In This Bundle
-
-- **szl-receipts** (DSSE receipt server) — deferred; requires `szl-receipts-server` image to be public. See `bundles/szl-receipts/README.md`.
-- **Mesh interconnect** (Istio mTLS between organs, AuthorizationPolicies) — v0.5.0 roadmap.
-- **phawaq** (vessels/drone) organ — no GHCR image yet; v0.5.0.
 
 ---
 
 ## Honesty Doctrine
-
-- Organs = SLSA **L1 + L2** — every organ image is cosign keyless-signed (L1) and carries a `slsa.dev/provenance/v0.2` DSSE attestation `.att` referrer that verifies via `cosign verify-attestation --type slsaprovenance` (L2). The mesh bundle is cosign-**signed** (`.sig` present, `cosign verify` PASSES); the GitHub build-provenance **attestation on the bundle is NOT yet earned** (the CI `attest-build-provenance` step requires org-level `attestations: write`). **L3 is NOT claimed.**
-- Λ = **Conjecture 1** (NEVER a theorem).
-- **No Iron Bank** — organ images are not in Iron Bank registry.
-- **No FedRAMP / CMMC**.
-- Section 889 = exactly 5 vendors: Huawei, ZTE, Hytera, Hikvision, Dahua.
+- Organ images = SLSA **L2** (`.att` provenance verifies via `cosign verify-attestation`). Bundle = cosign-**signed** only; **no bundle-level SLSA attestation** (token lacks `attestations: write`). **L3 NOT claimed.**
+- `a11oy-bundle:0.5.0` and `killinchu-bundle:0.5.0` are **authored-only** until built/published + verified on GHCR. Only `szl-mesh:0.4.0` is verified published today.
+- Λ = **Conjecture 1** (NEVER a theorem). 163 sorries open in the locked kernel (disclosed).
+- **No Iron Bank, No FedRAMP, No CMMC.** Section 889 = exactly 5 vendors (Huawei, ZTE, Hytera, Hikvision, Dahua).

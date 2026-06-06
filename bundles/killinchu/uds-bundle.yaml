@@ -1,0 +1,112 @@
+# Copyright 2026 SZL Holdings
+# SPDX-License-Identifier: Apache-2.0
+#
+# ============================================================================
+#  killinchu.uds  —  SZL field node (drones + vessels), self-contained
+# ============================================================================
+#
+# UDSBundle name: killinchu   version: 0.5.0   arch: amd64
+#
+# Produces (once built + published via the uds-bundle-publish workflow):
+#   oci://ghcr.io/szl-holdings/killinchu-bundle:0.5.0   (see PUBLISH NOTE below)
+#
+# WHAT THIS BUNDLE IS
+#   killinchu is the FIELD surface (counter-UAS drones + vessels). It inherited
+#   everything a11oy has (all capability + orchestration code is in the killinchu
+#   image). This bundle makes killinchu self-contained and deployable on its own
+#   at the edge / Navy: the killinchu field image PLUS the governance-brain
+#   prerequisites it needs as a field node, in ONE air-gap bundle:
+#     - killinchu (counter-UAS + vessels + inherited a11oy orchestration/console)
+#     - sentra    (policy / immune verdicts — killinchu screens interdictions through it)
+#     - amaru     (reasoning / 13-axis Λ-gate memory the threat scorer uses)
+#   Trust-scoring, policy, receipt-signing and the mesh wiring travel with the
+#   bundle: killinchu has a REAL cosign signing key in-image (SZL_COSIGN_PRIVATE_PEM)
+#   so its DSSE receipts are genuinely signed at the edge, and the mesh allow/expose
+#   matrix ships as the UDS Package CR inside each per-organ Zarf package below.
+#
+#   rosie (operator console) is OPTIONAL at a field node and is provided by the
+#   killinchu image's own inherited operator views; deploy the full rosie organ
+#   only if a separate operator console is wanted (uncomment szl-rosie below).
+#
+# PUBLISH NOTE (HONEST):
+#   GHCR repo `ghcr.io/szl-holdings/killinchu` ALREADY holds the killinchu ORGAN
+#   IMAGE (killinchu:uds-v0.2.0, verified pullable). To avoid image-vs-bundle
+#   collision this bundle publishes to a DISTINCT path:
+#   oci://ghcr.io/szl-holdings/killinchu-bundle:0.5.0. As of authoring it is NOT
+#   YET PUBLISHED — build via the uds-bundle-publish workflow (killinchu target).
+#   Do not claim published/signed until verified on GHCR.
+#
+# IMAGE PINS — VERIFIED PULLABLE (anonymous GHCR token + manifest HEAD, 2026-06-05):
+#   ghcr.io/szl-holdings/killinchu:uds-v0.2.0  200  sha256:e0fb6c3aeaddadfbabc3ca7c5f29ef7b3ba31370b5ffb816e12495d5f29ca548
+#   ghcr.io/szl-holdings/sentra:uds-v0.2.0     200  sha256:60a0efc14366ba392bfe3f3cd4196863fe148bb87a17428be6a57f0a05ac3639
+#   ghcr.io/szl-holdings/amaru:uds-v0.2.0      200  sha256:53301e26adcde49e73df28d8c3b790f2496da9d495307fe8587ffa7452b289ff
+#
+# HONESTY HEADER
+#   Doctrine v11 LOCKED 749/14/163 at kernel commit c7c0ba17
+#   Λ = Conjecture 1 (NEVER a theorem)
+#   SLSA L2 on ORGAN IMAGES (.att slsa.dev/provenance/v0.2; killinchu .att = genuine
+#     SLSA provenance). NOT L3; bundle-level build-provenance attestation NOT earned
+#     (cosign SIGNATURE is the real provenance). No FedRAMP / CMMC / Iron Bank.
+#   Section 889 = exactly 5 vendors (Huawei, ZTE, Hytera, Hikvision, Dahua).
+#
+# Signed-off-by: Stephen P. Lutar Jr. <stephenlutar2@gmail.com>
+# Co-Authored-By: Perplexity Computer Agent <agent@perplexity.ai>
+
+kind: UDSBundle
+metadata:
+  name: killinchu
+  description: "SZL killinchu field node — counter-UAS + vessels + inherited a11oy orchestration, with sentra/amaru governance prerequisites, one self-contained edge bundle"
+  version: "0.5.0"
+  architecture: amd64
+  authors: "Stephen P. Lutar Jr. <stephenlutar2@gmail.com>"
+  x-uds-core-compat: ">=1.5.0"
+  x-zarf-compat: ">=0.77.0"
+  annotations:
+    szl.dev/role: "field-node"
+    szl.dev/deployable-to-edge: "true"
+    szl.dev/ddil-ok: "true"
+    szl.dev/fleet-tier: "mission-application"
+    szl.dev/edge-profile: "ddil"
+
+packages:
+  # ── killinchu: THE field surface (drones + vessels + inherited a11oy brain) ─
+  # Reuses the verified bundles/szl-killinchu Zarf package (bakes
+  # ghcr.io/szl-holdings/killinchu:uds-v0.2.0 + its UDS Package CR). The killinchu
+  # image carries the inherited a11oy orchestration/console + a REAL cosign key,
+  # so edge receipts are genuinely signed offline.
+  - name: szl-killinchu
+    path: ../szl-killinchu
+    ref: "0.2.0"
+
+  # ── sentra: policy / immune BACKEND (interdiction screening at the edge) ───
+  - name: szl-sentra
+    path: ../szl-sentra
+    ref: "0.2.0"
+
+  # ── amaru: reasoning / 13-axis Λ-gate memory (threat scoring) ──────────────
+  - name: szl-amaru
+    path: ../szl-amaru
+    ref: "0.2.0"
+
+  # ── rosie operator console — OPTIONAL at a field node ──────────────────────
+  # killinchu's inherited operator views cover the field case. Uncomment to add a
+  # full standalone operator console organ (image verified pullable, uds-v0.2.0,
+  # sha256:1984a15f53c2e1b91c7dafaa0ed5df9148d57e3e86eb73db879c2b0443302848).
+  # - name: szl-rosie
+  #   path: ../szl-rosie
+  #   ref: "0.2.0"
+
+  # ── MESH INTERCONNECT ──────────────────────────────────────────────────────
+  # Ships inside each per-organ Zarf package as its UDS Package CR
+  # (manifests/uds-package.yaml). The UDS Operator reconciles the field
+  # allow/expose matrix (killinchu <-> sentra verdicts, killinchu <-> amaru
+  # memory, deny-by-default everywhere else) at deploy time.
+
+  # ── ROADMAP PREREQUISITES (authored as TODO — image NOT yet public) ────────
+  # Same honest status as a11oy.uds: a field node would also carry OTEL +
+  # receipts/lake once those images are public. NOT fake-pinned.
+  #   OTEL:     ghcr.io/szl-holdings/vsp-otel:<tag>             403 (not public) — TODO
+  #   RECEIPTS: ghcr.io/szl-holdings/szl-receipts-server:<tag>  403 (not public) — TODO
+  #   LAKE:     ghcr.io/szl-holdings/szl-lake:<tag>             403 (not public) — TODO
+  #   (killinchu signs receipts locally with its in-image cosign key regardless;
+  #    a central receipts sink is additive, not required for the field node to work.)

@@ -180,3 +180,38 @@ packages, cosign `.sig`, SBOMs, and the kind airgap deploy were **NOT** produced
 Per the directive, this is a HONEST BLOCK with everything staged ready to build. Signing
 status: **0/5 signed this session** (key is real/present). See `GAP_CHECK.md`,
 `AIRGAP_TEST_REPORT.md`, `COSIGN_SIGNING_LOG.md` for the honest detail.
+
+
+---
+
+## 9. INGEST MODEL — a11oy.uds + killinchu.uds (2026-06-05, Perplexity Computer Agent)
+
+Per CEO correction (2026-06-05 ~20:40 EDT): do NOT slim — INGEST everything into **two clean, self-contained UDS bundles**. These are the canonical bundles going forward; the existing `szl-mesh:0.4.0` meta-bundle stays working and unchanged.
+
+### New canonical bundles
+| Bundle dir | UDSBundle name | Version | Composes | Publish path | Status |
+|---|---|---|---|---|---|
+| `bundles/a11oy/` | `a11oy` | 0.5.0 | a11oy + sentra + amaru + rosie + mesh CRs | `ghcr.io/szl-holdings/a11oy-bundle:0.5.0` | **AUTHORED-ONLY** (not yet built/published) |
+| `bundles/killinchu/` | `killinchu` | 0.5.0 | killinchu + sentra + amaru + mesh CRs (rosie optional) | `ghcr.io/szl-holdings/killinchu-bundle:0.5.0` | **AUTHORED-ONLY** (not yet built/published) |
+
+Both reuse the verified per-organ Zarf packages under `bundles/szl-<organ>/` via relative `path:` references. The **mesh interconnect** is carried inside each per-organ package as its UDS Package CR (`manifests/uds-package.yaml`); the UDS Operator reconciles the cross-organ allow/expose matrix at deploy time.
+
+> **`-bundle` suffix note:** `ghcr.io/szl-holdings/{a11oy,killinchu}` already hold the organ IMAGES (verified pullable `:uds-v0.2.0`). Publishing a UDSBundle to the same repo would collide image-vs-bundle, so the bundles publish to `a11oy-bundle` / `killinchu-bundle`.
+
+### CI
+New workflow `.github/workflows/uds-canonical-bundles-publish.yml` (workflow_dispatch, input `bundle=a11oy|killinchu`). It is SEPARATE from `uds-bundle-publish.yml` — the proven `szl-mesh` publish is intentionally left UNCHANGED so it never breaks.
+
+### GHCR verification (anonymous token + manifest HEAD, 2026-06-05)
+- **Pullable (REAL pins):** a11oy, sentra, amaru, rosie, killinchu @ `uds-v0.2.0` (HTTP 200, digests recorded in the bundle headers); hatun-mcp @ `latest` (200).
+- **NOT pullable (403 → roadmap TODO, never fake-pinned):** `vsp-otel`, `szl-lake`, `szl-receipts-server`, `vessels`, `khipu-consensus`.
+
+### Deprecated / deferred bundle dirs (honest)
+- `bundles/v0.1.0/` — **DEPRECATED** legacy proof tarballs (`*-proof.uds.sig`, Zarf packages `0.3.1`). Superseded by `szl-mesh:0.4.0` and the new canonical bundles. Kept for provenance/history; not part of any current deploy path.
+- `bundles/szl-receipts/` — **DEFERRED** (README only; `szl-receipts-server` image is not public — GHCR HTTP 403). Re-add once the image is public + charts vendored.
+- `mesh/bundles/v0.3.1-demo/` and `releases/v0.1.0/` — historical demo/release artifacts; not current.
+- `releases/szl-warhacker-uds-v1.0.0/` — Warhacker USB release artifacts; retained.
+
+### Honesty
+SLSA **L2 on organ images** (`.att` provenance, cosign-verifiable). **No bundle-level SLSA attestation** — the CI token lacks `attestations: write`; the cosign **signature** is the bundle provenance. **No L3 / FedRAMP / CMMC / Iron Bank.** Λ = Conjecture 1. Doctrine v11 LOCKED 749/14/163 @ c7c0ba17. Section 889 = 5 vendors. The two new bundles are AUTHORED-ONLY until built + verified on GHCR; only `szl-mesh:0.4.0` is verified published today.
+
+Signed-off-by: Stephen P. Lutar Jr. \<stephenlutar2@gmail.com\>
