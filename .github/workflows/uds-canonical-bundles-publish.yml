@@ -133,13 +133,20 @@ jobs:
       - name: uds publish bundle to *-bundle repo
         run: |
           set -euo pipefail
+          # uds publish tags the artifact by metadata.name and pushes it under the
+          # target namespace as <namespace>/<metadata.name>:<version>. Publishing
+          # to oci://${REGISTRY}/${ORG} would push to ${ORG}/${BUNDLE_NAME}, which
+          # for a11oy/killinchu COLLIDES with the existing ORGAN IMAGE repos
+          # (ghcr.io/${ORG}/a11oy already exists and the CI token cannot write it —
+          # 403 permission_denied: write_package). Publish instead to a neutral,
+          # writable staging namespace ${ORG}/bundles-staging, then copy the bundle
+          # to the collision-safe ${PUBLISH_REPO} path that the token CAN write.
+          STAGE_NS="${REGISTRY}/${ORG}/bundles-staging"
           for tarball in uds-bundle-*.tar.zst; do
             [ -f "$tarball" ] || continue
-            # uds publish targets the ORG; uds tags by metadata.name. We then copy
-            # to the collision-safe ${PUBLISH_REPO} path.
-            uds publish "$tarball" "oci://${REGISTRY}/${ORG}"
+            uds publish "$tarball" "oci://${STAGE_NS}"
           done
-          SRC="${REGISTRY}/${ORG}/${BUNDLE_NAME}:${BUNDLE_VERSION}"
+          SRC="${STAGE_NS}/${BUNDLE_NAME}:${BUNDLE_VERSION}"
           DST="${REGISTRY}/${ORG}/${PUBLISH_REPO}:${BUNDLE_VERSION}"
           zarf tools registry copy "${SRC}" "${DST}"
           zarf tools registry copy "${SRC}" "${REGISTRY}/${ORG}/${PUBLISH_REPO}:latest"
