@@ -102,6 +102,25 @@ jobs:
       # packages via relative paths (bundles/a11oy/uds-bundle.yaml references
       # ../szl-a11oy, ../szl-sentra, ...). uds create builds each referenced
       # package then composes the bundle.
+      # uds create with a UDSBundle `path:` reference expects PRE-BUILT Zarf
+      # package tarballs (.tar.zst) to already exist in the referenced dir; it
+      # does NOT run `zarf package create` for you. Build each per-organ package
+      # the chosen bundle composes FIRST, emitting the tarball into the package
+      # dir so the relative `path:` resolves at compose time.
+      - name: Build per-organ Zarf packages (tarballs the bundle composes)
+        run: |
+          set -euo pipefail
+          if [ "${BUNDLE_NAME}" = "a11oy" ]; then
+            PKGS="szl-a11oy szl-sentra szl-amaru szl-rosie"
+          else
+            PKGS="szl-killinchu szl-sentra szl-amaru"
+          fi
+          for p in $PKGS; do
+            echo "=== zarf package create bundles/$p ==="
+            zarf package create "bundles/$p" -o "bundles/$p" --confirm --no-progress
+            ls -lh "bundles/$p"/zarf-package-*.tar.zst
+          done
+
       - name: uds create canonical bundle
         run: |
           set -euo pipefail
