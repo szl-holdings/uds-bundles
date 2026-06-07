@@ -63,14 +63,14 @@ vaB/grNuz+kVP1Xsaw0RokBKG0xT/XlV5Fz90AOwtgqC2yMBP0blK455gQ==
 
 | Bundle | Tag | sha256 | cosign sig (prior) | Overall (prior) |
 |---|---|---|---|---|
-| **vessels** | uds-v0.3.0 | OK | **Verified OK** keyless/Fulcio, Rekor **1675423172** | PASS (signed) |
+| **vessels** | uds-v0.3.0 | NOT PUBLISHED | NOT verifiable — image absent from GHCR (`uds-v0.3.0`/`latest` return HTTP 403); no live cosign/Rekor entry can exist for an unpublished image. Prior Rekor index 1675423172 is NOT a proof of this image. | BLOCKED — FA-001 (build fixed + CI-ready via szl-holdings/platform vessels-image.yml; one `gh workflow run` away once org permits first package push) |
 | a11oy | uds-v0.3.0 | OK | NO .sig | PARTIAL — sha256 only |
 | amaru | uds-v0.3.1 | OK | NO .sig | PARTIAL — sha256 only |
 | sentra | uds-v0.3.1 | OK | NO .sig | PARTIAL — sha256 only |
 | rosie | uds-v0.3.0 | OK | NO .sig | PARTIAL — sha256 only |
 | uds-mesh | uds-v0.3.0 | OK | NO .sig | PARTIAL — sha256 only |
 
-**Prior headline:** sha256 integrity 6/6; cosign 1/6 (vessels only). The 5 unsigned were a
+**Prior headline (CORRECTED 2026-06-07):** the earlier "cosign 1/6 (vessels only)" claim was wrong — the vessels image is NOT published to GHCR (HTTP 403), so it is NOT signed. Corrected standing: cosign 0/6 at image level (no SZL org image carries a live keyless signature yet). The 5 unsigned were a
 *missing-artifact* problem (Perplexity proxy could not upload binaries to GitHub releases),
 NOT a tooling failure. This session fixes signing at the **bundle-artifact** level using the
 real org key now that the DSSE agent has provisioned it.
