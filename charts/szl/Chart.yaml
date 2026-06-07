@@ -31,7 +31,7 @@ annotations:
     - ghcr.io/szl-holdings/sentra:uds-v0.1.0
     - ghcr.io/szl-holdings/rosie:uds-v0.1.0
     - ghcr.io/szl-holdings/killinchu:uds-v0.1.0
-    - ghcr.io/szl-holdings/vessels:uds-v0.1.0
+    # vessels consolidated into killinchu (2026-06-06) — no standalone image
     - ghcr.io/szl-holdings/hatun-mcp:uds-v0.1.0
 # Sub-charts: each flagship reuses the shared Big Bang base patterns rendered
 # from this chart's templates (loop over .Values.flagships). The PER_BUNDLE/*

@@ -86,13 +86,16 @@ flagships:
     image: {repository: ghcr.io/szl-holdings/killinchu, tag: uds-v0.1.0}
     port: 7860
     healthPath: /api/killinchu/healthz
-    role: "UDS front door / field action"
+    role: "UDS front door / field action (maritime + drone C2; carries vessels/maritime)"
+  # vessels: CONSOLIDATED INTO killinchu (2026-06-06). The maritime capability
+  # (sanctions screening, dark-vessel/AIS-gap detection, ownership graph, voyage
+  # analytics) now ships inside killinchu /elite. No standalone vessels service.
   vessels:
-    enabled: true
-    image: {repository: ghcr.io/szl-holdings/vessels, tag: uds-v0.1.0}
+    enabled: false
+    image: {repository: ghcr.io/szl-holdings/killinchu, tag: uds-v0.1.0}
     port: 7860
-    healthPath: /api/vessels/healthz
-    role: "maritime substrate"
+    healthPath: /api/killinchu/healthz
+    role: "DEPRECATED — consolidated into killinchu"
   hatun-mcp:
     enabled: true
     image: {repository: ghcr.io/szl-holdings/hatun-mcp, tag: uds-v0.1.0}
