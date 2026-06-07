@@ -121,6 +121,6 @@ The published mesh bundle artifact is `oci://ghcr.io/szl-holdings/szl-uds-bundle
 
 ---
 
-**Doctrine v11 LOCKED 749/14/163 · Λ = Conjecture 1 (NOT a theorem) · Apache-2.0**
+**Doctrine v11 LOCKED · locked kernel 749/14/163 @ c7c0ba17 (5 proven) · experimental main 1304/22 @ 7885fd9 (~36 theorems CI-green, never folded into the locked 5) · Λ = Conjecture 1 (NOT a theorem) · Apache-2.0**
 
 
