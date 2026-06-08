@@ -2,7 +2,7 @@
 # killinchu UDS runtime image. Derived from HF Space pattern at
 # killinchu_build/push_payload/ (Dockerfile+serve.py+drones_db.json).
 # ADDITIVE: k8s/Zarf build target only.
-FROM python:3.12-slim
+FROM python:3.14-slim
 ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 PORT=8080
 WORKDIR /app
 RUN pip install --no-cache-dir "fastapi==0.111.0" "uvicorn[standard]==0.30.1"
