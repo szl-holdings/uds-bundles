@@ -4,7 +4,7 @@
 **Still-working full-mesh bundle:** `szl-mesh:0.4.0` (published + cosign-signed; NOT changed).
 **Repo:** `szl-holdings/uds-bundles`
 **Updated:** 2026-06-05
-**Doctrine:** v11 LOCKED 749/14/163 @ kernel `c7c0ba17` · Λ = Conjecture 1 · SLSA **L2 on organ images** (`.att` = `slsa.dev/provenance/v0.2`, cosign-verifiable); **bundle-level build-provenance attestation NOT earned** — the cosign **signature** is the bundle provenance. **No L3 / FedRAMP / CMMC / Iron Bank.** Section 889 = 5 vendors.
+**Doctrine:** v11 LOCKED 749/14/163 @ kernel `c7c0ba17` · Λ = Conjecture 1 · SLSA **L1 honest / L2 on roadmap** — organ images are cosign-**signed** (the honest provenance); the L2 provenance attestation is NOT yet earned/verified. **No L3 / FedRAMP / CMMC / Iron Bank.** Section 889 = 5 vendors.
 **Signed-off-by:** Stephen P. Lutar Jr. \<stephenlutar2@gmail.com\>
 
 ---
@@ -85,14 +85,14 @@ cosign verify ghcr.io/szl-holdings/szl-mesh:0.4.0 \
   --certificate-identity-regexp="^https://github.com/szl-holdings/" \
   --certificate-oidc-issuer="https://token.actions.githubusercontent.com"
 
-# Organ-image SLSA L2 provenance attestation (.att):
+# Organ-image SLSA L2 provenance attestation (.att) — ROADMAP (run once earned):
 cosign verify-attestation --type slsaprovenance \
   ghcr.io/szl-holdings/a11oy:uds-v0.2.0 \
   --certificate-identity-regexp='^https://github.com/szl-holdings/' \
   --certificate-oidc-issuer='https://token.actions.githubusercontent.com'
 ```
 
-> **Honest provenance statement.** Organ images carry SLSA **L2** `.att` provenance (verified). The **bundle** carries a cosign **signature** only — the GitHub `attest-build-provenance` step does **NOT** succeed on the bundle (CI token lacks `attestations: write`), so there is **no bundle-level SLSA attestation**. The cosign signature is the real bundle provenance. **L3 is not claimed.** Once `a11oy-bundle:0.5.0` / `killinchu-bundle:0.5.0` are published, re-run the `cosign verify` above against those refs to confirm their signatures.
+> **Honest provenance statement.** Organ images are cosign-**signed** (SLSA **L1** honest provenance); the **L2** `.att` provenance attestation is on the roadmap (NOT yet verified). The **bundle** carries a cosign **signature** only — the GitHub `attest-build-provenance` step does **NOT** succeed on the bundle (CI token lacks `attestations: write`), so there is **no bundle-level SLSA attestation**. The cosign signature is the real bundle provenance. **L3 is not claimed.** Once `a11oy-bundle:0.5.0` / `killinchu-bundle:0.5.0` are published, re-run the `cosign verify` above against those refs to confirm their signatures.
 
 ---
 
@@ -109,7 +109,7 @@ curl -sf http://localhost:8080/api/a11oy/healthz && echo "a11oy OK"; kill %1
 ---
 
 ## Honesty Doctrine
-- Organ images = SLSA **L2** (`.att` provenance verifies via `cosign verify-attestation`). Bundle = cosign-**signed** only; **no bundle-level SLSA attestation** (token lacks `attestations: write`). **L3 NOT claimed.**
+- Organ images = SLSA **Level 1 (honest)** — cosign **signature** is the provenance (`cosign verify ghcr.io/szl-holdings/<repo>:<tag>`). Bundle = cosign-**signed** only; **no bundle-level SLSA attestation** (token lacks `attestations: write`). **L2 verification is on the roadmap (never claimed as L2-verified/L2-attested), and L3 / FedRAMP / Iron Bank / CMMC are NOT claimed.**
 - `a11oy-bundle:0.5.0` and `killinchu-bundle:0.5.0` are **authored-only** until built/published + verified on GHCR. Only `szl-mesh:0.4.0` is verified published today.
 - Λ = **Conjecture 1** (NEVER a theorem). 163 sorries open in the locked kernel (disclosed).
 - **No Iron Bank, No FedRAMP, No CMMC.** Section 889 = exactly 5 vendors (Huawei, ZTE, Hytera, Hikvision, Dahua).
