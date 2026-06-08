@@ -6,7 +6,7 @@
 # build target; it does NOT modify the HF Space. Note (PURIQ charter gotcha):
 # the upstream Space uses explicit per-file COPY (not `COPY . .`), so any new
 # root .py needs its own COPY line — preserved here.
-FROM python:3.12-slim AS base
+FROM python:3.14-slim AS base
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
