@@ -31,7 +31,7 @@ We follow a **90-day responsible disclosure** policy. After 90 days from initial
 
 ## Supply-Chain Security
 
-- **SLSA Build Level 1 + 2** — build provenance generated per release; organ L2 SLSA provenance attestations verify via `cosign verify-attestation` (keyless Fulcio+Rekor). **L3 not claimed.**
+- **SLSA Build Level 1 (honest)** — build provenance generated per release; organ images carry a cosign **signature** (verify with `cosign verify ghcr.io/szl-holdings/<repo>:<tag>`). **L2 verification is on the roadmap (never claimed as L2-verified or L2-attested); L3 / FedRAMP / Iron Bank / CMMC are not claimed.**
 - **DCO required** — all commits carry `Signed-off-by:` trailers per [Linux Foundation DCO](https://developercertificate.org/)
 - **Cosign keyless signing** — containers signed via Sigstore OIDC keyless mode; verify with `cosign verify ghcr.io/szl-holdings/<repo>:<tag>`
 - **SBOM** — CycloneDX SBOM attached to each GitHub Release
