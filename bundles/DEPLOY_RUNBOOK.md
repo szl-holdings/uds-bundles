@@ -4,7 +4,7 @@
 Operational tone: deploy in 60s, pull the cable, it works. No booth, no compliance pageantry.
 
 > **Not** Iron Bank certified · **Not** SWFT-listed · **Not** FedRAMP authorized — we don't need any of them for it to work.
-> Λ is **Conjecture 1**, not a theorem. SLSA **L1 + L2** (organ provenance attestations verify via `cosign verify-attestation`); **L3 not claimed**. 163 sorries open in the Lean kernel (disclosed).
+> Λ is **Conjecture 1**, not a theorem. SLSA **Level 1 (honest)** — organ images carry a cosign **signature** (`cosign verify`); **L2 verification is on the roadmap, never claimed as L2-verified/L2-attested; L3 not claimed**. 163 sorries open in the Lean kernel (disclosed).
 
 ## Bundle release — v0.2.0 (Fleet-native)
 
