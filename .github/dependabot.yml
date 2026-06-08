@@ -17,25 +17,14 @@ updates:
         patterns:
           - "*"
 
-  # Python pip dependencies
-  - package-ecosystem: "pip"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "08:00"
-      timezone: "America/New_York"
-    labels:
-      - "dependencies"
-    open-pull-requests-limit: 5
-    groups:
-      python-deps:
-        patterns:
-          - "*"
-
-  # Docker dependencies
+  # Docker base images
   - package-ecosystem: "docker"
-    directory: "/"
+    directories:
+      - "/uds-bundles/PER_BUNDLE/a11oy"
+      - "/uds-bundles/PER_BUNDLE/amaru"
+      - "/uds-bundles/PER_BUNDLE/killinchu"
+      - "/uds-bundles/PER_BUNDLE/rosie"
+      - "/uds-bundles/PER_BUNDLE/sentra"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -45,3 +34,7 @@ updates:
       - "dependencies"
       - "security"
     open-pull-requests-limit: 3
+    groups:
+      docker-deps:
+        patterns:
+          - "*"
