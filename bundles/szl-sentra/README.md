@@ -45,7 +45,7 @@
 | Helm chart | `chart/` |
 | SBOM (SPDX 2.3) | `sbom/sentra.spdx.json` |
 | SBOM (CycloneDX 1.4) | `sbom/sentra.cyclonedx.json` |
-| SLSA provenance (L1+L2) | `attestations/sentra.slsa-provenance.json` |
+| SLSA provenance (L1+L2, cosign-verified) | `attestations/sentra.slsa-provenance.json` |
 | Cosign verify guide | `attestations/sentra.cosign-verify.txt` |
 | Pepr policies | `policies/` (namespace isolation · DSSE-receipt egress · Section 889 denylist) |
 
