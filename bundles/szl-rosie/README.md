@@ -44,7 +44,7 @@
 | Helm chart | `chart/` |
 | SBOM (SPDX 2.3) | `sbom/rosie.spdx.json` |
 | SBOM (CycloneDX 1.4) | `sbom/rosie.cyclonedx.json` |
-| SLSA provenance (L1+L2) | `attestations/rosie.slsa-provenance.json` |
+| SLSA provenance (L1+L2, cosign-verified) | `attestations/rosie.slsa-provenance.json` |
 | Cosign verify guide | `attestations/rosie.cosign-verify.txt` |
 | Pepr policies | `policies/` (namespace isolation · DSSE-receipt egress · Section 889 denylist) |
 
