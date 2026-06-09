@@ -43,7 +43,7 @@
 | Helm chart | `chart/` |
 | SBOM (SPDX 2.3) | `sbom/amaru.spdx.json` |
 | SBOM (CycloneDX 1.4) | `sbom/amaru.cyclonedx.json` |
-| SLSA provenance (L1+L2) | `attestations/amaru.slsa-provenance.json` |
+| SLSA provenance (L1+L2, cosign-verified) | `attestations/amaru.slsa-provenance.json` |
 | Cosign verify guide | `attestations/amaru.cosign-verify.txt` |
 | Pepr policies | `policies/` (namespace isolation · DSSE-receipt egress · Section 889 denylist) |
 
