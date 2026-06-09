@@ -1,7 +1,23 @@
 # SPDX-License-Identifier: Apache-2.0
-# ClusterImagePolicy — require cosign signature on every szl image. Fail-CLOSED.
+# ClusterImagePolicy — require a cosign signature on every szl killinchu image. Fail-CLOSED.
 # sigstore/policy-controller v0.15.1 (Apache-2.0). Defaults to deny on no-match.
 # https://docs.sigstore.dev/policy-controller/overview/
+#
+# Two authorities are declared and OR'd by the policy-controller (an image satisfies
+# the policy if it matches EITHER):
+#   * szl-keyless  — the AUTHORITATIVE / LIVE signing path. killinchu's
+#                    .github/workflows/cosign.yml signs images keyless via GitHub OIDC
+#                    (Sigstore Fulcio + Rekor); no COSIGN_PRIVATE_KEY secret is set, so
+#                    keyless is what actually runs today. Verified in CI with
+#                    `cosign verify --certificate-identity-regexp ... --certificate-oidc-issuer ...`.
+#   * szl-key      — OPTIONAL / LEGACY ECDSA-P256 key-pair path. The PUBLIC half below is
+#                    the reconciled org key (matches a11oy infra/build-env/keys/cosign.pub and
+#                    the uds-bundles release signing-key artifacts). Only effective if an
+#                    operator later provisions the matching COSIGN_PRIVATE_KEY secret and
+#                    enables key-pair image signing. PUBLIC KEY ONLY — never commit the private key.
+#
+# MODE: warn (rollout). Flip to enforce ONLY after a green dress rehearsal —
+# see szl-uds-deployment/UDS_DEPLOY_RUNBOOK.md "warn -> enforce" section.
 apiVersion: policy.sigstore.dev/v1beta1
 kind: ClusterImagePolicy
 metadata:
@@ -10,18 +26,20 @@ spec:
   images:
     - glob: "ghcr.io/szl-holdings/killinchu**"
   authorities:
-    # OPTION 1 — keyed (matches our current HF-Space-held cosign key, ECDSA-P256):
+    # AUTHORITATIVE — keyless (GitHub Actions OIDC via Fulcio/Rekor). This is the path
+    # that .github/workflows/cosign.yml actually exercises and self-verifies.
+    - name: szl-keyless
+      keyless:
+        url: https://fulcio.sigstore.dev
+        identities:
+          - issuer: https://token.actions.githubusercontent.com
+            subjectRegExp: "https://github.com/szl-holdings/killinchu/.*"
+    # OPTIONAL / LEGACY — keyed ECDSA-P256. PUBLIC half of the reconciled org key-pair.
+    # Effective only if COSIGN_PRIVATE_KEY is provisioned and key-pair signing is enabled.
     - name: szl-key
       key:
         data: |
           -----BEGIN PUBLIC KEY-----
-          <SZL_COSIGN_PUBLIC_KEY>
-          -----END PUBLIC KEY-----
-    # OPTION 2 — keyless (GitHub Actions OIDC) path (commented out; NOT L2 — killinchu stays L1 honest until independently verified):
-    # - name: szl-keyless
-    #   keyless:
-    #     url: https://fulcio.sigstore.dev
-    #     identities:
-    #       - issuer: https://token.actions.githubusercontent.com
-    #         subjectRegExp: "https://github.com/szl-holdings/killinchu/.github/workflows/release.yml@.*"
-  mode: warn                                  # warn during rollout -> remove for enforce
+          MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE7mrYWDnz8TvT7o4/65XGqYxo9OoV
+          vaB/grNuz+kVP1Xsaw0RokBKG0xT/XlV5Fz90AOwtgqC2yMBP0blK455gQ==
+  mode: warn                                  # warn during rollout -> flip to enforce after dress rehearsal (see runbook)
