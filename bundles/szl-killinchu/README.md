@@ -43,7 +43,7 @@
 | Helm chart | `chart/` |
 | SBOM (SPDX 2.3) | `sbom/killinchu.spdx.json` |
 | SBOM (CycloneDX 1.4) | `sbom/killinchu.cyclonedx.json` |
-| SLSA provenance (L1+L2) | `attestations/killinchu.slsa-provenance.json` |
+| SLSA provenance (L1+L2, cosign-verified) | `attestations/killinchu.slsa-provenance.json` |
 | Cosign verify guide | `attestations/killinchu.cosign-verify.txt` |
 | Pepr policies | `policies/` (namespace isolation · DSSE-receipt egress · Section 889 denylist) |
 
