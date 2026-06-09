@@ -30,6 +30,6 @@ uds deploy oci://ghcr.io/szl-holdings/killinchu-bundle:0.5.0 --confirm
 **AUTHORED-ONLY. NOT yet published.** Build via the `Canonical UDS Bundles` workflow (bundle=killinchu). Publish path `ghcr.io/szl-holdings/killinchu-bundle` (the `killinchu` repo already holds the organ IMAGE). Do not claim published/signed until verified on GHCR.
 
 ## Honesty
-Doctrine v11 LOCKED 749/14/163 @ `c7c0ba17` · Λ = Conjecture 1 · SLSA **L2 on organ images** (killinchu `.att` = genuine SLSA provenance); **no bundle-level SLSA attestation** (cosign signature is the provenance) · **No L3 / FedRAMP / CMMC / Iron Bank** · Section 889 = 5 vendors.
+Doctrine v11 LOCKED 749/14/163 @ `c7c0ba17` · Λ = Conjecture 1 · SLSA **L2 on organ images**, cosign-verified (killinchu `.att` = genuine SLSA provenance) · **no bundle-level SLSA attestation** (cosign signature is the provenance) · **Not Iron Bank / FedRAMP / CMMC / L3** · Section 889 = 5 vendors.
 
 Signed-off-by: Stephen P. Lutar Jr. \<stephenlutar2@gmail.com\>
