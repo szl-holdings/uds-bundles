@@ -47,7 +47,7 @@
 # HONESTY HEADER
 #   Doctrine v11 LOCKED 749/14/163 at kernel commit c7c0ba17
 #   Λ = Conjecture 1 (NEVER a theorem)
-#   SLSA L2 on the ORGAN IMAGES (.att = slsa.dev/provenance/v0.2, cosign-verifiable).
+#   SLSA L2 on the ORGAN IMAGES (.att = slsa.dev/provenance/v0.2, cosign-verified).
 #     NOT SLSA L3, and the BUNDLE-LEVEL build-provenance attestation is NOT earned
 #     (CI token lacks attestations:write) — the cosign SIGNATURE is the real bundle
 #     provenance. No FedRAMP / CMMC / Iron Bank.
