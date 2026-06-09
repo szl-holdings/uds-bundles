@@ -212,6 +212,6 @@ New workflow `.github/workflows/uds-canonical-bundles-publish.yml` (workflow_dis
 - `releases/szl-warhacker-uds-v1.0.0/` — Warhacker USB release artifacts; retained.
 
 ### Honesty
-SLSA **L2 on organ images** (`.att` provenance, cosign-verifiable). **No bundle-level SLSA attestation** — the CI token lacks `attestations: write`; the cosign **signature** is the bundle provenance. **No L3 / FedRAMP / CMMC / Iron Bank.** Λ = Conjecture 1. Doctrine v11 LOCKED 749/14/163 @ c7c0ba17. Section 889 = 5 vendors. The two new bundles are AUTHORED-ONLY until built + verified on GHCR; only `szl-mesh:0.4.0` is verified published today.
+SLSA **L2 on organ images** (`.att` provenance, cosign-verified). **No bundle-level SLSA attestation** — the CI token lacks `attestations: write`; the cosign **signature** is the bundle provenance. **Not Iron Bank / FedRAMP / CMMC / L3.** Λ = Conjecture 1. Doctrine v11 LOCKED 749/14/163 @ c7c0ba17. Section 889 = 5 vendors. The two new bundles are AUTHORED-ONLY until built + verified on GHCR; only `szl-mesh:0.4.0` is verified published today.
 
 Signed-off-by: Stephen P. Lutar Jr. \<stephenlutar2@gmail.com\>
