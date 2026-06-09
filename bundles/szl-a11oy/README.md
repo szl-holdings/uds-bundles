@@ -42,7 +42,7 @@
 | Helm chart | `chart/` |
 | SBOM (SPDX 2.3) | `sbom/a11oy.spdx.json` |
 | SBOM (CycloneDX 1.4) | `sbom/a11oy.cyclonedx.json` |
-| SLSA provenance (L1+L2) | `attestations/a11oy.slsa-provenance.json` |
+| SLSA provenance (L1+L2, cosign-verified) | `attestations/a11oy.slsa-provenance.json` |
 | Cosign verify guide | `attestations/a11oy.cosign-verify.txt` |
 | Pepr policies | `policies/` (namespace isolation · DSSE-receipt egress · Section 889 denylist) |
 
