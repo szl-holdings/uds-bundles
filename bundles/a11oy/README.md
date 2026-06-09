@@ -36,6 +36,6 @@ uds deploy oci://ghcr.io/szl-holdings/a11oy-bundle:0.5.0 --confirm
 **AUTHORED-ONLY. NOT yet published.** Build via the `Canonical UDS Bundles` workflow. The publish path is `ghcr.io/szl-holdings/a11oy-bundle` (the `a11oy` repo already holds the organ IMAGE; `-bundle` avoids collision). Do not claim it is published/signed until verified on GHCR. Only `szl-mesh:0.4.0` is verified published today.
 
 ## Honesty
-Doctrine v11 LOCKED 749/14/163 @ `c7c0ba17` · Λ = Conjecture 1 (never a theorem) · SLSA **L2 on organ images** (`.att` provenance); **no bundle-level SLSA attestation** (cosign signature is the bundle provenance) · **No L3 / FedRAMP / CMMC / Iron Bank** · Section 889 = 5 vendors.
+Doctrine v11 LOCKED 749/14/163 @ `c7c0ba17` · Λ = Conjecture 1 (never a theorem) · SLSA **L2 on organ images** (`.att` provenance, cosign-verified) · **no bundle-level SLSA attestation** (cosign signature is the bundle provenance) · **Not Iron Bank / FedRAMP / CMMC / L3** · Section 889 = 5 vendors.
 
 Signed-off-by: Stephen P. Lutar Jr. \<stephenlutar2@gmail.com\>
