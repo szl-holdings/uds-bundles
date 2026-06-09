@@ -44,8 +44,8 @@
 # HONESTY HEADER
 #   Doctrine v11 LOCKED 749/14/163 at kernel commit c7c0ba17
 #   Λ = Conjecture 1 (NEVER a theorem)
-#   SLSA L2 on ORGAN IMAGES (.att slsa.dev/provenance/v0.2; killinchu .att = genuine
-#     SLSA provenance). NOT L3; bundle-level build-provenance attestation NOT earned
+#   SLSA L2 on ORGAN IMAGES, cosign-verified (.att slsa.dev/provenance/v0.2; killinchu .att
+#     = genuine SLSA provenance). NOT L3; bundle-level build-provenance attestation NOT earned
 #     (cosign SIGNATURE is the real provenance). No FedRAMP / CMMC / Iron Bank.
 #   Section 889 = exactly 5 vendors (Huawei, ZTE, Hytera, Hikvision, Dahua).
 #
