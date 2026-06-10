@@ -1,0 +1,45 @@
+# Copyright 2026 SZL Holdings
+# SPDX-License-Identifier: Apache-2.0
+#
+# Minimal self-contained smoke Zarf package for the deploy-proof CI workflow.
+#
+# WHY THIS EXISTS (honest):
+#   The full szl-mesh:v0.4.0 bundle is 3.6 GB (rosie alone bakes to 3.08 GB) and
+#   pulls 5 organ images, some of which may be private. That does not fit on an
+#   ephemeral GitHub-hosted runner and would make the proof flaky. The full bundle
+#   is validated by the "UDS Bundle Build + Publish" workflow (run 26963594879).
+#
+#   This package is the SMALLEST real, image-bearing, deployable Zarf package that
+#   proves the deploy PIPELINE end-to-end on a real k3d cluster:
+#     zarf package create -> zarf package deploy -> pod Ready -> /healthz 200.
+#   It bakes a tiny PUBLIC image (nginx-unprivileged, runs non-root, no SZL
+#   dependency) so the proof never depends on a possibly-private organ image.
+#
+#   It mirrors the organ deployment shape: hardened securityContext, restricted
+#   PodSecurity namespace, readiness probe — so a green deploy here exercises the
+#   same admission path the real organs traverse.
+#
+# Doctrine v11 LOCKED 749/14/163 at kernel commit c7c0ba17 · SLSA L1 honest
+# Λ = Conjecture 1 (NEVER theorem)
+# Signed-off-by: Stephen P. Lutar Jr. <stephenlutar2@gmail.com>
+kind: ZarfPackageConfig
+metadata:
+  name: szl-deploy-proof-smoke
+  version: 0.4.0
+  description: "Minimal self-contained deploy-proof smoke package (real image, real /healthz) for CI on ephemeral k3d"
+  architecture: amd64
+  authors: "Stephen P. Lutar Jr. <stephenlutar2@gmail.com>"
+  # Air-gap: the image is baked into the .tar.zst at create time; no pull at deploy.
+  yolo: false
+
+components:
+  - name: smoke-runtime
+    required: true
+    description: "Tiny non-root HTTP workload that answers /healthz with 200 — proves a real image deploys and goes Ready on the cluster."
+    images:
+      - "ghcr.io/nginxinc/nginx-unprivileged:1.27-alpine"
+    manifests:
+      - name: smoke
+        namespace: szl-proof
+        files:
+          - ./manifests/smoke.yaml

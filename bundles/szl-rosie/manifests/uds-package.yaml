@@ -30,7 +30,7 @@ spec:
         port: 7860
         gateway: tenant
         selector:
-          app: szl-rosie
+          app.kubernetes.io/name: rosie
     allow:
       - direction: Egress
         description: "Keycloak OIDC token endpoint"
@@ -58,7 +58,7 @@ spec:
         - "https://rosie.uds.dev"
       standardFlowEnabled: true
       enableAuthserviceSelector:
-        app: szl-rosie
+        app.kubernetes.io/name: rosie
       groups:
         anyOf:
           - /szl-operators
@@ -73,6 +73,6 @@ spec:
       portName: http-metrics
       targetPort: 9090
       selector:
-        app: szl-rosie
+        app.kubernetes.io/name: rosie
       path: /metrics
       kind: ServiceMonitor
