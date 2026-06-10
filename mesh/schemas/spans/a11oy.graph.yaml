@@ -93,44 +93,44 @@ common_fields:
     description: |
       SZL-specific attributes carried on every a11oy.graph.* span.
       Attribute key prefix: szl.graph.
+    fields:
+      - name: szl.graph.lambda_value
+        type: string
+        required: true
+        description: |
+          Λ_graph (V17.2-T1) serialised as a decimal string with ≥ 6 significant
+          digits. NNReal serialisation: value ∈ [0, 1]. Example: "0.813472".
+          Invariant: Λ_graph ≤ 1 (V17.2-T1 kernel-checked).
+        example: "0.813472"
 
-    - name: szl.graph.lambda_value
-      type: string
-      required: true
-      description: |
-        Λ_graph (V17.2-T1) serialised as a decimal string with ≥ 6 significant
-        digits. NNReal serialisation: value ∈ [0, 1]. Example: "0.813472".
-        Invariant: Λ_graph ≤ 1 (V17.2-T1 kernel-checked).
-      example: "0.813472"
+      - name: szl.graph.v_count
+        type: integer
+        required: true
+        description: "Number of vertices |V| in the graph-valued execution."
+        example: 12
 
-    - name: szl.graph.v_count
-      type: integer
-      required: true
-      description: "Number of vertices |V| in the graph-valued execution."
-      example: 12
+      - name: szl.graph.e_count
+        type: integer
+        required: true
+        description: "Number of edges |E| in the graph-valued execution."
+        example: 18
 
-    - name: szl.graph.e_count
-      type: integer
-      required: true
-      description: "Number of edges |E| in the graph-valued execution."
-      example: 18
+      - name: szl.graph.receipt_hash
+        type: string
+        required: true
+        description: |
+          SHA-256 hex digest of the canonical receipt for this graph execution.
+          Binds the span to the SLSA provenance chain in extended-attestations.jsonl.
+        example: "a3f2e1d4b8c7094f6e5d2c1b0a9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1"
 
-    - name: szl.graph.receipt_hash
-      type: string
-      required: true
-      description: |
-        SHA-256 hex digest of the canonical receipt for this graph execution.
-        Binds the span to the SLSA provenance chain in extended-attestations.jsonl.
-      example: "a3f2e1d4b8c7094f6e5d2c1b0a9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1"
-
-    - name: szl.graph.governance_drift
-      type: boolean
-      required: true
-      description: |
-        True iff Λ_graph fell below the Doctrine v6 §3.2 floor (LAMBDA_FLOOR = 0.1)
-        OR above 1.0 (which V17.2-T1 proves impossible; a true value here
-        indicates a runtime serialisation error warranting alert).
-      example: false
+      - name: szl.graph.governance_drift
+        type: boolean
+        required: true
+        description: |
+          True iff Λ_graph fell below the Doctrine v6 §3.2 floor (LAMBDA_FLOOR = 0.1)
+          OR above 1.0 (which V17.2-T1 proves impossible; a true value here
+          indicates a runtime serialisation error warranting alert).
+        example: false
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Span definitions
@@ -444,3 +444,4 @@ examples:
         szl.graph.proposed_edge_dst: 7
         szl.graph.predicted_lambda: "0.761234"
         szl.graph.proposal_accepted: true
+
