@@ -5,7 +5,8 @@
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Doctrine v11 LOCKED](https://img.shields.io/badge/Doctrine-v11_LOCKED-d4a444.svg)](https://github.com/szl-holdings/lutar-lean)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19944926.svg)](https://doi.org/10.5281/zenodo.19944926)
-[![SLSA L1 honest · L2 roadmap](https://img.shields.io/badge/SLSA-L1_honest_%C2%B7_L2_roadmap-22c55e.svg)](https://slsa.dev/spec/v1.0/levels)
+[![Λ Conjecture 1](https://img.shields.io/badge/Λ-Conjecture_1_(conditional_Theorem_U)-B79BD6.svg)](https://github.com/szl-holdings/lutar-lean/blob/main/BOUNTY.md)
+[![SLSA](https://img.shields.io/badge/SLSA-L1_honest_%C2%B7_L2_build--attested_%C2%B7_L3_roadmap-c9b787.svg)](https://slsa.dev/spec/v1.0/levels)
 [![Security Policy](https://img.shields.io/badge/Security-Policy-red.svg)](SECURITY.md)
 
 **Airgap-deployable Zarf bundles for the SZL governed agentic mesh — built on Unified Defense Stack (UDS) Core v1.5.0.**
@@ -22,7 +23,7 @@
 |--------|----------------------|------|
 | `szl-a11oy` | a11oy — governance gate | Policy overlay + Λ-gate + agentic /code orchestrator |
 | `szl-sentra` | a11oy — **CHAPAQ** egress immune-inspector (policy gate) | 8-gate fail-CLOSED verdict pipeline |
-| `szl-amaru` | a11oy — **YACHAY** read-only reasoning cortex / receipt memory | Khipu Merkle DAG + DSSE-signed receipt chain |
+| `szl-amaru` | a11oy — **Provenance Anchor** (YAWAR receipt bus / receipt memory) | Khipu Merkle DAG + DSSE-signed receipt chain |
 | `szl-rosie` | a11oy — operator console | Human-on-the-loop decision approval gates (full 10-view operator app) |
 | `szl-killinchu` | killinchu — counter-UAS | Λ-gate defensive application (ADS-B + MAVLink) |
 
@@ -33,8 +34,8 @@ Three K8s-native CRDs in `crds/`: **LambdaGate** · **KhipuReceipt** · **Doctri
 > **Naming note.** The published Zarf package names and GHCR image coordinates (`szl-sentra`,
 > `szl-amaru`, `szl-rosie`, `ghcr.io/szl-holdings/{sentra,amaru,rosie}`) are **immutable infra
 > coordinates** — renaming them would break pulls, so they are kept verbatim. In user-facing
-> terms these capabilities are the **CHAPAQ** egress immune-inspector, the **YACHAY** read-only
-> reasoning cortex, and the operator console respectively.
+> terms these capabilities are the **CHAPAQ** egress immune-inspector (Policy), the **Provenance
+> Anchor** (receipt memory / YAWAR receipt bus), and the **Operator** console respectively.
 
 ---
 
