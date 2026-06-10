@@ -22,20 +22,19 @@
 | Bundle | Product / capability | Role |
 |--------|----------------------|------|
 | `szl-a11oy` | a11oy — governance gate | Policy overlay + Λ-gate + agentic /code orchestrator |
-| `szl-sentra` | a11oy — **CHAPAQ** egress immune-inspector (policy gate) | 8-gate fail-CLOSED verdict pipeline |
-| `szl-amaru` | a11oy — **Provenance Anchor** (YAWAR receipt bus / receipt memory) | Khipu Merkle DAG + DSSE-signed receipt chain |
-| `szl-rosie` | a11oy — operator console | Human-on-the-loop decision approval gates (full 10-view operator app) |
+| `szl-policy` | a11oy — **CHAPAQ** egress immune-inspector (policy gate) *(roadmap role, surfaces in a11oy)* | 8-gate fail-CLOSED verdict pipeline |
+| `szl-provenance` | a11oy — **Provenance Anchor** (YAWAR receipt bus / receipt memory) *(roadmap role, surfaces in a11oy)* | Khipu Merkle DAG + DSSE-signed receipt chain |
+| `szl-operator` | a11oy — operator console *(roadmap role, surfaces in a11oy)* | Human-on-the-loop decision approval gates (full 10-view operator app) |
 | `szl-killinchu` | killinchu — counter-UAS | Λ-gate defensive application (ADS-B + MAVLink) |
 
 Each bundle ships: `uds-bundle.yaml` · `zarf.yaml` · Helm chart · Pepr policies + ValidatingAdmissionPolicy + Cilium NetworkPolicy · SPDX + CycloneDX SBOMs · SLSA v1.2 provenance · `serviceMesh.mode: ambient`.
 
 Three K8s-native CRDs in `crds/`: **LambdaGate** · **KhipuReceipt** · **DoctrineLock**.
 
-> **Naming note.** The published Zarf package names and GHCR image coordinates (`szl-sentra`,
-> `szl-amaru`, `szl-rosie`, `ghcr.io/szl-holdings/{sentra,amaru,rosie}`) are **immutable infra
-> coordinates** — renaming them would break pulls, so they are kept verbatim. In user-facing
-> terms these capabilities are the **CHAPAQ** egress immune-inspector (Policy), the **Provenance
-> Anchor** (receipt memory / YAWAR receipt bus), and the **Operator** console respectively.
+> **Naming note.** Only **two products ship** as standalone signed images — **a11oy** and
+> **killinchu**. The other mesh capabilities are **roadmap roles** that surface *inside* a11oy:
+> the **CHAPAQ** egress immune-inspector (Policy), the **Provenance Anchor** (receipt memory /
+> YAWAR receipt bus), and the **Operator** console. They are not separately-branded live products.
 
 ---
 
@@ -59,11 +58,11 @@ brew install defenseunicorns/tap/uds
 git clone https://github.com/szl-holdings/uds-bundles
 cd uds-bundles
 
-# Build the Zarf package locally (requires Docker)
-zarf package create bundles/szl-sentra/ --confirm
+# Build a Zarf package locally (requires Docker)
+zarf package create bundles/szl-killinchu/ --confirm
 
 # Deploy to a running UDS Core cluster
-zarf package deploy zarf-package-szl-sentra-amd64-0.2.0.tar.zst --confirm
+zarf package deploy zarf-package-szl-killinchu-amd64-0.2.0.tar.zst --confirm
 ```
 
 See `bundles/DEPLOY_RUNBOOK.md` for Scenario A (single capability bundle), B (policy + memory), C (full mesh).
@@ -88,7 +87,7 @@ kubectl get doctrinelock -n szl-a11oy
 ## Per-bundle provenance matrix (SLSA L1 honest — L2 verified-provenance on roadmap)
 
 Each capability image is referenced in this bundle by **immutable digest** (not a floating tag).
-**Honest doctrine:** All five capability images are **SLSA Build L1 (honest)** — cosign
+**Honest doctrine:** The two shipping product images are **SLSA Build L1 (honest)** — cosign
 keyless-signed (Fulcio + Rekor) and verifiable via `cosign verify`. **SLSA L2 verified
 build-provenance (isolated builders + verified provenance attestation) is on the roadmap.**
 **L3 is NOT claimed** (no FedRAMP, Iron Bank, or CMMC).
@@ -96,22 +95,21 @@ build-provenance (isolated builders + verified provenance attestation) is on the
 | Bundle | Image (digest-pinned) | Build provenance | Rekor entry |
 |-------|------------------------|-----------------|-------------|
 | `szl-a11oy` | `ghcr.io/szl-holdings/a11oy@sha256:8aaea251609104b554baaac161a0e44cb59a909296e0b37d25ba94b3ab921530` | cosign keyless + `slsa.dev/provenance/v1` DSSE | logIndex **1710578865** |
-| `szl-sentra` | `ghcr.io/szl-holdings/sentra@sha256:32360746e0084ca0c7233bbca2709c1b1e907b6ffa91c166444d8aeb196fa002` | cosign keyless + DSSE | logIndex **1710576247** |
-| `szl-amaru` | `ghcr.io/szl-holdings/amaru@sha256:435ac605a21feaa9c273c6877232307e88f304f81b2248b73c6dcfa31d997993` | cosign keyless + DSSE | logIndex **1712902861** |
-| `szl-rosie` | `ghcr.io/szl-holdings/rosie@sha256:86429fd4a07e209c02004e0ddd5ec408a2587a720a7e91cf5fbe1fe88e188a01` | cosign keyless + DSSE | logIndex **1710599687** |
 | `szl-killinchu` | `ghcr.io/szl-holdings/killinchu@sha256:e872344f2fc8e7d8085042d5b5660c8bd62887a7d2f2353f44f882d782e8cd75` | cosign keyless + DSSE | `bundles/szl-killinchu/attestations/killinchu.slsa-provenance.json` |
 
-The published mesh bundle artifact is `oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.0`. It composes all five capability Zarf packages. **Honest scope:** the five capability images are SLSA Build **L1 honest** (cosign keyless-signed, Rekor-anchored); SLSA **L2 verified build-provenance is on the roadmap** for the images and the bundle alike. Bundle-level attestation is not yet published (blocked on an owner-only GHCR `szl-uds-bundle` package-write grant). Do not claim the bundle is L2-attested until `cosign verify-attestation` returns a provenance payload for the bundle.
+The roadmap-role capability packages (Policy / Provenance Anchor / Operator) surface inside a11oy and are not listed as separately-branded published products.
+
+The published mesh bundle artifact is `oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.0`. **Honest scope:** the two shipping product images are SLSA Build **L1 honest** (cosign keyless-signed, Rekor-anchored); SLSA **L2 verified build-provenance is on the roadmap** for the images and the bundle alike. Bundle-level attestation is not yet published (blocked on an owner-only GHCR `szl-uds-bundle` package-write grant). Do not claim the bundle is L2-attested until `cosign verify-attestation` returns a provenance payload for the bundle.
 
 ## Honest disclosure
 
-- **Capability images: SLSA Build L1 (honest).** All five capability images are cosign
+- **Capability images: SLSA Build L1 (honest).** The shipping product images are cosign
   keyless-signed (Fulcio + Rekor) and verifiable via `cosign verify`. **SLSA L2 verified
   build-provenance is on the roadmap** (isolated builders + verified provenance attestation).
   **L3 is NOT claimed anywhere** (doctrine: no FedRAMP, Iron Bank, or CMMC).
 - **Bundle artifact: signed, NOT yet provenance-attested.** The mesh bundle `szl-uds-bundle:uds-v0.2.0` is real and deployable, but the **bundle artifact itself is not yet SLSA-attested** (owner-only GHCR package-write grant pending).
 - **Λ = Conjecture 1**, NOT a theorem — Lake Verifier testing the proof; 163 sorries open
-- **Proved PURIQ formulas = exactly 5** — F1, F11, F12, F18, F19 (Lean 4, zero-sorry); the remaining 18 are Roadmap
+- **Proved PURIQ formulas = 8** — F1, F4, F7, F11, F12, F18, F19, F22 (Lean 4, zero-sorry; the no-axiom theorem `locked_count_eight`); the remaining formulas are Roadmap
 - **Section 889** = exactly 5 banned vendors: Huawei, ZTE, Hytera, Hikvision, Dahua
 - **`uds-v0.2.0` is the published, signed mesh bundle** — the per-capability Zarf source packages under `bundles/szl-<name>/` can also be built locally with `zarf package create bundles/szl-<name>/`.
 - No Iron Bank, no FedRAMP, no CMMC — deploy on YOUR operational hardware
@@ -129,6 +127,6 @@ The published mesh bundle artifact is `oci://ghcr.io/szl-holdings/szl-uds-bundle
 
 ---
 
-**Doctrine v11 LOCKED · locked kernel 749/14/163 @ c7c0ba17 (5 proven) · experimental main 1304/22 @ 7885fd9 (~36 theorems CI-green, never folded into the locked 5) · Λ = Conjecture 1 (NOT a theorem) · Apache-2.0**
+**Doctrine v11 LOCKED · locked kernel 749/14/163 @ c7c0ba17 (8 proven) · experimental main 1304/22 @ 7885fd9 (~36 theorems CI-green, never folded into the locked eight) · Λ = Conjecture 1 (NOT a theorem) · Khipu Conjecture 2 open · Apache-2.0**
 
 
