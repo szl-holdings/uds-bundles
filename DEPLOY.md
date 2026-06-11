@@ -27,6 +27,7 @@ The **mesh interconnect** (Istio AuthorizationPolicy + NetworkPolicy + strict Pe
 | OCI ref | Status |
 |---------|--------|
 | `oci://ghcr.io/szl-holdings/szl-mesh:0.4.0` | **PUBLISHED + cosign-SIGNED** (verified on GHCR: tags `0.4.0`/`v0.4.0`/`latest` + 3 `.sig`). |
+| `oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.0` | **PUBLISHED + cosign-SIGNED + PUBLIC** (package visibility public; anonymous manifest + `.sig`/`.att` pull verified HTTP 200, no GHCR login). The composed 5-organ mesh bundle — `uds pull`/`uds deploy oci://…` works anonymously for the artifact (UDS Core pull still needs a free DU registry account). |
 | `oci://ghcr.io/szl-holdings/a11oy-bundle:0.5.0` | **AUTHORED-ONLY — NOT yet published.** Build via the `uds-bundle-publish` workflow (a11oy target). |
 | `oci://ghcr.io/szl-holdings/killinchu-bundle:0.5.0` | **AUTHORED-ONLY — NOT yet published.** Build via the `uds-bundle-publish` workflow (killinchu target). |
 
