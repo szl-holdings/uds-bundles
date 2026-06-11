@@ -52,6 +52,27 @@ brew install defenseunicorns/tap/uds
 # Running UDS Core v1.5.0 cluster required
 ```
 
+### One-command install (public mesh bundle)
+
+The composed 5-organ mesh bundle is **published, cosign-signed, and publicly
+(anonymously) pullable** — no GHCR login is needed to pull the bundle artifact:
+
+```bash
+# Pull the signed bundle artifact (anonymous — no GHCR auth required)
+uds pull oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.0
+
+# …or deploy it straight from the registry onto a running UDS Core cluster
+uds deploy oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.0 --confirm
+```
+
+> **Honest scope.** Only the **bundle artifact** is anonymously pullable. The
+> deploy step still pulls **UDS Core** from `registry.defenseunicorns.com`, which
+> requires a **free** Defense Unicorns registry account (HTTP Basic — not
+> anonymous). The bundle ships the two products **published + signed +
+> individually deployable** — NOT "all five organs boot together" (cross-organ
+> in-cluster mesh is roadmap). Bundle-level SLSA provenance attestation is not yet
+> published.
+
 ### Deploy a single bundle
 
 ```bash
