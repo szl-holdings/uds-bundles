@@ -164,6 +164,44 @@ jobs:
             --bundle "${PKG}.sbom.bundle" \
             "${PKG}"
 
+      # ── Verify the keyless signature + SBOM attestation (fails on bad verify) ──
+      # This proves "verify clean" in-CI for every flagship (incl. the a11oy
+      # vertical bundles). The job fails if the signature or attestation does
+      # not verify against the workflow's OIDC certificate identity.
+      - name: Verify signed package + attestation (keyless OIDC)
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          set -euo pipefail
+          PKG="dist/${PKG_FILE}"
+          CERT_IDENTITY="https://github.com/${GITHUB_REPOSITORY}/.github/workflows/zarf-package-sign.yml@refs/heads/main"
+          CERT_ISSUER="https://token.actions.githubusercontent.com"
+
+          echo "::group::cosign verify-blob (${PKG_FILE})"
+          cosign verify-blob \
+            --bundle "${PKG}.cosign.bundle" \
+            --certificate-identity "${CERT_IDENTITY}" \
+            --certificate-oidc-issuer "${CERT_ISSUER}" \
+            "${PKG}"
+          echo "::endgroup::"
+
+          echo "::group::cosign verify-blob-attestation SBOM (${PKG_FILE})"
+          cosign verify-blob-attestation \
+            --bundle "${PKG}.sbom.bundle" \
+            --type spdxjson \
+            --certificate-identity "${CERT_IDENTITY}" \
+            --certificate-oidc-issuer "${CERT_ISSUER}" \
+            "${PKG}"
+          echo "::endgroup::"
+
+          {
+            echo "### ✅ Verified clean: ${PKG_FILE}"
+            echo ""
+            echo "- \`cosign verify-blob\` — PASS (keyless OIDC, Rekor-logged)"
+            echo "- \`cosign verify-blob-attestation\` (spdxjson SBOM) — PASS"
+            echo "- certificate-identity: \`${CERT_IDENTITY}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
       # ── Upload signed artifacts ───────────────────────────────────────────
       - name: Upload signed artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
