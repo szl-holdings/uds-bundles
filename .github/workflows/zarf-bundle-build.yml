@@ -20,12 +20,13 @@ permissions:
   packages: read
   id-token: write   # enables keyless/tlog operations
 
-env:
-  COSIGN_KEY_PRESENT: ${{ secrets.COSIGN_KEY != '' }}
-
 jobs:
   build:
     runs-on: ubuntu-latest
+    # secrets context is NOT available in top-level `env:` or in `if:` — map the
+    # signing key through job-level env, then gate signing on env.COSIGN_KEY.
+    env:
+      COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
@@ -56,10 +57,9 @@ jobs:
       - name: Cosign sign-blob (key from secret; Rekor anchor optional)
         # Only runs when COSIGN_KEY secret is set. When absent, build still succeeds
         # with unsigned artifacts and a clear notice. Add COSIGN_KEY to secrets to enable.
-        if: ${{ env.COSIGN_KEY_PRESENT == 'true' }}
+        if: ${{ env.COSIGN_KEY != '' }}
         env:
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
-          COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
         run: |
           set -euo pipefail
           if [ -z "${COSIGN_KEY:-}" ]; then
@@ -83,7 +83,7 @@ jobs:
           rm -f cosign.key
 
       - name: Notice (signing skipped — COSIGN_KEY absent)
-        if: ${{ env.COSIGN_KEY_PRESENT == 'false' }}
+        if: ${{ env.COSIGN_KEY == '' }}
         run: |
           echo "::notice title=Signing skipped::COSIGN_KEY secret is not set. Bundle was built but not signed."
           echo "::notice::To enable signing: add repo/org secret COSIGN_KEY (cosign private key PEM) and COSIGN_PASSWORD."
