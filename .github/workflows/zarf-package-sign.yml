@@ -205,27 +205,51 @@ jobs:
           echo "Attestation signature + OIDC identity verified; checking subject binding..."
           SUBJECT_SHA="$(python3 - "${PKG}.sbom.bundle" <<'PY'
           import base64, json, sys
-          b = json.load(open(sys.argv[1]))
-          def find_payload(o):
+          # The cosign --bundle JSON shape varies (new Sigstore bundle has a
+          # top-level dsseEnvelope.payload; the legacy cosign bundle wraps the
+          # whole DSSE envelope inside base64Signature). Recursively scan every
+          # string, base64-decode, and pick the in-toto Statement (has subject[]),
+          # unwrapping a DSSE envelope (has payload) one level if needed.
+          raw = open(sys.argv[1], "rb").read()
+          def b64try(s):
+              try:
+                  return base64.b64decode(s, validate=False)
+              except Exception:
+                  return None
+          def jtry(bs):
+              try:
+                  return json.loads(bs)
+              except Exception:
+                  return None
+          found = []
+          def walk(o):
               if isinstance(o, dict):
-                  if isinstance(o.get("payload"), str) and ("payloadType" in o or "payload_type" in o):
-                      return o["payload"]
                   for v in o.values():
-                      r = find_payload(v)
-                      if r:
-                          return r
+                      walk(v)
               elif isinstance(o, list):
                   for v in o:
-                      r = find_payload(v)
-                      if r:
-                          return r
-              return None
-          p = find_payload(b)
-          if not p:
-              sys.stderr.write("no DSSE payload found in bundle\n")
+                      walk(v)
+              elif isinstance(o, str):
+                  bs = b64try(o)
+                  if bs is None:
+                      return
+                  j = jtry(bs)
+                  if isinstance(j, dict):
+                      if isinstance(j.get("subject"), list):
+                          found.append(j)
+                      elif isinstance(j.get("payload"), str):
+                          inner = jtry(b64try(j["payload"]) or b"")
+                          if isinstance(inner, dict) and isinstance(inner.get("subject"), list):
+                              found.append(inner)
+          top = jtry(raw)
+          if top is None:
+              sys.stderr.write("bundle is not JSON\n")
               sys.exit(2)
-          stmt = json.loads(base64.b64decode(p))
-          print(stmt["subject"][0]["digest"]["sha256"])
+          walk(top)
+          if not found:
+              sys.stderr.write("no in-toto statement found in bundle\n")
+              sys.exit(2)
+          print(found[0]["subject"][0]["digest"]["sha256"])
           PY
           )"
           if [ "${SUBJECT_SHA}" != "${DIGEST}" ]; then
