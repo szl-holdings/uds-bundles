@@ -7,7 +7,6 @@ metadata:
   name: amaru-attestation
   description: "amaru cortex attestation / formula witness — KL drift + hash-chained proof receipts, 7-chakra runtime, adversarial regression detection. Doctrine v11 LOCKED preserved."
   version: "0.3.1"
-  zarfVersion: ">=0.77.0"   # Min Zarf CLI: Helm 4 + keyless signing
   url: "https://szlholdings.com"
   authors: "Stephen Paul Lutar JR <stephen@szlholdings.com>"
   documentation: "https://github.com/szl-holdings/uds-bundles"

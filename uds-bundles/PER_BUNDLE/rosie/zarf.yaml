@@ -6,7 +6,6 @@ metadata:
   name: rosie-replay
   description: "rosie governed decision fabric — mandatory witnesses (ROSIE-V1), receipt-DAG replay engine + observability dashboard, brain-jack mesh. Doctrine v11 LOCKED preserved."
   version: "0.3.1"
-  zarfVersion: ">=0.77.0"   # Min Zarf CLI: Helm 4 + keyless signing
   url: "https://szlholdings.com"
   authors: "Stephen Paul Lutar JR <stephen@szlholdings.com>"
   documentation: "https://github.com/szl-holdings/uds-bundles"
