@@ -185,13 +185,20 @@ jobs:
             "${PKG}"
           echo "::endgroup::"
 
-          echo "::group::cosign verify-blob-attestation SBOM (${PKG_FILE})"
+          # verify-blob-attestation re-reads the blob to check the subject-digest
+          # claim and trips cosign's 128MiB per-layer read limit on the large
+          # organ packages. Pass the precomputed sha256 via --hash so the claim
+          # is verified against the exact package digest WITHOUT re-reading the
+          # multi-hundred-MB file (same cryptographic binding, no weakening).
+          DIGEST="$(sha256sum "${PKG}" | awk '{print $1}')"
+          echo "::group::cosign verify-blob-attestation SBOM (${PKG_FILE}) sha256=${DIGEST}"
           cosign verify-blob-attestation \
             --bundle "${PKG}.sbom.bundle" \
             --type spdxjson \
+            --check-claims=true \
+            --hash "${DIGEST}" \
             --certificate-identity "${CERT_IDENTITY}" \
-            --certificate-oidc-issuer "${CERT_ISSUER}" \
-            "${PKG}"
+            --certificate-oidc-issuer "${CERT_ISSUER}"
           echo "::endgroup::"
 
           {
