@@ -185,20 +185,54 @@ jobs:
             "${PKG}"
           echo "::endgroup::"
 
-          # verify-blob-attestation re-reads the blob to check the subject-digest
-          # claim and trips cosign's 128MiB per-layer read limit on the large
-          # organ packages. Pass the precomputed sha256 via --hash so the claim
-          # is verified against the exact package digest WITHOUT re-reading the
-          # multi-hundred-MB file (same cryptographic binding, no weakening).
+          # cosign's verify-blob-attestation re-reads the subject blob to check
+          # the in-toto subject claim and trips its 128MiB per-blob read limit on
+          # the large organ packages; cosign v2.4.3 has no --hash for this
+          # subcommand. Split the check into two honest steps with NO loss of
+          # binding (arguably stronger, since the binding is made explicit):
+          #   1. cryptographically verify the SBOM attestation (signature + OIDC
+          #      cert identity + Rekor) WITHOUT the blob (--check-claims=false);
+          #   2. decode the just-verified attestation's in-toto subject digest and
+          #      assert it equals the package's actual sha256.
           DIGEST="$(sha256sum "${PKG}" | awk '{print $1}')"
           echo "::group::cosign verify-blob-attestation SBOM (${PKG_FILE}) sha256=${DIGEST}"
           cosign verify-blob-attestation \
             --bundle "${PKG}.sbom.bundle" \
             --type spdxjson \
-            --check-claims=true \
-            --hash "${DIGEST}" \
+            --check-claims=false \
             --certificate-identity "${CERT_IDENTITY}" \
             --certificate-oidc-issuer "${CERT_ISSUER}"
+          echo "Attestation signature + OIDC identity verified; checking subject binding..."
+          SUBJECT_SHA="$(python3 - "${PKG}.sbom.bundle" <<'PY'
+          import base64, json, sys
+          b = json.load(open(sys.argv[1]))
+          def find_payload(o):
+              if isinstance(o, dict):
+                  if isinstance(o.get("payload"), str) and ("payloadType" in o or "payload_type" in o):
+                      return o["payload"]
+                  for v in o.values():
+                      r = find_payload(v)
+                      if r:
+                          return r
+              elif isinstance(o, list):
+                  for v in o:
+                      r = find_payload(v)
+                      if r:
+                          return r
+              return None
+          p = find_payload(b)
+          if not p:
+              sys.stderr.write("no DSSE payload found in bundle\n")
+              sys.exit(2)
+          stmt = json.loads(base64.b64decode(p))
+          print(stmt["subject"][0]["digest"]["sha256"])
+          PY
+          )"
+          if [ "${SUBJECT_SHA}" != "${DIGEST}" ]; then
+            echo "::error::SBOM attestation subject digest (${SUBJECT_SHA}) != package sha256 (${DIGEST})"
+            exit 1
+          fi
+          echo "Subject binding OK: ${SUBJECT_SHA}"
           echo "::endgroup::"
 
           {
