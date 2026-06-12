@@ -50,7 +50,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        flagship: [a11oy, sentra, amaru, rosie, killinchu]
+        flagship: [a11oy, sentra, amaru, rosie, killinchu, a11oy-memory, a11oy-sentinel, a11oy-operator]
 
     steps:
       # ── Checkout ─────────────────────────────────────────────────────────

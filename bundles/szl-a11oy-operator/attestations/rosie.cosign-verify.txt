@@ -1,0 +1,33 @@
+# Cosign verification reference — szl-a11oy-operator (a11oy Operator)
+# SPDX-License-Identifier: Apache-2.0
+#
+# SIGNING PATH: KEYLESS cosign via GitHub Actions OIDC (Sigstore Fulcio + Rekor).
+# There is NO private signing key. The certificate identity is the signing
+# workflow's URL (from the GitHub OIDC claim) and every signature is recorded in
+# the public Rekor transparency log. The self-contained .cosign.bundle enables
+# OFFLINE (air-gap) verification.
+#
+# Produced by: .github/workflows/zarf-package-sign.yml (matrix flagship=a11oy-operator)
+# Bundle re-issued under the a11oy vertical name "a11oy Operator".
+# Internal codename: rosie. The underlying organ CONTAINER IMAGE retains its
+# codename (ghcr.io/szl-holdings/rosie) because its build source is archived
+# and cannot be rebuilt; the deployment BUNDLE, Zarf package, namespace and UDS
+# Package CR are genuinely re-bundled and re-signed under the vertical name.
+
+# --- Verify the signed Zarf package (keyless OIDC, offline-capable) ---
+cosign verify-blob \
+  --bundle dist/zarf-package-szl-a11oy-operator-amd64-0.2.0.tar.zst.cosign.bundle \
+  --certificate-identity "https://github.com/szl-holdings/uds-bundles/.github/workflows/zarf-package-sign.yml@refs/heads/main" \
+  --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+  dist/zarf-package-szl-a11oy-operator-amd64-0.2.0.tar.zst
+
+# --- Verify the in-bundle SBOM attestation (keyless DSSE, spdxjson) ---
+cosign verify-blob-attestation \
+  --bundle dist/zarf-package-szl-a11oy-operator-amd64-0.2.0.tar.zst.sbom.bundle \
+  --type spdxjson \
+  --certificate-identity "https://github.com/szl-holdings/uds-bundles/.github/workflows/zarf-package-sign.yml@refs/heads/main" \
+  --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+  dist/zarf-package-szl-a11oy-operator-amd64-0.2.0.tar.zst
+
+# After the signing run completes, the live cosign output (Rekor log index +
+# certificate SAN) is appended below by the operator capturing the run.
