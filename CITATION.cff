@@ -19,6 +19,8 @@ keywords:
   - sigstore
   - opentelemetry
   - sovereign-ai
+  - anomaly-detection
+  - space-domain-awareness
 authors:
   - name: "SZL Holdings"
     website: "https://szlholdings.ai"
@@ -38,3 +40,6 @@ references:
   - type: standard
     title: "EO 14028 — Improving the Nation's Cybersecurity (SBOM mandate)"
     url: "https://www.federalregister.gov/documents/2021/05/17/2021-10460/improving-the-nations-cybersecurity"
+  - type: generic
+    title: "True Anomaly — Mosaic (4-function SDA framing; attribution for szl-sda inspiration; clean-room, not affiliated)"
+    url: "https://www.trueanomaly.space/mosaic"

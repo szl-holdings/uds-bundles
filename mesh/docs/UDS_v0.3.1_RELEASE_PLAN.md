@@ -1,4 +1,11 @@
-# uds-mesh — UDS v0.3.1 Release Plan
+> **⚠️ SUPERSEDED by `uds-v0.4.0` (canonical).** This v0.3.1 release plan is retained as
+> historical record only. The canonical UDS ecosystem version is now **`uds-v0.4.0`**
+> (see `/VERSION` and `scripts/check_version_doctrine.sh`), which adds the clean-room
+> anomaly/SDA capability (`szl-sda` / killinchu SDA). Forward-only: the already-signed
+> flagship organ images stay byte-stable at `uds-v0.2.0` and are never renamed.
+> Do not action this plan; it is preserved so existing signatures/links remain valid.
+
+# uds-mesh — UDS v0.3.1 Release Plan (SUPERSEDED)
 
 **Repo:** `szl-holdings/uds-mesh`
 **Plan date:** 2026-05-29

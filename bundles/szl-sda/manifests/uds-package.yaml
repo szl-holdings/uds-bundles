@@ -1,0 +1,87 @@
+# Copyright 2026 SZL Holdings
+# SPDX-License-Identifier: Apache-2.0
+#
+# UDS Package CR for szl-sda (killinchu SDA / khipu-sda-core)
+# Doctrine v11 LOCKED 749/14/163 at kernel commit c7c0ba17
+#
+# Registers szl-sda with the UDS Operator so that:
+#   - Istio sidecar injection is managed by UDS Core
+#   - NetworkPolicy is UDS-operated (not raw Cilium)
+#   - SSO (Keycloak OIDC) is provisioned automatically
+#   - Prometheus monitoring is configured via ServiceMonitor
+#
+# The SDA engine consumes air/maritime tracks from killinchu and emits the SDA verdict
+# envelope (anomaly_score, advisory Λ axis, ESTIMATE confidence, in-toto receipt) which
+# is signed downstream by a11oy / khipu-consensus into the Khipu DAG.
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: szl-sda
+  namespace: szl-sda
+  annotations:
+    szl.io/doctrine-version: "v11"
+    szl.io/doctrine-pin: "749/14/163"
+    szl.io/kernel-commit: "c7c0ba17"
+    szl.io/slsa-level: "L1"                 # honest: L1; L2 build-attested where CI runs; L3 roadmap
+    szl.io/lambda-posture: "conjecture-1-advisory"
+    szl.io/capability: "killinchu-sda-domain-awareness"
+spec:
+  network:
+    expose:
+      - host: sda
+        service: szl-sda
+        port: 8080
+        gateway: tenant
+        selector:
+          app.kubernetes.io/name: szl-sda
+    allow:
+      - direction: Egress
+        description: "Keycloak OIDC token endpoint"
+        remoteNamespace: keycloak
+        remoteSelector:
+          app.kubernetes.io/name: keycloak
+        port: 8443
+        remoteProtocol: TLS
+      - direction: Egress
+        description: "SZL receipts server (DSSE audit sink — Khipu DAG ingest)"
+        remoteNamespace: szl-receipts
+        remoteSelector:
+          app.kubernetes.io/name: szl-receipts-server
+        port: 8080
+      - direction: Ingress
+        description: "killinchu fusion path calls SDA /sda/evaluate"
+        remoteNamespace: szl-killinchu
+        remoteSelector:
+          app.kubernetes.io/name: killinchu
+        port: 8080
+      - direction: Ingress
+        description: "IntraNamespace (Istio sidecar + health probes)"
+        remoteGenerated: IntraNamespace
+  sso:
+    - clientId: uds-szl-sda
+      name: "killinchu SDA"
+      protocol: openid-connect
+      redirectUris:
+        - "https://sda.uds.dev/*"
+      webOrigins:
+        - "https://sda.uds.dev"
+      standardFlowEnabled: true
+      enableAuthserviceSelector:
+        app.kubernetes.io/name: szl-sda
+      groups:
+        anyOf:
+          - /szl-operators
+      secretConfig:
+        name: szl-sda-oidc-secret
+        template: |
+          OIDC_CLIENT_ID: "{{ .clientId }}"
+          OIDC_CLIENT_SECRET: "{{ .secret }}"
+          OIDC_ISSUER: "https://sso.uds.dev/realms/uds"
+  monitor:
+    - description: "szl-sda Prometheus metrics"
+      portName: http-metrics
+      targetPort: 9090
+      selector:
+        app.kubernetes.io/name: szl-sda
+      path: /metrics
+      kind: ServiceMonitor

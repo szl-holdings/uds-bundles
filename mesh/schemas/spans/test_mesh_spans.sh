@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # test_mesh_spans.sh — Validates the cross-organ UDS mesh span schemas.
 #
-# Covers all 5 flagship organs:
+# Covers all 6 organs (5 flagship + szl-sda / killinchu SDA):
 #   a11oy.graph.yaml      sentra.gate.yaml     amaru.sync.yaml
-#   killinchu.courier.yaml  rosie.decision.yaml
+#   killinchu.courier.yaml  rosie.decision.yaml  sda.detection.yaml
 #
 # Tests per organ:
 #   1. Schema file exists and is non-empty
@@ -31,6 +31,7 @@ declare -A SCHEMA=(
   [amaru]="amaru.sync.yaml"
   [killinchu]="killinchu.courier.yaml"
   [rosie]="rosie.decision.yaml"
+  [sda]="sda.detection.yaml"
 )
 declare -A SPANS=(
   [a11oy]="a11oy.graph.lambda a11oy.graph.automorphism a11oy.graph.position a11oy.graph.gcpn_propose"
@@ -38,10 +39,11 @@ declare -A SPANS=(
   [amaru]="amaru.sync.merge amaru.sync.drift_alert amaru.sync.receipt"
   [killinchu]="killinchu.courier.dispatch killinchu.courier.verify killinchu.courier.deliver"
   [rosie]="rosie.decision.evaluate rosie.decision.witness rosie.decision.replay"
+  [sda]="sda.detection.dtid sda.detection.characterize sda.detection.twa sda.detection.fuse"
 )
 
-echo "=== UDS mesh cross-organ span schema tests (5 organs) ==="
-for organ in a11oy sentra amaru killinchu rosie; do
+echo "=== UDS mesh cross-organ span schema tests (6 organs) ==="
+for organ in a11oy sentra amaru killinchu rosie sda; do
   f="$DIR/${SCHEMA[$organ]}"
   echo ""
   echo "── $organ ($f) ──"

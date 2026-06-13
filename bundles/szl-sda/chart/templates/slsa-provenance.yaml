@@ -1,0 +1,35 @@
+{{/* Copyright 2026 SZL Holdings — SPDX-License-Identifier: Apache-2.0 */}}
+{{/*
+  SDA SLSA provenance metadata ConfigMap.
+
+  HONEST: This declares the build-attestation predicateType that Forge emits for
+  khipu-sda-core (SLSA L2 = roadmap / not yet earned until the founder-gated Forge build signs it). It is the machine-checkable
+  evidence consumed by compliance/oscal-component-sda.yaml (lula validation 6).
+
+  The image digest is intentionally left EMPTY until Forge cosign-signs uds-v0.4.0
+  (FA-001). NEVER fabricate a digest or a signature — `imageDigest` stays blank and
+  is populated only after the real build + Rekor upload.
+
+  SLSA gradient (honest):
+    L1            = provenance generated (today)
+    L2            = roadmap / not yet earned (attestation to be emitted by the founder-gated Forge build, FA-001)
+    L2-verified   = ROADMAP (verifier admission)
+    L3            = ROADMAP (hermetic, isolated builder)
+*/}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: szl-sda-slsa-provenance
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/name: szl-sda
+    app.kubernetes.io/part-of: szl-mesh
+data:
+  predicateType: "https://slsa.dev/provenance/v1"
+  buildType: "https://szlholdings.com/forge/airgap-build/v1"
+  imageRepository: {{ .Values.image.repository | quote }}
+  imageTag: {{ .Values.image.tag | quote }}
+  # Populated by Forge after cosign sign + Rekor upload (FA-001). Blank = not yet built.
+  imageDigest: {{ .Values.image.digest | quote }}
+  slsaLevel: "L1-honest; L2-build-attestation-present; L2-verified/L3=ROADMAP"
+  attestationStatus: "STUB_PENDING_FORGE_BUILD_FA-001"

@@ -5,14 +5,18 @@
 #
 # Produces: oci://ghcr.io/szl-holdings/szl-mesh:v0.4.0
 #
-# Package composition (5 flagship organs — szl-receipts deferred):
-#   szl-a11oy     — ghcr.io/szl-holdings/a11oy:uds-v0.2.0    (PUBLIC, cosign-signed)
-#   szl-sentra    — ghcr.io/szl-holdings/sentra:uds-v0.2.0   (PUBLIC, cosign-signed)
-#   szl-amaru     — ghcr.io/szl-holdings/amaru:uds-v0.2.0    (PUBLIC, cosign-signed)
-#   szl-rosie     — ghcr.io/szl-holdings/rosie:uds-v0.2.0    (PUBLIC, cosign-signed)
-#   szl-killinchu — ghcr.io/szl-holdings/killinchu:uds-v0.2.0 (PUBLIC, cosign-signed)
+# Package composition (5 flagship organs + 1 new SDA capability — szl-receipts deferred):
+#   szl-a11oy     — ghcr.io/szl-holdings/a11oy:uds-v0.2.0          (PUBLIC, cosign-signed)
+#   szl-sentra    — ghcr.io/szl-holdings/sentra:uds-v0.2.0         (PUBLIC, cosign-signed)
+#   szl-amaru     — ghcr.io/szl-holdings/amaru:uds-v0.2.0          (PUBLIC, cosign-signed)
+#   szl-rosie     — ghcr.io/szl-holdings/rosie:uds-v0.2.0          (PUBLIC, cosign-signed)
+#   szl-killinchu — ghcr.io/szl-holdings/killinchu:uds-v0.2.0      (PUBLIC, cosign-signed)
+#   szl-sda       — ghcr.io/szl-holdings/khipu-sda-core:uds-v0.4.0 (NEW; PENDING Forge build + sign FA-001)
 #
-# v0.4.0 extends v0.3.0 (a11oy+sentra+amaru) with rosie + killinchu.
+# v0.4.0 extends v0.3.0 (a11oy+sentra+amaru) with rosie + killinchu, and adds the new
+# clean-room anomaly/SDA capability (szl-sda / killinchu SDA). The 5 flagship images stay
+# byte-stable at uds-v0.2.0 (forward-only: never renamed/re-tagged); szl-sda is a NEW
+# uds-v0.4.0 artifact — the canonical version string for this release.
 # Mesh interconnect wiring (UDS Package CRs, Istio, mTLS) is roadmap v0.4.0
 # feature — see docs/roadmap/MESH_INTERCONNECT.md in szl-holdings/uds-mesh.
 # This bundle is the image-bearing air-gap artifact for the June 9 rehearsal.
@@ -78,3 +82,13 @@ packages:
   - name: szl-killinchu
     path: bundles/szl-killinchu
     ref: "0.2.0"
+
+  # ── szl-sda: killinchu SDA / khipu-sda-core (clean-room anomaly/SDA engine) ─
+  # Image ghcr.io/szl-holdings/khipu-sda-core:uds-v0.4.0 — PENDING Forge build + sign (FA-001).
+  # NEW capability inspired by True Anomaly Mosaic (capability only, no proprietary code).
+  # Advisory Λ-gated (Conjecture 1), DSSE-receipted into the Khipu DAG, sovereign air-gap.
+  # Honest: ref is the NEW canonical uds-v0.4.0 — it adds a fresh versioned artifact and
+  # does NOT re-tag or rename any published v0.2.0 signed package (forward-only).
+  - name: szl-sda
+    path: bundles/szl-sda
+    ref: "0.4.0"

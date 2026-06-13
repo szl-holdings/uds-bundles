@@ -1,0 +1,24 @@
+{
+  "_comment": "PENDING FORGE BUILD. Honest SBOM stub (SPDX 2.3). Forge regenerates this with syft/grype from the real built image; this stub lists the clean-room permissive lineage only and contains NO fabricated digests or signatures.",
+  "_status": "STUB_PENDING_FORGE_BUILD",
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "khipu-sda-core-uds-v0.4.0",
+  "documentNamespace": "https://github.com/szl-holdings/khipu-sda-core/sbom/uds-v0.4.0",
+  "creationInfo": {
+    "creators": ["Organization: SZL Holdings", "Tool: syft (PENDING — Forge build)"],
+    "created": "2026-06-13T00:00:00Z"
+  },
+  "packages": [
+    {"SPDXID": "SPDXRef-Package-khipu-sda-core", "name": "khipu-sda-core", "licenseConcluded": "Apache-2.0", "downloadLocation": "https://github.com/szl-holdings/khipu-sda-core"},
+    {"SPDXID": "SPDXRef-Package-pyod", "name": "pyod", "licenseConcluded": "BSD-2-Clause", "downloadLocation": "https://github.com/yzhao062/pyod"},
+    {"SPDXID": "SPDXRef-Package-pygod", "name": "pygod", "licenseConcluded": "BSD-2-Clause", "downloadLocation": "https://github.com/pygod-team/pygod"},
+    {"SPDXID": "SPDXRef-Package-merlion", "name": "salesforce-merlion", "licenseConcluded": "BSD-3-Clause", "downloadLocation": "https://github.com/salesforce/Merlion"},
+    {"SPDXID": "SPDXRef-Package-tods", "name": "tods", "licenseConcluded": "Apache-2.0", "downloadLocation": "https://github.com/datamllab/tods"},
+    {"SPDXID": "SPDXRef-Package-tsod", "name": "tsod", "licenseConcluded": "MIT", "downloadLocation": "https://github.com/DHI/tsod"},
+    {"SPDXID": "SPDXRef-Package-sgp4", "name": "sgp4", "licenseConcluded": "MIT", "downloadLocation": "https://github.com/brandon-rhodes/python-sgp4"},
+    {"SPDXID": "SPDXRef-Package-scikit-learn", "name": "scikit-learn", "licenseConcluded": "BSD-3-Clause", "downloadLocation": "https://github.com/scikit-learn/scikit-learn"},
+    {"SPDXID": "SPDXRef-Package-numpy", "name": "numpy", "licenseConcluded": "BSD-3-Clause", "downloadLocation": "https://github.com/numpy/numpy"}
+  ]
+}

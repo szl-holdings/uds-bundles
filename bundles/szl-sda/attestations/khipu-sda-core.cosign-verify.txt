@@ -1,0 +1,46 @@
+# Cosign verification reference — szl-sda (killinchu SDA / khipu-sda-core)
+# SPDX-License-Identifier: Apache-2.0
+#
+# STATUS: PENDING FORGE BUILD + FOUNDER SIGNING (FA-001).
+# This file documents WHERE and HOW the uds-v0.4.0 SDA image is signed and verified.
+# No signature, certificate, or digest is fabricated here. The commands below become
+# runnable AFTER Forge builds the image and the founder signing key (or keyless OIDC)
+# produces the real .sig / .att / Rekor entry.
+#
+# SIGNING HAPPENS HERE (founder/Forge step — NOT in this PR):
+#   AUTHORITATIVE: keyless via GitHub Actions OIDC (Fulcio + Rekor) in
+#                  khipu-sda-core/.github/workflows/cosign.yml — no private key needed.
+#   LEGACY/OPT:    keyed ECDSA-P256; PRIVATE key in HF Space secret COSIGN_PRIVATE_KEY
+#                  (huggingface.co/spaces/SZLHOLDINGS/<sda-space> → Settings → Secrets).
+#                  PUBLIC key: bundles/v0.1.0/cosign_signing_key.pub (this repo).
+
+# --- Verify the container image signature (KEYLESS, authoritative) ---
+cosign verify \
+  --certificate-identity-regexp "https://github.com/szl-holdings/khipu-sda-core/.*" \
+  --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+  ghcr.io/szl-holdings/khipu-sda-core:uds-v0.4.0
+
+# --- Verify the SLSA provenance attestation (L1 honest; L2 = roadmap / not yet earned until FA-001 build) ---
+cosign verify-attestation \
+  --certificate-identity-regexp "https://github.com/szl-holdings/khipu-sda-core/.*" \
+  --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+  --type slsaprovenance \
+  ghcr.io/szl-holdings/khipu-sda-core:uds-v0.4.0
+
+# --- GitHub-native build provenance (SLSA L2 = roadmap / not yet earned; populated after the FA-001 Forge build) ---
+gh attestation verify oci://ghcr.io/szl-holdings/khipu-sda-core:uds-v0.4.0 \
+  --owner szl-holdings
+
+# --- Verify any DSSE receipt blob emitted by an SDA anomaly/threat verdict ---
+# (Receipts are SAME in-toto Statement v1 schema as szl_mechanics; predicate
+#  predicateType = https://szlholdings.com/attestations/sda-anomaly/v1)
+cosign verify-blob \
+  --certificate-identity-regexp "https://github.com/szl-holdings/khipu-sda-core/.*" \
+  --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+  --signature <receipt>.sig \
+  --certificate <receipt>.pem \
+  <receipt>.blob
+
+# HONESTY: until the above pass against a real signed image, the SDA verdict envelope's
+# _signing.status is "UNSIGNED" and the a11oy verify-api treats it as STRUCTURAL-ONLY —
+# never a false "verified/green". real-DSSE-or-honestly-UNSIGNED; never silently fabricated.
