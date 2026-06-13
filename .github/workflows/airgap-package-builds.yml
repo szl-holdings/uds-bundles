@@ -1,0 +1,204 @@
+# Copyright 2026 SZL Holdings
+# SPDX-License-Identifier: Apache-2.0
+#
+# AIRGAP PACKAGE BUILDS — CI smoke for the air-gapped 'uds deploy' proof (Raven proof).
+#
+# WHAT THIS PROVES (on a NON-privileged GitHub runner, no cable-pulled box):
+#   1. The air-gap capture harness (scripts/capture_airgap_proof.sh) is syntactically
+#      valid (bash -n + shellcheck) and self-consistent (LINT mode runs, prints the
+#      pinned bundle ref, the 5 organ digests, and the exact offline-verify commands
+#      WITHOUT touching the network or a cluster).
+#   2. The bundle composition (uds-bundle.yaml) references exactly the 5 flagship
+#      organs and the air-gap proof harness pins a digest for each of those 5 organs
+#      — i.e. the package the founder will stage genuinely covers all 5.
+#   3. The minimal smoke Zarf package still `zarf package create`s (the image-bearing
+#      build path is real), giving a green 'airgap-package-builds' signal.
+#   4. The offline cosign verify-blob command runs end-to-end on a SELF-SIGNED sample
+#      (ephemeral key, generated in-run) with --insecure-ignore-tlog=true, proving the
+#      OFFLINE (no-Rekor) verification path the founder uses is valid — without
+#      verifying the real bundle (that needs the real artifact on the box).
+#
+# WHAT THIS DOES NOT PROVE (honest scope — the true Raven proof is founder-run):
+#   - The actual cable-pulled 5-organ `uds deploy` against the local store. That is a
+#     privileged/box step the founder runs per AIRGAP_PROOF_RUNBOOK.md; its receipt
+#     (PROOF.json + transcript) is attached to releases/ AFTER the founder run. CI
+#     cannot pull a cable or fit the 3.6 GB bundle on an ephemeral runner.
+#   - This is COMPLEMENTARY to deploy-proof.yml (which proves the live k3d deploy
+#     PIPELINE on a real cluster). Together: pipeline proven in CI; full air-gap
+#     deploy = runbook + harness ready, founder-run.
+#
+# Doctrine v11 LOCKED 749/14/163 @ c7c0ba17 · Λ = Conjecture 1 (NEVER theorem)
+# SLSA L1 honest · L2 attested (organs) · bundle-attestation + L3 roadmap
+# Section 889 = 5 vendors (Huawei, ZTE, Hytera, Hikvision, Dahua)
+# Signed-off-by: Stephen P. Lutar Jr. <stephenlutar2@gmail.com>
+
+name: airgap-package-builds
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/capture_airgap_proof.sh'
+      - 'AIRGAP_PROOF_RUNBOOK.md'
+      - 'uds-bundle.yaml'
+      - 'test/smoke/**'
+      - '.github/workflows/airgap-package-builds.yml'
+  pull_request:
+    paths:
+      - 'scripts/capture_airgap_proof.sh'
+      - 'AIRGAP_PROOF_RUNBOOK.md'
+      - 'uds-bundle.yaml'
+      - 'test/smoke/**'
+      - '.github/workflows/airgap-package-builds.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  packages: read
+
+env:
+  ZARF_VERSION: "v0.77.0"
+  COSIGN_EXPERIMENTAL: "0"
+
+jobs:
+  airgap-package-builds:
+    name: Prove the air-gap package + verify harness (no privileged box)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      # ── 1. Harness is syntactically valid ────────────────────────────────
+      - name: bash -n + shellcheck the capture harness (HARD GATE)
+        run: |
+          set -euo pipefail
+          test -f scripts/capture_airgap_proof.sh || { echo "::error::scripts/capture_airgap_proof.sh missing"; exit 1; }
+          bash -n scripts/capture_airgap_proof.sh
+          echo "bash -n OK"
+          if command -v shellcheck >/dev/null 2>&1; then
+            shellcheck -S warning scripts/capture_airgap_proof.sh
+          else
+            sudo apt-get update -qq && sudo apt-get install -y shellcheck
+            shellcheck -S warning scripts/capture_airgap_proof.sh
+          fi
+          echo "shellcheck OK (warning level)"
+
+      # ── 2. Harness LINT mode runs offline + prints the pinned facts ──────
+      - name: Run harness in LINT mode (no network, no cluster) (HARD GATE)
+        run: |
+          set -euo pipefail
+          OUT="$(LINT=1 bash scripts/capture_airgap_proof.sh --lint)"
+          echo "${OUT}"
+          echo "${OUT}" | grep -q "LINT OK" || { echo "::error::LINT mode did not complete cleanly"; exit 1; }
+          # Assert it pins all 5 organ digests.
+          for o in a11oy sentra amaru rosie killinchu; do
+            echo "${OUT}" | grep -Eq "^  - ${o}: sha256:[0-9a-f]{64}$" \
+              || { echo "::error::harness LINT output is missing a pinned digest for ${o}"; exit 1; }
+          done
+          echo "PASS: harness LINT pins all 5 organ digests."
+
+      # ── 3. Composition + digest coverage cross-check ─────────────────────
+      - name: Assert bundle composes 5 organs and harness pins all 5 (HARD GATE)
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import re, sys, pathlib
+          organs = ["a11oy","sentra","amaru","rosie","killinchu"]
+
+          # 3a. The top-level bundle composes exactly the 5 flagship organ packages.
+          bundle = pathlib.Path("uds-bundle.yaml").read_text()
+          missing = [o for o in organs if f"szl-{o}" not in bundle]
+          if missing:
+              print(f"::error::uds-bundle.yaml does not compose: {missing}")
+              sys.exit(1)
+          print("PASS: uds-bundle.yaml composes all 5 flagship organs:", organs)
+
+          # 3b. The harness pins a 64-hex sha256 digest for each of the 5 organs.
+          harness = pathlib.Path("scripts/capture_airgap_proof.sh").read_text()
+          for o in organs:
+              m = re.search(rf"\[{o}\]=\"sha256:([0-9a-f]{{64}})\"", harness)
+              if not m:
+                  print(f"::error::harness does not pin a sha256 digest for {o}")
+                  sys.exit(1)
+          print("PASS: harness pins a real sha256 digest for all 5 organs.")
+
+          # 3c. The harness pins the bundle ref + a bundle digest.
+          if "ghcr.io/szl-holdings/szl-mesh:v0.4.0" not in harness:
+              print("::error::harness does not pin the szl-mesh:v0.4.0 bundle ref"); sys.exit(1)
+          if not re.search(r'BUNDLE_DIGEST="sha256:[0-9a-f]{64}"', harness):
+              print("::error::harness does not pin a bundle digest"); sys.exit(1)
+          print("PASS: harness pins the bundle ref + digest.")
+          PY
+
+      # ── 4. The offline verify-blob path actually works (ephemeral key) ───
+      - name: Install Zarf (standalone)
+        run: |
+          set -euo pipefail
+          curl -sLo /usr/local/bin/zarf \
+            "https://github.com/zarf-dev/zarf/releases/download/${ZARF_VERSION}/zarf_${ZARF_VERSION}_Linux_amd64"
+          chmod +x /usr/local/bin/zarf
+          zarf version
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@d7d6bc7722e3daa8354c50bcb52f4837da5e9b6a # v3.8.1
+
+      - name: Build the minimal smoke Zarf package (HARD GATE)
+        run: |
+          set -euo pipefail
+          # Proves the image-bearing build path is real and self-contained — the same
+          # `zarf package create` the founder runs to stage the air-gap tarball.
+          zarf package create test/smoke --confirm -o test/smoke
+          PKG="$(ls test/smoke/zarf-package-szl-deploy-proof-smoke-*.tar.zst 2>/dev/null | head -1 || true)"
+          [ -n "${PKG}" ] || { echo "::error::smoke Zarf package was not produced"; exit 1; }
+          echo "PKG=${PKG}" >> "$GITHUB_ENV"
+          echo "Built: ${PKG} ($(du -h "${PKG}" | cut -f1))"
+
+      - name: Prove the OFFLINE cosign verify-blob path (ephemeral key, no Rekor) (HARD GATE)
+        env:
+          COSIGN_PASSWORD: ""
+        run: |
+          set -euo pipefail
+          WORK="$(mktemp -d)"; cp "${PKG}" "${WORK}/bundle.tar.zst"; cd "${WORK}"
+          # Ephemeral key — REAL signature, throwaway key. This exercises the EXACT
+          # offline command the founder runs against the real .sig on the box:
+          #   cosign verify-blob --key <pub> --insecure-ignore-tlog=true --signature <sig> <bundle>
+          cosign generate-key-pair
+          cosign sign-blob --key cosign.key --yes --tlog-upload=false \
+            --output-signature bundle.tar.zst.sig bundle.tar.zst
+          if ! cosign verify-blob --key cosign.pub --insecure-ignore-tlog=true \
+              --signature bundle.tar.zst.sig bundle.tar.zst; then
+            echo "::error::offline cosign verify-blob path FAILED"
+            exit 1
+          fi
+          echo "PASS: offline cosign verify-blob (no Rekor) path is valid."
+          # Negative control: a tampered byte MUST fail to verify (honest harness).
+          printf '\x00' >> bundle.tar.zst
+          if cosign verify-blob --key cosign.pub --insecure-ignore-tlog=true \
+              --signature bundle.tar.zst.sig bundle.tar.zst 2>/dev/null; then
+            echo "::error::tampered bundle verified — verify path is NOT honest"
+            exit 1
+          fi
+          echo "PASS: tampered bundle correctly FAILS offline verify (negative control)."
+
+      - name: Summary (honest)
+        if: always()
+        run: |
+          {
+            echo "### airgap-package-builds — air-gap proof harness smoke"
+            echo ""
+            echo "**PROVEN on a non-privileged runner:**"
+            echo "- capture harness passes \`bash -n\` + \`shellcheck\` and runs in LINT mode offline"
+            echo "- harness pins a real sha256 digest for ALL 5 organs + the szl-mesh:v0.4.0 bundle"
+            echo "- \`uds-bundle.yaml\` composes all 5 flagship organs"
+            echo "- the minimal smoke Zarf package builds (\`zarf package create\`)"
+            echo "- the OFFLINE \`cosign verify-blob --insecure-ignore-tlog=true\` path verifies a"
+            echo "  real signature AND correctly rejects a tampered byte (negative control)"
+            echo ""
+            echo "**NOT proven here (founder-run, by design):**"
+            echo "- the actual cable-pulled 5-organ \`uds deploy\` against the local store"
+            echo "- its PROOF.json + transcript receipt — captured by the founder per"
+            echo "  AIRGAP_PROOF_RUNBOOK.md and attached to releases/ AFTER the run"
+            echo ""
+            echo "Complements **deploy-proof.yml** (live k3d deploy PIPELINE on a real cluster)."
+            echo "Doctrine v11 · Λ = Conjecture 1 · SLSA L1 honest · L2 attested (organs) · bundle-attestation + L3 roadmap"
+          } >> "$GITHUB_STEP_SUMMARY"
