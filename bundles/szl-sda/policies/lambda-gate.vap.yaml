@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: Apache-2.0
+# ValidatingAdmissionPolicyBinding — bind the org Lambda-gate to the szl-sda namespace.
+# The szl-lambda-gate ValidatingAdmissionPolicy is defined once (bundles/szl-killinchu/policies/
+# lambda-gate.vap.yaml) and reused here via a namespace-scoped binding (no duplicate policy object).
+# Λ = Conjecture 1 (NOT a theorem). Doctrine v11 LOCKED 749/14/163. K8s VAP GA since v1.30.
+# https://kubernetes.io/docs/reference/access-authn-authz/validating-admission-policy/
+# Additive: sits ALONGSIDE the Pepr Package policies (UDS Core compat preserved).
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: szl-lambda-gate-binding-sda
+spec:
+  policyName: szl-lambda-gate
+  validationActions: ["Audit"]             # Audit during rollout; promote to Deny after green dress rehearsal
+  matchResources:
+    namespaceSelector:
+      matchLabels: { "kubernetes.io/metadata.name": "szl-sda" }

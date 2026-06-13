@@ -1,0 +1,11 @@
+{{/* NOTES */}}
+killinchu SDA (khipu-sda-core) deployed to namespace {{ .Values.namespace }}.
+Health:  kubectl -n {{ .Values.namespace }} port-forward svc/szl-sda 8080:8080
+         curl http://localhost:8080/sda/healthz
+Evaluate: curl -XPOST http://localhost:8080/sda/evaluate -d @track.json
+          -> returns the SDA verdict envelope (anomaly_score, Λ advisory axis,
+             confidence ESTIMATE, in-toto receipt). Receipts sign downstream
+             via DSSE/Khipu (a11oy / khipu-consensus). UNSIGNED is honest, never green.
+Honest:  air/maritime anomaly is LIVE; orbital-SDA (python-sgp4) is ROADMAP (off by default).
+         Λ = Conjecture 1 (advisory). SLSA L1 honest (L2 build-attested, L3 roadmap).
+Operational: pull the network cable — it still serves. Doctrine v11 LOCKED 749/14/163.

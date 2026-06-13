@@ -11,6 +11,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [uds-v0.4.0] — 2026-06-13
+
+### Added
+- **`szl-sda` bundle — killinchu SDA / Domain Awareness capability.** New air-gap-deployable,
+  clean-room anomaly / Space-Domain-Awareness UDS component (engine image
+  `ghcr.io/szl-holdings/khipu-sda-core:uds-v0.4.0`). Ships `zarf.yaml`, `uds-bundle.yaml`,
+  Helm chart (STIG-aligned securityContext, default-deny NetworkPolicy, STRICT mTLS), UDS
+  Package CR, cosign image policy (warn mode), DSSE receipt-egress gate, Λ-gate VAP binding,
+  Section 889 denylist, SLSA-provenance ConfigMap, and STUB SBOMs. Pipeline:
+  DTID → CHARACTERIZE → TWA → FUSE; each detection emits a signed DSSE receipt.
+- **`VERSION` file + `scripts/check_version_doctrine.sh` + `version-doctrine.yml` CI** — declares
+  `uds-v0.4.0` as the single canonical UDS ecosystem version and enforces no user-visible
+  drift, while allowlisting signed historical tags (forward-only).
+
+### Version reconciliation (drift fix)
+- Canonical UDS ecosystem version is **`uds-v0.4.0`**. The five flagship organ images
+  (a11oy/sentra/amaru/rosie/killinchu) stay **byte-stable at the signed `uds-v0.2.0`** —
+  forward-only, never renamed (renaming would break published cosign signatures + Rekor
+  entries). The `uds-v0.3.1` release plan is marked **SUPERSEDED**.
+
+### Attribution / honesty
+- `szl-sda` is **inspired by** the publicly described 4-function SDA framing of True Anomaly's
+  "Mosaic"; it is a **clean-room** SZL implementation from permissively licensed lineage. SZL
+  Holdings is **not affiliated** with True Anomaly. The `alibi-detect` library is deliberately
+  **excluded** (BSL 1.1 since 2024-01-22). No signature or image digest is fabricated; the SDA
+  image digest is blank until the founder-gated Forge build signs `uds-v0.4.0` (FA-001).
+- SLSA: **L1 honest**; L2 build-attestation present (in-toto provenance emitted by Forge);
+  L2-verified / L3 = roadmap. Λ = Conjecture 1 (advisory, not a theorem). Doctrine v11 LOCKED.
+
+---
+
 ## [1.0.0] — 2026-06-09
 
 ### Added

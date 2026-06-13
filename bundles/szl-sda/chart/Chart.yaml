@@ -1,0 +1,22 @@
+# Copyright 2026 SZL Holdings — SPDX-License-Identifier: Apache-2.0
+# killinchu SDA (Sovereign Domain-Awareness) standalone Helm chart — UDS Core / Big Bang compatible.
+# Engine: khipu-sda-core (clean-room anomaly/SDA core). User-visible surface: "killinchu SDA / Domain Awareness".
+# Inspired by True Anomaly's Mosaic (capability only; no proprietary code) — https://www.trueanomaly.space/mosaic
+# Author: Yachay <yachay@szlholdings.dev> (DCO signed). Doctrine v11 LOCKED 749/14/163.
+apiVersion: v2
+name: szl-sda
+description: "killinchu SDA — Sovereign Domain-Awareness layer: clean-room multivariate + graph anomaly / Threat-Warning engine (khipu-sda-core). Every detection emits a Λ-gated (Conjecture 1, advisory) DSSE provenance receipt into the Khipu DAG."
+type: application
+version: 0.4.0
+appVersion: "uds-v0.4.0"
+home: https://github.com/szl-holdings/khipu-sda-core
+sources:
+  - https://github.com/szl-holdings/khipu-sda-core
+  - https://github.com/szl-holdings/killinchu
+keywords: [uds, big-bang, szl, sda, anomaly-detection, domain-awareness, killinchu]
+maintainers:
+  - name: Yachay
+    email: yachay@szlholdings.dev
+annotations:
+  helm.sh/images: |
+    - ghcr.io/szl-holdings/khipu-sda-core:uds-v0.4.0

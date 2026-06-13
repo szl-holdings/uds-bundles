@@ -26,6 +26,17 @@
 | `szl-provenance` | a11oy — **Provenance Anchor** (YAWAR receipt bus / receipt memory) *(roadmap role, surfaces in a11oy)* | Khipu Merkle DAG + DSSE-signed receipt chain |
 | `szl-operator` | a11oy — operator console *(roadmap role, surfaces in a11oy)* | Human-on-the-loop decision approval gates (full 10-view operator app) |
 | `szl-killinchu` | killinchu — counter-UAS | Λ-gate defensive application (ADS-B + MAVLink) |
+| `szl-sda` | **killinchu SDA / Domain Awareness** — clean-room anomaly/SDA capability | DTID → CHARACTERIZE → TWA → FUSE; signed DSSE receipt per detection (`sda.detection.*` mesh spans) |
+
+> **New in `uds-v0.4.0`:** the `szl-sda` bundle adds an air-gap-deployable, clean-room
+> anomaly / Space-Domain-Awareness capability (engine image `ghcr.io/szl-holdings/khipu-sda-core`).
+> Attribution: inspired by the publicly described 4-function SDA framing of True Anomaly's
+> "Mosaic" ([trueanomaly.space/mosaic](https://www.trueanomaly.space/mosaic)); SZL's
+> implementation is a clean-room build from permissively licensed lineage (PyOD/PyGOD BSD-2,
+> Merlion BSD-3, TODS Apache-2.0, tsod/GDN/GraGOD MIT, python-sgp4 MIT). SZL Holdings is
+> **not affiliated** with True Anomaly. The image is cosign-sign-ready; its digest is left
+> blank until the founder-gated Forge build signs `uds-v0.4.0` (FA-001) — no signature or
+> digest is fabricated.
 
 Each bundle ships: `uds-bundle.yaml` · `zarf.yaml` · Helm chart · Pepr policies + ValidatingAdmissionPolicy + Cilium NetworkPolicy · SPDX + CycloneDX SBOMs · SLSA v1.2 provenance · `serviceMesh.mode: ambient`.
 

@@ -1,0 +1,420 @@
+# SZL Holdings — sda.detection.* OTEL Span Schema (v18.0)
+# Author: Lutar, Stephen P. · ORCID 0009-0001-0110-4173 · SZL Holdings
+#
+# OTEL semantic-convention schema for anomaly/threat-detection spans emitted by the
+# killinchu SDA (Sovereign Domain-Awareness) capability — engine `khipu-sda-core`.
+# Each anomaly/threat detection -> one signed span -> the Khipu Merkle DAG receipt chain.
+#
+# Capability INSPIRED BY True Anomaly's Mosaic (capability only; no proprietary code):
+#   DTID (Detect/Track/ID) -> Characterize -> ML Threat-Warning & Assessment -> Fuse.
+#   https://www.trueanomaly.space/mosaic
+#
+# Specification follows:
+#   OpenTelemetry Specification v1.29+ (https://opentelemetry.io/docs/specs/otel/)
+#   OpenTelemetry Semantic Conventions v1.25+ (https://opentelemetry.io/docs/specs/semconv/)
+#   DSSE envelope: https://github.com/secure-systems-lab/dsse
+#   in-toto attestation: https://github.com/in-toto/attestation
+#
+# UDS mesh wiring (cross-organ):
+#   namespace:        szl-sda
+#   service:          szl-sda  (Istio sidecar mTLS via UDS Operator / uds-core)
+#   service discovery: UDS Package CR `Package/szl-sda` (network.expose host=sda)
+#   DSSE receipt sink: szl-receipts (Egress NetworkPolicy, port 8080) -> Khipu DAG
+#   SSO:              Keycloak OIDC client uds-szl-sda
+#   producer organ:   killinchu (fusion path) calls /sda/evaluate; SDA emits these spans
+#
+# SLSA provenance: L1 (honest) — receipts bind spans to extended-attestations.jsonl.
+#                  L2 build-attestation present where CI runs; L3 roadmap.
+# HONESTY: Λ = Conjecture 1 (advisory, never a theorem). Confidence is a bounded
+#          finite-sample ESTIMATE (split-conformal), not a certainty claim. UNSIGNED
+#          receipts are STRUCTURAL-ONLY — never a false "verified". Never fabricated.
+
+schema_url: https://github.com/szl-holdings/uds-mesh/blob/main/schemas/spans/sda.detection.yaml
+version: 18.0.0
+organ: sda
+mesh_namespace: szl-sda
+mesh_service: szl-sda
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Common fields — shared by EVERY organ span across the UDS mesh
+# (cross-organ receipt envelope: any organ can read any other organ's spans)
+# ─────────────────────────────────────────────────────────────────────────────
+
+common_fields:
+  description: |
+    All sda.detection.* spans share the standard OTEL span envelope plus the SZL
+    cross-organ DSSE governance-receipt attributes (prefix szl.mesh.*). These shared
+    attributes are IDENTICAL across all organs (a11oy, sentra, amaru, killinchu, rosie,
+    sda) so the mesh can correlate a single decision as it crosses organ boundaries —
+    e.g. a killinchu fused track -> an sda.detection.twa span -> an a11oy oversight row.
+
+  otel_fields:
+    - name: trace_id
+      type: string
+      required: true
+      description: "W3C TraceContext trace-id (32 hex chars). Stable across organs."
+      example: "4bf92f3577b34da6a3ce929d0e0e4736"
+    - name: span_id
+      type: string
+      required: true
+      description: "W3C TraceContext span-id (16 hex chars)."
+      example: "00f067aa0ba902b7"
+    - name: parent_span_id
+      type: string
+      required: false
+      description: "Parent span-id; may belong to a DIFFERENT organ (e.g. killinchu.courier)."
+      example: "00f067aa0ba902b6"
+    - name: name
+      type: string
+      required: true
+      description: "Span name — one of the sda.detection.* names below."
+    - name: start_time
+      type: string
+      format: "RFC 3339 / ISO 8601 UTC"
+      required: true
+      example: "2026-06-13T12:00:00.000000000Z"
+    - name: end_time
+      type: string
+      format: "RFC 3339 / ISO 8601 UTC"
+      required: true
+      example: "2026-06-13T12:00:00.042000000Z"
+    - name: status
+      type: object
+      required: true
+      description: "OTEL SpanStatus: {code: OK | ERROR | UNSET, message?: string}."
+      properties:
+        code:
+          type: string
+          enum: [OK, ERROR, UNSET]
+        message:
+          type: string
+          required: false
+
+  # Cross-organ DSSE governance-receipt attributes. Present on EVERY mesh span
+  # regardless of organ. Bind each span to the Khipu Merkle DAG receipt chain and
+  # to the per-organ cosign-signed image that emitted it.
+  szl_mesh_attributes:
+    - name: szl.mesh.organ
+      type: string
+      required: true
+      description: "Emitting organ: a11oy | sentra | amaru | killinchu | rosie | sda."
+      example: "sda"
+    - name: szl.mesh.receipt_hash
+      type: string
+      required: true
+      description: |
+        SHA-256 hex digest of the canonical DSSE receipt (in-toto Statement v1,
+        predicateType https://szlholdings.com/attestations/sda-anomaly/v1) for this
+        span. Binds the span to the cross-organ provenance chain in
+        extended-attestations.jsonl on the Khipu Merkle DAG.
+      example: "a3f2e1d4b8c7094f6e5d2c1b0a9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1a"
+    - name: szl.mesh.dsse_payload_type
+      type: string
+      required: true
+      description: "DSSE payloadType. Always application/vnd.in-toto+json for mesh receipts."
+      example: "application/vnd.in-toto+json"
+    - name: szl.mesh.image_digest
+      type: string
+      required: true
+      description: |
+        Digest of the cosign-signed ghcr.io image that emitted the span,
+        ghcr.io/szl-holdings/khipu-sda-core@sha256:... (keyless OIDC or P-256 signature).
+        HONEST: until Forge builds + signs uds-v0.4.0, this is the all-zero placeholder
+        and the receipt's _signing.status is UNSIGNED (STRUCTURAL-ONLY).
+      example: "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+    - name: szl.mesh.lambda_value
+      type: string
+      required: true
+      description: |
+        Governance Λ for this span as a decimal string (Λ Conjecture 1: Λ ∈ [0,1],
+        ADVISORY). The SDA anomaly score feeds the killinchu 13-axis Λ-gate as the new
+        advisory `anomaly_twa` axis; this is the resulting gate scalar, never "proven trust".
+      example: "0.813472"
+    - name: szl.mesh.governance_drift
+      type: boolean
+      required: true
+      description: |
+        True iff Λ fell below the Doctrine Λ floor (LAMBDA_FLOOR = 0.1) or exceeded 1.0.
+      example: false
+    - name: szl.mesh.upstream_organ
+      type: string
+      required: false
+      description: |
+        For cross-organ edges: the organ that produced the parent span (typically
+        "killinchu" — the fusion path that called /sda/evaluate).
+      example: "killinchu"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Span definitions (organ-specific) — the Mosaic-derived pipeline stages
+# ─────────────────────────────────────────────────────────────────────────────
+
+spans:
+
+  - name: sda.detection.dtid
+    stability: experimental
+    brief: |
+      Emitted when a track is detected / tracked / identified (DTID stage).
+    description: |
+      Covers the Detect/Track/ID stage for one air/maritime track (orbital is roadmap).
+      Records track custody hand-off into the SDA engine before anomaly scoring.
+    attributes:
+      - name: szl.sda.track_id
+        type: string
+        required: true
+        description: "Fused COP track id (air/maritime). Orbital tracks are roadmap."
+        example: "TRK-0001"
+      - name: szl.sda.stage
+        type: string
+        required: true
+        description: "Mosaic-derived pipeline stage."
+        example: "DTID"
+      - name: szl.sda.domain
+        type: string
+        required: true
+        description: "Track domain: air | maritime (orbital = roadmap, off by default)."
+        example: "air"
+
+  - name: sda.detection.characterize
+    stability: experimental
+    brief: |
+      Emitted when a detected track is characterized against the threat-class DB.
+    description: |
+      Records characterization (Mosaic "infer what a system does") keyed to killinchu's
+      Threat Class DB / drone fingerprints. Advisory only.
+    attributes:
+      - name: szl.sda.track_id
+        type: string
+        required: true
+        description: "Fused COP track id."
+        example: "TRK-0001"
+      - name: szl.sda.stage
+        type: string
+        required: true
+        example: "CHARACTERIZE"
+      - name: szl.sda.threat_class
+        type: string
+        required: false
+        description: "Characterized threat class (advisory)."
+        example: "uas-rotary"
+
+  - name: sda.detection.twa
+    stability: experimental
+    brief: |
+      Emitted when the clean-room anomaly ensemble scores a track (Threat Warning & Assessment).
+    description: |
+      The core anomaly/Threat-Warning span. Records the ensemble anomaly score in [0,1],
+      the advisory Λ verdict (allow|advisory|deny — Λ Conjecture 1), and the bounded
+      conformal confidence interval (ESTIMATE, not certainty). One signed span per detection.
+    attributes:
+      - name: szl.sda.track_id
+        type: string
+        required: true
+        example: "TRK-0001"
+      - name: szl.sda.stage
+        type: string
+        required: true
+        example: "TWA"
+      - name: szl.sda.anomaly_score
+        type: string
+        required: true
+        description: "Ensemble anomaly score in [0,1] as a decimal string."
+        example: "0.872103"
+      - name: szl.sda.lambda_verdict
+        type: string
+        required: true
+        description: "Advisory Λ verdict (Λ Conjecture 1): allow | advisory | deny. Human-on-the-loop."
+        example: "advisory"
+      - name: szl.sda.confidence_lo
+        type: string
+        required: true
+        description: "Lower bound of the conformal confidence interval (ESTIMATE)."
+        example: "0.61"
+      - name: szl.sda.confidence_hi
+        type: string
+        required: true
+        description: "Upper bound of the conformal confidence interval (ESTIMATE)."
+        example: "0.95"
+      - name: szl.sda.confidence_method
+        type: string
+        required: true
+        description: "Confidence method; always labeled an ESTIMATE, never a certainty claim."
+        example: "split-conformal-style alpha=0.10 (ESTIMATE)"
+      - name: szl.sda.detector_ensemble
+        type: string
+        required: true
+        description: "Clean-room detector lineage that produced the score (permissive)."
+        example: "IsolationForest(PyOD-BSD2)+Autoencoder(Merlion/TODS-BSD3/Apache2)+RobustZScore(tsod-MIT)+GraphDeviation(GDN/PyGOD-MIT/BSD2)"
+
+  - name: sda.detection.fuse
+    stability: experimental
+    brief: |
+      Emitted when an SDA verdict is fused into the killinchu Common Operating Picture.
+    description: |
+      Records fusion of the anomaly verdict back into the killinchu COP (Sensor-Fusion /
+      Multi-Track Priority) and the durable append into the Khipu DAG, closing the loop.
+    attributes:
+      - name: szl.sda.track_id
+        type: string
+        required: true
+        example: "TRK-0001"
+      - name: szl.sda.stage
+        type: string
+        required: true
+        example: "FUSE"
+      - name: szl.sda.khipu_appended
+        type: boolean
+        required: true
+        description: "True iff the signed receipt was durably appended to the Khipu Merkle DAG."
+        example: true
+
+# ─────────────────────────────────────────────────────────────────────────────
+# JSON Schema (canonical wire format — shared mesh envelope + organ fields)
+# ─────────────────────────────────────────────────────────────────────────────
+
+json_schema:
+  type: object
+  required:
+    - trace_id
+    - span_id
+    - name
+    - start_time
+    - end_time
+    - status
+    - attributes
+  properties:
+    trace_id:
+      type: string
+      pattern: "^[0-9a-f]{32}$"
+    span_id:
+      type: string
+      pattern: "^[0-9a-f]{16}$"
+    parent_span_id:
+      type: string
+      pattern: "^[0-9a-f]{16}$"
+    name:
+      type: string
+      enum:
+        - "sda.detection.dtid"
+        - "sda.detection.characterize"
+        - "sda.detection.twa"
+        - "sda.detection.fuse"
+    start_time:
+      type: string
+      format: "date-time"
+    end_time:
+      type: string
+      format: "date-time"
+    status:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+          enum: [OK, ERROR, UNSET]
+        message:
+          type: string
+    attributes:
+      type: object
+      required:
+        - "szl.mesh.organ"
+        - "szl.mesh.receipt_hash"
+        - "szl.mesh.dsse_payload_type"
+        - "szl.mesh.image_digest"
+        - "szl.mesh.lambda_value"
+        - "szl.mesh.governance_drift"
+      properties:
+        "szl.mesh.organ":
+          type: string
+          enum: ["a11oy", "sentra", "amaru", "killinchu", "rosie", "sda"]
+        "szl.mesh.receipt_hash":
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+        "szl.mesh.dsse_payload_type":
+          type: string
+        "szl.mesh.image_digest":
+          type: string
+          pattern: "^sha256:[0-9a-f]{64}$"
+        "szl.mesh.lambda_value":
+          type: string
+          description: "Λ ∈ [0,1] decimal string (Λ Conjecture 1, advisory)"
+        "szl.mesh.governance_drift":
+          type: boolean
+        "szl.mesh.upstream_organ":
+          type: string
+        "szl.sda.track_id":
+          type: string
+        "szl.sda.stage":
+          type: string
+          enum: ["DTID", "CHARACTERIZE", "TWA", "FUSE"]
+        "szl.sda.domain":
+          type: string
+          enum: ["air", "maritime", "orbital"]
+        "szl.sda.threat_class":
+          type: string
+        "szl.sda.anomaly_score":
+          type: string
+        "szl.sda.lambda_verdict":
+          type: string
+          enum: ["allow", "advisory", "deny"]
+        "szl.sda.confidence_lo":
+          type: string
+        "szl.sda.confidence_hi":
+          type: string
+        "szl.sda.confidence_method":
+          type: string
+        "szl.sda.detector_ensemble":
+          type: string
+        "szl.sda.khipu_appended":
+          type: boolean
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Example spans
+# ─────────────────────────────────────────────────────────────────────────────
+
+examples:
+
+  - span: sda.detection.twa
+    body:
+      trace_id: "4bf92f3577b34da6a3ce929d0e0e4736"
+      span_id: "00f067aa0ba902b7"
+      parent_span_id: "00f067aa0ba902b6"
+      name: "sda.detection.twa"
+      start_time: "2026-06-13T12:00:00.000000000Z"
+      end_time: "2026-06-13T12:00:00.040000000Z"
+      status: {code: OK}
+      attributes:
+        szl.mesh.organ: "sda"
+        szl.mesh.receipt_hash: "a3f2e1d4b8c7094f6e5d2c1b0a9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1a"
+        szl.mesh.dsse_payload_type: "application/vnd.in-toto+json"
+        szl.mesh.image_digest: "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        szl.mesh.lambda_value: "0.813472"
+        szl.mesh.governance_drift: false
+        szl.mesh.upstream_organ: "killinchu"
+        szl.sda.track_id: "TRK-0001"
+        szl.sda.stage: "TWA"
+        szl.sda.anomaly_score: "0.872103"
+        szl.sda.lambda_verdict: "advisory"
+        szl.sda.confidence_lo: "0.61"
+        szl.sda.confidence_hi: "0.95"
+        szl.sda.confidence_method: "split-conformal-style alpha=0.10 (ESTIMATE)"
+        szl.sda.detector_ensemble: "IsolationForest(PyOD-BSD2)+Autoencoder(Merlion/TODS-BSD3/Apache2)+RobustZScore(tsod-MIT)+GraphDeviation(GDN/PyGOD-MIT/BSD2)"
+  - span: sda.detection.fuse
+    body:
+      trace_id: "4bf92f3577b34da6a3ce929d0e0e4736"
+      span_id: "33e389dd3ed135ea"
+      parent_span_id: "00f067aa0ba902b7"
+      name: "sda.detection.fuse"
+      start_time: "2026-06-13T12:00:00.040000000Z"
+      end_time: "2026-06-13T12:00:00.052000000Z"
+      status: {code: OK}
+      attributes:
+        szl.mesh.organ: "sda"
+        szl.mesh.receipt_hash: "a3f2e1d4b8c7094f6e5d2c1b0a9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1a"
+        szl.mesh.dsse_payload_type: "application/vnd.in-toto+json"
+        szl.mesh.image_digest: "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        szl.mesh.lambda_value: "0.813472"
+        szl.mesh.governance_drift: false
+        szl.mesh.upstream_organ: "killinchu"
+        szl.sda.track_id: "TRK-0001"
+        szl.sda.stage: "FUSE"
+        szl.sda.khipu_appended: true

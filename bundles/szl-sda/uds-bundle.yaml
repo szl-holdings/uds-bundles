@@ -1,0 +1,43 @@
+# SPDX-License-Identifier: Apache-2.0
+# UDS Core declarative bundle spec — szl-sda (killinchu SDA / khipu-sda-core)
+# Author: Yachay <yachay@szlholdings.dev> (DCO signed)
+# Doctrine v11 LOCKED 749/14/163
+# Operational drop: the clean-room anomaly/SDA capability on top of UDS Core + killinchu.
+kind: UDSBundle
+metadata:
+  name: szl-sda
+  description: "killinchu SDA operational UDS drop — clean-room multivariate + graph anomaly / Threat-Warning engine; advisory Λ-gated, DSSE-receipted, sovereign air-gap"
+  version: "0.4.0"
+  architecture: amd64
+  authors: "Yachay <yachay@szlholdings.dev>"
+
+  # UDS Core compatibility: targets Unified Defense Stack Core v1.5.0
+  # https://github.com/defenseunicorns/uds-core/releases/tag/v1.5.0
+  x-uds-core-compat: ">=1.5.0"
+  # Zarf toolchain compatibility (keyless sign + offline verify)
+  x-zarf-compat: ">=0.77.0"
+  annotations:
+    szl.dev/fleet-deployable: "true"
+    szl.dev/deployable-to-edge: "true"
+    szl.dev/ddil-ok: "true"           # Denied/Degraded/Intermittent/Limited edge OK
+    szl.dev/fleet-tier: "mission-application"
+    szl.dev/edge-profile: "ddil"
+    szl.dev/min-ram-gb: "4"
+    szl.dev/lambda-posture: "conjecture-1-advisory"
+    szl.dev/orbital-sda: "roadmap"    # honest: air/maritime live; orbital is future work
+
+packages:
+  - name: szl-sda
+    # Local path for air-gap create; OCI ref for registry-backed deploy.
+    path: .
+    ref: 0.4.0
+    optionalComponents:
+      - szl-sda-sbom-attest
+    overrides:
+      szl-sda:
+        szl-sda:
+          values:
+            - path: image.tag
+              value: "uds-v0.4.0"
+            - path: namespace
+              value: "szl-sda"

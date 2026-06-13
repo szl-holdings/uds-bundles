@@ -1,0 +1,26 @@
+{
+  "_comment": "PENDING FORGE BUILD. Honest SBOM stub (CycloneDX 1.4). Forge regenerates from the real built image. No fabricated hashes/signatures.",
+  "_status": "STUB_PENDING_FORGE_BUILD",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.4",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "type": "application",
+      "name": "khipu-sda-core",
+      "version": "uds-v0.4.0",
+      "licenses": [{"license": {"id": "Apache-2.0"}}],
+      "purl": "pkg:oci/khipu-sda-core@uds-v0.4.0"
+    }
+  },
+  "components": [
+    {"type": "library", "name": "pyod", "licenses": [{"license": {"id": "BSD-2-Clause"}}], "purl": "pkg:pypi/pyod"},
+    {"type": "library", "name": "pygod", "licenses": [{"license": {"id": "BSD-2-Clause"}}], "purl": "pkg:pypi/pygod"},
+    {"type": "library", "name": "salesforce-merlion", "licenses": [{"license": {"id": "BSD-3-Clause"}}], "purl": "pkg:pypi/salesforce-merlion"},
+    {"type": "library", "name": "tods", "licenses": [{"license": {"id": "Apache-2.0"}}], "purl": "pkg:pypi/tods"},
+    {"type": "library", "name": "tsod", "licenses": [{"license": {"id": "MIT"}}], "purl": "pkg:pypi/tsod"},
+    {"type": "library", "name": "sgp4", "licenses": [{"license": {"id": "MIT"}}], "purl": "pkg:pypi/sgp4"},
+    {"type": "library", "name": "scikit-learn", "licenses": [{"license": {"id": "BSD-3-Clause"}}], "purl": "pkg:pypi/scikit-learn"},
+    {"type": "library", "name": "numpy", "licenses": [{"license": {"id": "BSD-3-Clause"}}], "purl": "pkg:pypi/numpy"}
+  ]
+}

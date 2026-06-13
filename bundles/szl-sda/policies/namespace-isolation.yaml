@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: Apache-2.0
+# Pepr policy — namespace isolation for szl-sda (UDS Core native admission).
+# Author: Yachay <yachay@szlholdings.dev> (DCO signed). Doctrine v11 LOCKED 749/14/163.
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: szl-sda-isolation
+  namespace: szl-sda
+spec:
+  network:
+    # UDS Core v1.5.0 canonical: Istio ambient service-mesh mode.
+    serviceMesh:
+      mode: ambient
+    # Default-deny: only same-namespace + Istio mesh ingress; killinchu may call SDA.
+    allow:
+      - direction: Ingress
+        remoteNamespace: istio-system
+        port: 8080
+        description: "Allow Istio mesh ingress only"
+      - direction: Ingress
+        remoteNamespace: szl-sda
+        description: "Allow same-namespace traffic"
+      - direction: Ingress
+        remoteNamespace: szl-killinchu
+        port: 8080
+        description: "killinchu fusion path calls SDA /sda/evaluate"
+  monitor:
+    - selector:
+        app.kubernetes.io/name: szl-sda
+      targetPort: 8080
+      portName: http
+      description: "killinchu SDA (khipu-sda-core) metrics"

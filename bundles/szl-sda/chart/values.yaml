@@ -1,0 +1,58 @@
+# Copyright 2026 SZL Holdings — SPDX-License-Identifier: Apache-2.0
+# killinchu SDA (khipu-sda-core) Helm values — STIG-aligned securityContext, default-deny NetworkPolicy.
+# Author: Yachay <yachay@szlholdings.dev> (DCO signed). Doctrine v11 LOCKED 749/14/163.
+namespace: szl-sda
+replicas: 1
+
+image:
+  repository: ghcr.io/szl-holdings/khipu-sda-core
+  tag: "uds-v0.4.0"
+  # Digest pin is intentionally EMPTY until Forge builds + cosign-signs the first
+  # uds-v0.4.0 image (see attestations/khipu-sda-core.cosign-verify.txt). NEVER
+  # fabricate a digest: an unknown digest is left blank and the tag is pinned only.
+  # Forge fills this with the real sha256 after `cosign sign` + Rekor upload (FA-001).
+  digest: ""
+  pullPolicy: IfNotPresent
+
+service:
+  port: 8080
+
+healthPath: "/sda/healthz"
+
+istio:
+  enabled: true
+  hardened: true   # STRICT mTLS PeerAuthentication
+
+monitoring:
+  enabled: true
+  path: /metrics
+  interval: 30s
+
+networkPolicy:
+  enabled: true
+  defaultDeny: true
+  cilium: false   # set true on Cilium-CNI edges to enable L7 CiliumNetworkPolicy
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  seccompProfile:
+    type: RuntimeDefault
+  capabilities:
+    drop: ["ALL"]
+
+resources:
+  requests: {cpu: 100m, memory: 256Mi}
+  limits: {cpu: "2", memory: 2Gi}
+
+# SDA-specific config surfaced to the engine (clean-room anomaly stack).
+sda:
+  # Λ-gate thresholds (advisory; Λ = Conjecture 1, never a theorem).
+  allowThreshold: "0.35"
+  denyThreshold: "0.65"
+  # Honest finite-sample confidence interval (split-conformal). NOT a certainty claim.
+  conformalAlpha: "0.10"
+  # Orbital-SDA (python-sgp4) track surface is ROADMAP, OFF by default. Air/maritime live.
+  orbitalRoadmapEnabled: false

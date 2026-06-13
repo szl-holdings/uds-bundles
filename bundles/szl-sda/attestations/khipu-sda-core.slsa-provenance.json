@@ -1,0 +1,50 @@
+{
+  "_comment": "PENDING FORGE BUILD. This is an HONEST STUB, not a signed attestation. The subject.digest is intentionally EMPTY — Forge fills the real sha256 after building ghcr.io/szl-holdings/khipu-sda-core:uds-v0.4.0 and running attest-build-provenance + cosign attest (keyless Fulcio/Rekor). NO digest or signature is fabricated. SLSA L1 honest; L2 build-attestation present where CI runs; L3 roadmap.",
+  "_status": "STUB_PENDING_FORGE_BUILD_FA-001",
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [
+    {
+      "name": "ghcr.io/szl-holdings/khipu-sda-core:uds-v0.4.0",
+      "digest": {
+        "sha256": ""
+      }
+    }
+  ],
+  "predicateType": "https://slsa.dev/provenance/v1",
+  "predicate": {
+    "buildDefinition": {
+      "buildType": "https://github.com/slsa-framework/slsa-github-generator",
+      "externalParameters": {
+        "source": "https://github.com/szl-holdings/khipu-sda-core",
+        "dockerfile": "Dockerfile",
+        "baseImage": "python:3.12-slim"
+      },
+      "internalParameters": {
+        "doctrine": "v11 LOCKED 749/14/163",
+        "lambda": "Conjecture 1 (advisory, never a theorem)",
+        "cleanroom": "INSPIRED BY True Anomaly Mosaic (capability only; no proprietary code)"
+      },
+      "resolvedDependencies": [
+        {"uri": "pkg:pypi/pyod", "_license": "BSD-2-Clause"},
+        {"uri": "pkg:pypi/pygod", "_license": "BSD-2-Clause"},
+        {"uri": "pkg:pypi/salesforce-merlion", "_license": "BSD-3-Clause"},
+        {"uri": "pkg:pypi/tods", "_license": "Apache-2.0"},
+        {"uri": "pkg:pypi/tsod", "_license": "MIT"},
+        {"uri": "pkg:pypi/sgp4", "_license": "MIT"},
+        {"uri": "pkg:pypi/scikit-learn", "_license": "BSD-3-Clause"},
+        {"uri": "pkg:pypi/numpy", "_license": "BSD-3-Clause"}
+      ],
+      "_excluded_dependencies": [
+        {"uri": "pkg:pypi/alibi-detect", "_reason": "REJECTED — relicensed to BSL 1.1 on 2024-01-22; no production use without subscription. Blocked in CI."}
+      ]
+    },
+    "runDetails": {
+      "builder": {
+        "id": "https://github.com/szl-holdings/khipu-sda-core/.github/workflows/cosign.yml@refs/heads/main"
+      },
+      "metadata": {
+        "_invocationId": "PENDING_FORGE_BUILD"
+      }
+    }
+  }
+}
