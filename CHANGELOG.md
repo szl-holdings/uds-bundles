@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical UDS ecosystem version is **`uds-v0.4.0`**. The five flagship organ images
   (a11oy/sentra/amaru/rosie/killinchu) stay **byte-stable at the signed `uds-v0.2.0`** —
   forward-only, never renamed (renaming would break published cosign signatures + Rekor
-  entries). The `uds-v0.3.1` release plan is marked **SUPERSEDED**.
+  entries). The prior v0.3.1 release plan (`mesh/docs/UDS_v0.3.1_RELEASE_PLAN.md`) is marked **SUPERSEDED**.
 
 ### Attribution / honesty
 - `szl-sda` is **inspired by** the publicly described 4-function SDA framing of True Anomaly's
