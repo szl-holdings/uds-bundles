@@ -20,19 +20,30 @@ metadata:
   architecture: amd64
 
 packages:
-  - name: a11oy
-    repository: ghcr.io/szl-holdings/packages/a11oy
-    ref: 1.0.0-alpha
-    # For local dev against unpublished packages, swap `repository`+`ref`
-    # for `path: ../a11oy/deploy` (uds-cli will run zarf package create
-    # against the package directory at bundle-build time).
+  # These three members are sourced from the real, in-repo Zarf packages under
+  # `bundles/szl-<organ>/` (the same local-path pattern the canonical published
+  # root bundle `szl-mesh:v0.4.0` uses). Each wraps the published, cosign-signed
+  # organ image (uds-v0.2.0). uds-cli runs `zarf package create` against the
+  # package directory at bundle-build time, so `uds create .` deploys as written.
+  #
+  # The prior refs `ghcr.io/szl-holdings/packages/<organ>:1.0.0-alpha` were never
+  # published — wrong org path (`packages/` prefix) AND no standalone per-organ
+  # Zarf package exists on GHCR (only the plain container images do). They are
+  # replaced with local paths so the bundle is genuinely deployable.
+  - name: szl-a11oy
+    path: ../bundles/szl-a11oy
+    ref: "0.2.0"
     optionalComponents:
-      - a11oy-attestations
+      - a11oy-sbom-attest
 
-  - name: sentra
-    repository: ghcr.io/szl-holdings/packages/sentra
-    ref: 1.0.0-alpha
+  - name: szl-sentra
+    path: ../bundles/szl-sentra
+    ref: "0.2.0"
+    optionalComponents:
+      - sentra-sbom-attest
 
-  - name: amaru
-    repository: ghcr.io/szl-holdings/packages/amaru
-    ref: 1.0.0-alpha
+  - name: szl-amaru
+    path: ../bundles/szl-amaru
+    ref: "0.2.0"
+    optionalComponents:
+      - amaru-sbom-attest
