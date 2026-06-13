@@ -37,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Holdings is **not affiliated** with True Anomaly. The `alibi-detect` library is deliberately
   **excluded** (BSL 1.1 since 2024-01-22). No signature or image digest is fabricated; the SDA
   image digest is blank until the founder-gated Forge build signs `uds-v0.4.0` (FA-001).
-- SLSA: **L1 honest**; L2 build-attestation present (in-toto provenance emitted by Forge);
+- SLSA: **L1 honest**; L2 = roadmap / not yet earned (in-toto provenance to be emitted by the founder-gated Forge build, FA-001);
   L2-verified / L3 = roadmap. Λ = Conjecture 1 (advisory, not a theorem). Doctrine v11 LOCKED.
 
 ---

@@ -20,14 +20,14 @@ cosign verify \
   --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
   ghcr.io/szl-holdings/khipu-sda-core:uds-v0.4.0
 
-# --- Verify the SLSA provenance attestation (L1 honest; L2 build-attested where CI runs) ---
+# --- Verify the SLSA provenance attestation (L1 honest; L2 = roadmap / not yet earned until FA-001 build) ---
 cosign verify-attestation \
   --certificate-identity-regexp "https://github.com/szl-holdings/khipu-sda-core/.*" \
   --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
   --type slsaprovenance \
   ghcr.io/szl-holdings/khipu-sda-core:uds-v0.4.0
 
-# --- GitHub-native build provenance (SLSA L2 attestation present) ---
+# --- GitHub-native build provenance (SLSA L2 = roadmap / not yet earned; populated after the FA-001 Forge build) ---
 gh attestation verify oci://ghcr.io/szl-holdings/khipu-sda-core:uds-v0.4.0 \
   --owner szl-holdings
 

@@ -3,7 +3,7 @@
   SDA SLSA provenance metadata ConfigMap.
 
   HONEST: This declares the build-attestation predicateType that Forge emits for
-  khipu-sda-core (SLSA L2 = build-attestation present). It is the machine-checkable
+  khipu-sda-core (SLSA L2 = roadmap / not yet earned until the founder-gated Forge build signs it). It is the machine-checkable
   evidence consumed by compliance/oscal-component-sda.yaml (lula validation 6).
 
   The image digest is intentionally left EMPTY until Forge cosign-signs uds-v0.4.0
@@ -12,7 +12,7 @@
 
   SLSA gradient (honest):
     L1            = provenance generated (today)
-    L2            = build-attestation present (this attestation, emitted by Forge)
+    L2            = roadmap / not yet earned (attestation to be emitted by the founder-gated Forge build, FA-001)
     L2-verified   = ROADMAP (verifier admission)
     L3            = ROADMAP (hermetic, isolated builder)
 */}}
