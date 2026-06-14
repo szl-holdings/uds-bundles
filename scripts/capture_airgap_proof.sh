@@ -85,7 +85,7 @@ declare -A EXPECT_DIGEST=(
 )
 # Published signing-key fingerprint (PEM-as-served, no trailing newline). The
 # harness asserts the supplied --pubkey matches this so the verify is honest.
-EXPECT_PUBKEY_FP="a4d73120c312d94bdd6cbdfa6f3d629cfff4b85e7addde5f9c3fd4c02341eb30"
+EXPECT_PUBKEY_FP="a4d73120c312d94bdd6cbdfa6f3d629cfff4b85e7addde5f9c3fd4c02341eb30"  # gitleaks:allow  published cosign PUBLIC-key fingerprint (verification material, not a secret)
 KEYID="szlholdings-cosign"
 
 while [[ $# -gt 0 ]]; do
