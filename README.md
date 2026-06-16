@@ -81,8 +81,11 @@ uds deploy oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.0 --confirm
 > requires a **free** Defense Unicorns registry account (HTTP Basic — not
 > anonymous). The bundle ships the two products **published + signed +
 > individually deployable** — NOT "all five organs boot together" (cross-organ
-> in-cluster mesh is roadmap). Bundle-level SLSA provenance attestation is not yet
-> published.
+> in-cluster mesh is roadmap). The bundle now also carries a **published,
+> anonymously-verifiable SLSA provenance attestation** on
+> `szl-uds-bundle:uds-v0.3.0` (post-publish provenance — keyless Sigstore via
+> GitHub OIDC, Rekor-anchored). SLSA **L2 verified build-provenance** (in-line,
+> isolated builders) remains on the roadmap.
 
 ### Deploy a single bundle
 
@@ -110,6 +113,12 @@ cosign verify-blob   --certificate-identity "https://github.com/szl-holdings/uds
 # Inspect SLSA provenance
 cat bundles/szl-a11oy/attestations/a11oy.slsa-provenance.json
 
+# Verify the BUNDLE's SLSA provenance attestation (keyless, anonymous — no key)
+cosign verify-attestation --type slsaprovenance \
+  --certificate-identity "https://github.com/szl-holdings/szl-uds-deployment/.github/workflows/uds-bundle-attest-existing.yml@refs/heads/main" \
+  --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+  ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.3.0
+
 # Check Doctrine lock
 kubectl get doctrinelock -n szl-a11oy
 ```
@@ -131,7 +140,7 @@ build-provenance (isolated builders + verified provenance attestation) is on the
 
 The roadmap-role capability packages (Policy / Provenance Anchor / Operator) surface inside a11oy and are not listed as separately-branded published products.
 
-The published mesh bundle artifact is `oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.0`. **Honest scope:** the two shipping product images are SLSA Build **L1 honest** (cosign keyless-signed, Rekor-anchored); SLSA **L2 verified build-provenance is on the roadmap** for the images and the bundle alike. Bundle-level attestation is not yet published (blocked on an owner-only GHCR `szl-uds-bundle` package-write grant). Do not claim the bundle is L2-attested until `cosign verify-attestation` returns a provenance payload for the bundle.
+The published mesh bundle artifact is `oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.3.0` (digest `sha256:de24aac3e73d034ce1c5f718dc136dfdc100001362ffd1875f612aba95a37b56`). **Honest scope:** the two shipping product images are SLSA Build **L1 honest** (cosign keyless-signed, Rekor-anchored). The **bundle artifact now carries a published, anonymously-verifiable SLSA provenance attestation** — `cosign verify-attestation --type slsaprovenance` returns a `slsa.dev/provenance/v0.2` payload for the bundle (keyless Sigstore via GitHub OIDC, Rekor-anchored). This is **post-publish provenance** (it records who/when attested and cites the original publish run; `postPublish: true` in the predicate) — it is **not** in-line build-time provenance. SLSA **L2 verified build-provenance** (isolated builders + in-line attestation) remains on the roadmap for the images and the bundle alike; **do not claim L2-verified / L2-attested.**
 
 ## Honest disclosure
 
@@ -139,11 +148,11 @@ The published mesh bundle artifact is `oci://ghcr.io/szl-holdings/szl-uds-bundle
   keyless-signed (Fulcio + Rekor) and verifiable via `cosign verify`. **SLSA L2 verified
   build-provenance is on the roadmap** (isolated builders + verified provenance attestation).
   **L3 is NOT claimed anywhere** (doctrine: no FedRAMP, Iron Bank, or CMMC).
-- **Bundle artifact: signed, NOT yet provenance-attested.** The mesh bundle `szl-uds-bundle:uds-v0.2.0` is real and deployable, but the **bundle artifact itself is not yet SLSA-attested** (owner-only GHCR package-write grant pending).
+- **Bundle artifact: signed AND provenance-attested (post-publish).** The mesh bundle `szl-uds-bundle:uds-v0.3.0` is real and deployable, and the **bundle artifact now carries a published, anonymously-verifiable SLSA provenance attestation** (`slsa.dev/provenance/v0.2`, keyless Sigstore, Rekor-anchored). It is **post-publish** provenance (`postPublish: true`), **not** in-line build provenance; SLSA **L2 verified build-provenance** stays on the roadmap.
 - **Λ = Conjecture 1**, NOT a theorem — Lake Verifier testing the proof; 163 sorries open
 - **Proved PURIQ formulas = 8** — F1, F4, F7, F11, F12, F18, F19, F22 (Lean 4, zero-sorry; the no-axiom theorem `locked_count_eight`); the remaining formulas are Roadmap
 - **Section 889** = exactly 5 banned vendors: Huawei, ZTE, Hytera, Hikvision, Dahua
-- **`uds-v0.2.0` is the published, signed mesh bundle** — the per-capability Zarf source packages under `bundles/szl-<name>/` can also be built locally with `zarf package create bundles/szl-<name>/`.
+- **`uds-v0.3.0` is the published, signed, and SLSA-provenance-attested mesh bundle** — the per-capability Zarf source packages under `bundles/szl-<name>/` can also be built locally with `zarf package create bundles/szl-<name>/`.
 - No Iron Bank, no FedRAMP, no CMMC — deploy on YOUR operational hardware
 
 ---
