@@ -27,7 +27,7 @@ The **mesh interconnect** (Istio AuthorizationPolicy + NetworkPolicy + strict Pe
 | OCI ref | Status |
 |---------|--------|
 | `oci://ghcr.io/szl-holdings/szl-mesh:0.4.0` | **PUBLISHED + cosign-SIGNED** (verified on GHCR: tags `0.4.0`/`v0.4.0`/`latest` + 3 `.sig`). |
-| `oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.2.0` | **PUBLISHED + cosign-SIGNED + PUBLIC** (package visibility public; anonymous manifest + `.sig`/`.att` pull verified HTTP 200, no GHCR login). The composed 5-organ mesh bundle — `uds pull`/`uds deploy oci://…` works anonymously for the artifact (UDS Core pull still needs a free DU registry account). |
+| `oci://ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.3.0` | **PUBLISHED + cosign-SIGNED + SLSA-PROVENANCE-ATTESTED + PUBLIC** (package visibility public; anonymous manifest + `.sig` + provenance `.att` pull verified HTTP 200, no GHCR login). `cosign verify-attestation --type slsaprovenance` returns a `slsa.dev/provenance/v0.2` payload **anonymously** (post-publish provenance — keyless Sigstore/OIDC, Rekor-anchored; **not** in-line build provenance). The composed 5-organ mesh bundle — `uds pull`/`uds deploy oci://…` works anonymously for the artifact (UDS Core pull still needs a free DU registry account). |
 | `oci://ghcr.io/szl-holdings/a11oy-bundle:0.5.0` | **AUTHORED-ONLY — NOT yet published.** Build via the `uds-bundle-publish` workflow (a11oy target). |
 | `oci://ghcr.io/szl-holdings/killinchu-bundle:0.5.0` | **AUTHORED-ONLY — NOT yet published.** Build via the `uds-bundle-publish` workflow (killinchu target). |
 
@@ -86,6 +86,12 @@ cosign verify ghcr.io/szl-holdings/szl-mesh:0.4.0 \
   --certificate-identity-regexp="^https://github.com/szl-holdings/" \
   --certificate-oidc-issuer="https://token.actions.githubusercontent.com"
 
+# Bundle SLSA provenance attestation — PUBLISHED + anonymously verifiable TODAY:
+cosign verify-attestation --type slsaprovenance \
+  --certificate-identity "https://github.com/szl-holdings/szl-uds-deployment/.github/workflows/uds-bundle-attest-existing.yml@refs/heads/main" \
+  --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+  ghcr.io/szl-holdings/szl-uds-bundle:uds-v0.3.0
+
 # Organ-image SLSA L2 provenance attestation (.att) — ROADMAP (run once earned):
 cosign verify-attestation --type slsaprovenance \
   ghcr.io/szl-holdings/a11oy:uds-v0.2.0 \
@@ -93,7 +99,7 @@ cosign verify-attestation --type slsaprovenance \
   --certificate-oidc-issuer='https://token.actions.githubusercontent.com'
 ```
 
-> **Honest provenance statement.** Organ images are cosign-**signed** (SLSA **L1** honest provenance); the **L2** `.att` provenance attestation is on the roadmap (NOT yet verified). The **bundle** carries a cosign **signature** only — the GitHub `attest-build-provenance` step does **NOT** succeed on the bundle (CI token lacks `attestations: write`), so there is **no bundle-level SLSA attestation**. The cosign signature is the real bundle provenance. **L3 is not claimed.** Once `a11oy-bundle:0.5.0` / `killinchu-bundle:0.5.0` are published, re-run the `cosign verify` above against those refs to confirm their signatures.
+> **Honest provenance statement.** Organ images are cosign-**signed** (SLSA **L1** honest provenance); their **L2** in-line `.att` build-provenance attestation is on the roadmap (NOT yet verified). The **bundle** (`szl-uds-bundle:uds-v0.3.0`) is cosign-**signed** AND now carries a **published, anonymously-verifiable SLSA provenance attestation** (`slsa.dev/provenance/v0.2`, keyless Sigstore via GitHub OIDC, Rekor-anchored). This is **post-publish** provenance (`postPublish: true` — it records who/when attested and cites the original publish run); it is **not** in-line build provenance and must **not** be presented as SLSA **L2** verified build-provenance, which remains on the roadmap. **L3 is not claimed.** Once `a11oy-bundle:0.5.0` / `killinchu-bundle:0.5.0` are published, re-run the `cosign verify` above against those refs to confirm their signatures.
 
 ---
 
@@ -110,7 +116,7 @@ curl -sf http://localhost:8080/api/a11oy/healthz && echo "a11oy OK"; kill %1
 ---
 
 ## Honesty Doctrine
-- Organ images = SLSA **Level 1 (honest)** — cosign **signature** is the provenance (`cosign verify ghcr.io/szl-holdings/<repo>:<tag>`). Bundle = cosign-**signed** only; **no bundle-level SLSA attestation** (token lacks `attestations: write`). **L2 verification is on the roadmap (never claimed as L2-verified/L2-attested), and L3 / FedRAMP / Iron Bank / CMMC are NOT claimed.**
+- Organ images = SLSA **Level 1 (honest)** — cosign **signature** is the provenance (`cosign verify ghcr.io/szl-holdings/<repo>:<tag>`). Bundle (`szl-uds-bundle:uds-v0.3.0`) = cosign-**signed** AND carries a **published, anonymously-verifiable SLSA provenance attestation** (`slsa.dev/provenance/v0.2`, keyless, Rekor-anchored) — but it is **post-publish** provenance, **not** in-line build provenance. **L2 verified build-provenance is on the roadmap (never claimed as L2-verified/L2-attested), and L3 / FedRAMP / Iron Bank / CMMC are NOT claimed.**
 - `a11oy-bundle:0.5.0` and `killinchu-bundle:0.5.0` are **authored-only** until built/published + verified on GHCR. Only `szl-mesh:0.4.0` is verified published today.
 - Λ = **Conjecture 1** (NEVER a theorem). 163 sorries open in the locked kernel (disclosed).
 - **No Iron Bank, No FedRAMP, No CMMC.** Section 889 = exactly 5 vendors (Huawei, ZTE, Hytera, Hikvision, Dahua).
