@@ -44,9 +44,15 @@
 # HONESTY HEADER
 #   Doctrine v11 LOCKED 749/14/163 at kernel commit c7c0ba17
 #   Λ = Conjecture 1 (NEVER a theorem)
-#   SLSA L2 on ORGAN IMAGES, cosign-verified (.att slsa.dev/provenance/v0.2; killinchu .att
-#     = genuine SLSA provenance). NOT L3; bundle-level build-provenance attestation NOT earned
-#     (cosign SIGNATURE is the real provenance). No FedRAMP / CMMC / Iron Bank.
+#   SLSA L1 honest on ALL organ images (all 5 pinned digests cosign-signed). SLSA L2
+#     provenance is cosign-verified (.att slsa.dev/provenance/v0.2) on 4 of 5 pinned
+#     digests: killinchu, sentra, amaru, rosie (killinchu .att = genuine SLSA provenance,
+#     confirmed live 2026-06-16). NOTE: the a11oy organ has TWO published digests — the
+#     L2-attested one (@sha256:45fa2365, pinned by bundles/a11oy/) and an older L1-only one
+#     (@sha256:8aaea251, referenced in README); do NOT claim a11oy L2 against the older
+#     8aaea251 digest until its L2 re-attestation lands (founder-gated). NOT L3; bundle-level
+#     build-provenance attestation NOT earned (cosign SIGNATURE is the real provenance).
+#     No FedRAMP / CMMC / Iron Bank.
 #   Section 889 = exactly 5 vendors (Huawei, ZTE, Hytera, Hikvision, Dahua).
 #
 # Signed-off-by: Stephen P. Lutar Jr. <stephenlutar2@gmail.com>
