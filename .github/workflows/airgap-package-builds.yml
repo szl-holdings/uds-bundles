@@ -141,6 +141,12 @@ jobs:
 
       - name: Install cosign
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          # Pin cosign v2.x: the offline keyed `sign-blob --key --tlog-upload=false
+          # --output-signature` flow used below is rejected by cosign v3 (which
+          # requires a signing-config). Matches the repo convention already used by
+          # cosign-bootstrap.yml / zarf-bundle-build.yml / zarf-package-sign.yml.
+          cosign-release: v2.4.1
 
       - name: Build the minimal smoke Zarf package (HARD GATE)
         run: |
