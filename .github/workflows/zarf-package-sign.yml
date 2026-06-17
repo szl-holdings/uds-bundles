@@ -31,10 +31,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Least privilege: read-only at the top level; the package-sign job declares the
+# write scopes it needs. (Scorecard Token-Permissions)
 permissions:
-  id-token: write     # Required for OIDC token exchange with Fulcio (keyless signing)
-  contents: read      # Required for checkout
-  packages: write     # Required to push to ghcr.io
+  contents: read
 
 env:
   ZARF_VERSION: "v0.77.0"
@@ -47,6 +47,10 @@ jobs:
   package-sign:
     name: Build & Sign (${{ matrix.flagship }})
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # OIDC token exchange with Fulcio (keyless signing)
+      contents: read    # checkout
+      packages: write   # push to ghcr.io
     strategy:
       fail-fast: false
       matrix:

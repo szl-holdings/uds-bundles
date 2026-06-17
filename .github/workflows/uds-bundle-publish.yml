@@ -42,10 +42,10 @@ on:
         required: false
         default: 'v0.4.0'
 
+# Least privilege: read-only at the top level; the publish job declares the
+# write scopes it needs. (Scorecard Token-Permissions)
 permissions:
   contents: read
-  packages: write
-  id-token: write   # required for keyless cosign OIDC signing + attest
 
 env:
   UDS_CLI_VERSION: "v0.32.0"
@@ -59,6 +59,10 @@ jobs:
   publish:
     name: Build + Publish UDS Bundle
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write   # push bundle to ghcr.io
+      id-token: write   # keyless cosign OIDC signing + attest
     steps:
       - name: Checkout uds-bundles
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3

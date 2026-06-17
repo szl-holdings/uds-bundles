@@ -8,14 +8,18 @@ on:
   schedule:
     - cron: '0 6 * * 1'  # Weekly Monday 06:00 UTC
 
+# Least privilege: read-only at the top level; each scanning job that uploads
+# SARIF declares security-events:write. (Scorecard Token-Permissions)
 permissions:
   contents: read
-  security-events: write
 
 jobs:
   trivy-scan:
     name: Trivy filesystem scan
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write   # upload-sarif to Security tab
     steps:
       - name: Checkout code
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
@@ -38,6 +42,9 @@ jobs:
   grype-gate:
     name: Grype CVE gate (fail on HIGH/CRITICAL)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write   # upload-sarif to Security tab
     steps:
       - name: Checkout code
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
