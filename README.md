@@ -129,8 +129,8 @@ kubectl get doctrinelock -n szl-a11oy
 
 Each capability image is referenced in this bundle by **immutable digest** (not a floating tag).
 **Honest doctrine:** The two shipping product images are **SLSA Build L1 (honest)** — cosign
-keyless-signed (Fulcio + Rekor) and verifiable via `cosign verify`. **SLSA L2 verified
-build-provenance (isolated builders + verified provenance attestation) is on the roadmap.**
+keyless-signed (Fulcio + Rekor) and verifiable via `cosign verify`.
+**SLSA L2 build-provenance (isolated builders + verified provenance attestation) is on the roadmap — not yet earned.**
 **L3 is NOT claimed** (no FedRAMP, Iron Bank, or CMMC).
 
 | Bundle | Image (digest-pinned) | Build provenance | Rekor entry |
@@ -145,8 +145,8 @@ The published mesh bundle artifact is `oci://ghcr.io/szl-holdings/szl-uds-bundle
 ## Honest disclosure
 
 - **Capability images: SLSA Build L1 (honest).** The shipping product images are cosign
-  keyless-signed (Fulcio + Rekor) and verifiable via `cosign verify`. **SLSA L2 verified
-  build-provenance is on the roadmap** (isolated builders + verified provenance attestation).
+  keyless-signed (Fulcio + Rekor) and verifiable via `cosign verify`.
+  **SLSA L2 build-provenance is on the roadmap — not yet earned** (isolated builders + verified provenance attestation).
   **L3 is NOT claimed anywhere** (doctrine: no FedRAMP, Iron Bank, or CMMC).
 - **Bundle artifact: signed AND provenance-attested (post-publish).** The mesh bundle `szl-uds-bundle:uds-v0.3.0` is real and deployable, and the **bundle artifact now carries a published, anonymously-verifiable SLSA provenance attestation** (`slsa.dev/provenance/v0.2`, keyless Sigstore, Rekor-anchored). It is **post-publish** provenance (`postPublish: true`), **not** in-line build provenance; SLSA **L2 verified build-provenance** stays on the roadmap.
 - **Λ = Conjecture 1**, NOT a theorem — Lake Verifier testing the proof; 163 sorries open
