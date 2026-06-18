@@ -1,7 +1,7 @@
 # Architecture — uds-bundles
 
 > Doctrine v11 LOCKED `749/14/163` · Kernel commit `c7c0ba17` · Λ = **Conjecture 1**
-> (conditional Theorem U) · SLSA L1 honest · L2 build-attested · L3 roadmap.
+> (conditional Theorem U) · SLSA L1 · L2-attested (images) · L3 roadmap; bundle-level L2 NOT earned.
 
 > **Trademark notice.** SZL's use of "UDS" references Defense Unicorns' Unified Defense
 > Stack (USPTO Serial 99831122). SZL Holdings is **not affiliated** with Defense
@@ -53,7 +53,7 @@ provenance · `serviceMesh.mode: ambient`.
 
 Bundles are **cosign-sign-ready**. Image digests are left blank until the founder-gated
 Forge build signs the release — no signature or digest is ever fabricated. SLSA is
-claimed at **L1 honest / L2 build-attested**, never L3.
+claimed at **L1 · L2-attested for images · L3 roadmap; bundle-level L2 is NOT earned** (the bundle artifact carries only post-publish provenance), never L3.
 
 ## CI gates (required on `main`)
 
