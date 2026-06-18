@@ -10,9 +10,12 @@
 #                    keyless is what actually runs. Verified in CI with
 #                    `cosign verify --certificate-identity-regexp ... --certificate-oidc-issuer ...`.
 #   * szl-key      — OPTIONAL / LEGACY ECDSA-P256 key-pair path. PUBLIC half below is the
-#                    reconciled org key (matches a11oy infra/build-env/keys/cosign.pub and the
-#                    uds-bundles release signing-key artifacts). Effective only if an operator
-#                    later provisions COSIGN_PRIVATE_KEY. PUBLIC KEY ONLY — never commit private.
+#                    uds-bundles signing key, SHA-256(DER SPKI) daa4aeca…7cb40b (committed at
+#                    uds-bundles/bundles/v0.1.0/cosign_signing_key.pub). It is NOT the org key
+#                    a1f6d323…2826ab (szl-holdings/.github/cosign.pub) — distinct keys; no a11oy
+#                    infra/build-env/keys/cosign.pub exists. Effective only if an operator later
+#                    provisions COSIGN_PRIVATE_KEY. PUBLIC KEY ONLY — never commit private.
+#                    See COSIGN_KEYS.md.
 #
 # MODE: warn (rollout). Flip to enforce ONLY after a green dress rehearsal —
 # see szl-uds-deployment/UDS_DEPLOY_RUNBOOK.md "warn -> enforce" section.
@@ -32,7 +35,8 @@ spec:
         identities:
           - issuer: https://token.actions.githubusercontent.com
             subjectRegExp: "https://github.com/szl-holdings/khipu-sda-core/.*"
-    # OPTIONAL / LEGACY — keyed ECDSA-P256. PUBLIC half of the reconciled org key-pair.
+    # OPTIONAL / LEGACY — keyed ECDSA-P256. PUBLIC half of the uds-bundles signing
+    # key (daa4aeca…7cb40b), NOT the org key (a1f6d323…2826ab). See COSIGN_KEYS.md.
     - name: szl-key
       key:
         data: |

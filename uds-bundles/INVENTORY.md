@@ -43,7 +43,14 @@ The in-flight `wire_d_implementation_dsse_cosign_real_signing_mpuu2jy7` agent **
 
 **Consequence:** the 5 SZL bundles can be **TRULY cosign-signed** this session (offline /
 `--tlog-upload=false` mode, since the sandbox airgap blocks Rekor at deploy time). This
-moves the crew from "5/6 unsigned" toward "signed with the real org key."
+moves the crew from "5/6 unsigned" toward "signed with the **uds-bundles signing key**."
+
+> **KEY IDENTITY (honest, corrected):** the public key below is the **uds-bundles signing
+> key**, SHA-256(DER SPKI) `daa4aeca…7cb40b` (published at
+> `bundles/v0.1.0/cosign_signing_key.pub`). It is **NOT the SZL org key** `a1f6d323…2826ab`
+> (`szl-holdings/.github/cosign.pub`, embedded in a11oy `szl_dsse.py`). They are **distinct
+> ECDSA-P256 keys.** Earlier prose in this file that called this "the org key" was wrong;
+> see `COSIGN_KEYS.md` for the authoritative key-to-artifact map.
 
 Public key (P-256):
 ```
@@ -73,7 +80,8 @@ vaB/grNuz+kVP1Xsaw0RokBKG0xT/XlV5Fz90AOwtgqC2yMBP0blK455gQ==
 **Prior headline (CORRECTED 2026-06-07):** the earlier "cosign 1/6 (vessels only)" claim was wrong — the vessels image is NOT published to GHCR (HTTP 403), so it is NOT signed. Corrected standing: cosign 0/6 at image level (no SZL org image carries a live keyless signature yet). The 5 unsigned were a
 *missing-artifact* problem (Perplexity proxy could not upload binaries to GitHub releases),
 NOT a tooling failure. This session fixes signing at the **bundle-artifact** level using the
-real org key now that the DSSE agent has provisioned it.
+**uds-bundles signing key** (`daa4aeca…7cb40b`, NOT the org key `a1f6d323`) now that the
+DSSE agent has provisioned it. See `COSIGN_KEYS.md`.
 
 ---
 
@@ -137,11 +145,11 @@ ADDITIVE — it does not touch or rebuild the live HF Spaces.
 | Flagship | Zarf pkg | UDS Bundle | UDS Core dep | Image | Signing key |
 |---|---|---|---|---|---|
 | a11oy | `zarf.yaml` (a11oy-runtime) | `a11oy.uds` | Istio + Keycloak(SSO) + Pepr + Prometheus | ghcr.io/szl-holdings/a11oy:uds-v0.3.1 | `.secret/cosign_signing_key.key` |
-| amaru | `zarf.yaml` (amaru-attestation) | `amaru.uds` | Istio + Loki/Tempo + Prometheus | ghcr.io/szl-holdings/amaru:uds-v0.3.1 | same org key |
-| sentra | `zarf.yaml` (sentra-gates) | `sentra.uds` | Istio + Pepr (fail-closed) + Prometheus | ghcr.io/szl-holdings/sentra:uds-v0.3.1 | same org key |
-| killinchu | `zarf.yaml` (killinchu-bundle) | `killinchu.uds` | Istio + Pepr (2-person gate) + szl-receipts | ghcr.io/szl-holdings/killinchu:uds-v0.3.1 | same org key |
-| rosie | `zarf.yaml` (rosie-replay) | `rosie.uds` | Istio + Grafana/Prometheus | ghcr.io/szl-holdings/rosie:uds-v0.3.1 | same org key |
-| (static) anatomy-3d, rosie-3d, szl-constellation | OCI artifacts (oras) | static assets | nginx distroless | — | same org key (artifact sign) |
+| amaru | `zarf.yaml` (amaru-attestation) | `amaru.uds` | Istio + Loki/Tempo + Prometheus | ghcr.io/szl-holdings/amaru:uds-v0.3.1 | same uds-bundles key (`daa4aeca`) |
+| sentra | `zarf.yaml` (sentra-gates) | `sentra.uds` | Istio + Pepr (fail-closed) + Prometheus | ghcr.io/szl-holdings/sentra:uds-v0.3.1 | same uds-bundles key (`daa4aeca`) |
+| killinchu | `zarf.yaml` (killinchu-bundle) | `killinchu.uds` | Istio + Pepr (2-person gate) + szl-receipts | ghcr.io/szl-holdings/killinchu:uds-v0.3.1 | same uds-bundles key (`daa4aeca`) |
+| rosie | `zarf.yaml` (rosie-replay) | `rosie.uds` | Istio + Grafana/Prometheus | ghcr.io/szl-holdings/rosie:uds-v0.3.1 | same uds-bundles key (`daa4aeca`) |
+| (static) anatomy-3d, rosie-3d, szl-constellation | OCI artifacts (oras) | static assets | nginx distroless | — | same uds-bundles key (`daa4aeca`, artifact sign) |
 
 **Mesh dependency chain (smoke test target):** a11oy → amaru → sentra → killinchu → rosie,
 all reachable via Istio service mesh inside the cluster.

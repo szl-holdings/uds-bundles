@@ -30,7 +30,10 @@ image-bearing packages are produced by `build_sign_all.sh` on a host with docker
 | killinchu | zarf-package-killinchu-bundle-proof-amd64-0.3.1.tar.zst | 0e581c9f… | killinchu-proof.uds.sig | **Verified OK** |
 | rosie | zarf-package-rosie-replay-proof-amd64-0.3.1.tar.zst | ed04612e… | rosie-proof.uds.sig | **Verified OK** |
 
-**5 of 5 PROOF bundles are REALLY signed and verified this session** with the SZL org key
+**5 of 5 PROOF bundles are REALLY signed and verified this session** with the **uds-bundles
+signing key** (SHA-256(DER SPKI) `daa4aeca…7cb40b`; published at
+`bundles/v0.1.0/cosign_signing_key.pub`) — **NOT the SZL org key** `a1f6d323…2826ab`
+(`szl-holdings/.github/cosign.pub`); they are distinct keys, see `COSIGN_KEYS.md`
 (offline `--tlog-upload=false`). Full proof capture (zarf version, ls, sha256, verify,
 inspect, deploy dry-run) is in `artifacts/PROOF_CAPTURE.txt`, `artifacts/SHA256SUMS_PROOF.txt`,
 and `artifacts/DEPLOY_DRYRUN.txt`. The **production image-bearing** packages (5/5) are NOT

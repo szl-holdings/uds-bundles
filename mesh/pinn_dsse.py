@@ -3,17 +3,31 @@
 uds-mesh already ships ``formula_receipts.py``, which is an HMAC-SHA-256 receipt
 layer (symmetric, keyid ``szl-formula-hmac-sha256-v1``). That layer is unchanged.
 
-This module ADDS an *asymmetric* signer so a PINN Λ-receipt can be sealed with the
-SAME cosign key the rest of the mesh uses for cross-repo, key-only verification:
+This module ADDS an *asymmetric* signer so a PINN Λ-receipt can be sealed and
+then verified with a published public key (cross-repo, key-only verification):
 
-    keyid:        szlholdings-cosign
-    algorithm:    ECDSA P-256 over SHA-256 of the DSSE PAE preimage (DSSEv1)
-    private key:  env SZL_COSIGN_PRIVATE_PEM (PKCS8 PEM; NEVER committed)
-    public key:   szl-holdings/.github/cosign.pub (cosign verify-blob compatible)
+    keyid (label): szlholdings-cosign  (see KEYID-COLLISION note below)
+    algorithm:     ECDSA P-256 over SHA-256 of the DSSE PAE preimage (DSSEv1)
+    private key:   env SZL_COSIGN_PRIVATE_PEM (PKCS8 PEM; NEVER committed)
+    public key:    the uds-bundles signing key, SHA-256(DER SPKI) ``daa4aeca…7cb40b``
+                   — committed at ``uds-bundles/bundles/v0.1.0/cosign_signing_key.pub``
+                   (this is the key embedded as ``COSIGN_PUBLIC_PEM`` below).
 
-It is byte-for-byte compatible with amaru's ``sidecar/src/amaru/dinn_dsse.py`` and
-the root ``szl_dsse.py``: identical PAE encoding, identical key, identical envelope
-shape — so a PINN receipt and a DINN receipt verify with the exact same command.
+KEYID-COLLISION NOTE (honest): this module shares the ``szlholdings-cosign`` keyid
+*string* with the root ``szl_dsse.py`` and amaru's ``sidecar/src/amaru/dinn_dsse.py``,
+but it does NOT use the same key. ``szl_dsse.py``/``dinn_dsse.py`` embed the ORG key
+``a1f6d323…2826ab`` (``szl-holdings/.github/cosign.pub``); this module embeds the
+uds-bundles key ``daa4aeca…7cb40b``. They are DISTINCT ECDSA-P256 keys. Therefore a
+PINN receipt and a DINN/org receipt do NOT verify with the same key — the matching
+keyid string is a label collision, not a shared trust domain. Verify a PINN receipt
+with the uds-bundles key only (command below). See ``COSIGN_KEYS.md`` for the full
+key-to-artifact map and the exact working verify commands.
+
+Verify a PINN Λ-receipt (extract the base64 sig + PAE'd payload, then):
+    cosign verify-blob --key bundles/v0.1.0/cosign_signing_key.pub \
+        --signature <sig> <pae-preimage-or-payload-blob>
+(equivalently, ``pinn_dsse.verify_envelope(env)`` checks the embedded
+``daa4aeca`` key in-process — no network call.)
 
 HONESTY: the signature attests the *receipt bytes*, not the PINN's physics. The
 underlying Lean obligation (``confidence_monotone_in_residual`` and any Λ-aggregator
@@ -31,13 +45,16 @@ import os
 from datetime import datetime, timezone
 from typing import Any
 
-KEYID = "szlholdings-cosign"
+KEYID = "szlholdings-cosign"  # label only; see KEYID-COLLISION note in module docstring
 PINN_PAYLOAD_TYPE = "application/vnd.szl.pinn-lambda-receipt+json"
-PUB_KEY_URL = "https://github.com/szl-holdings/.github/blob/main/cosign.pub"
+# Verify-key for PINN receipts = the uds-bundles signing key (daa4aeca…7cb40b),
+# NOT the org key (a1f6d323). Published public half:
+PUB_KEY_URL = "https://github.com/szl-holdings/uds-bundles/blob/main/bundles/v0.1.0/cosign_signing_key.pub"
 
-# Published public key (szl-holdings/.github/cosign.pub) — PUBLIC, embedded so
-# verification needs no network call. Identical to szl_dsse.COSIGN_PUBLIC_PEM and
-# amaru dinn_dsse.COSIGN_PUBLIC_PEM.
+# Published public key (uds-bundles/bundles/v0.1.0/cosign_signing_key.pub) — PUBLIC,
+# embedded so verification needs no network call. SHA-256(DER SPKI) = daa4aeca…7cb40b.
+# This is NOT the org key in szl_dsse.COSIGN_PUBLIC_PEM (a1f6d323) — it is a distinct
+# key, despite the shared keyid string. See COSIGN_KEYS.md.
 COSIGN_PUBLIC_PEM = """-----BEGIN PUBLIC KEY-----
 MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE7mrYWDnz8TvT7o4/65XGqYxo9OoV
 vaB/grNuz+kVP1Xsaw0RokBKG0xT/XlV5Fz90AOwtgqC2yMBP0blK455gQ==
@@ -130,10 +147,11 @@ def sign_payload(payload_obj: Any, payload_type: str = PINN_PAYLOAD_TYPE) -> dic
     env["signatures"] = [{"sig": base64.b64encode(sig).decode("ascii"), "keyid": KEYID}]
     env["signed"] = True
     env["honesty"] = (
-        "REAL — ECDSA-P256-SHA256 over DSSE PAE; verifiable by "
-        "`cosign verify-blob --key cosign.pub`. The signature attests the receipt "
-        "bytes, NOT the PINN's physics. Lean obligation ships as `sorry` where not "
-        "discharged; Λ uniqueness is Conjecture 1 (never a theorem)."
+        "REAL — ECDSA-P256-SHA256 over DSSE PAE; verifiable by `cosign verify-blob "
+        "--key uds-bundles/bundles/v0.1.0/cosign_signing_key.pub` (the daa4aeca key, "
+        "NOT the org key a1f6d323). The signature attests the receipt bytes, NOT the "
+        "PINN's physics. Lean obligation ships as `sorry` where not discharged; "
+        "Λ uniqueness is Conjecture 1 (never a theorem)."
     )
     return env
 
