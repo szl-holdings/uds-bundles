@@ -169,7 +169,7 @@ jobs:
       # the default token LACKS. It is non-blocking and is EXPECTED to fail —
       # the cosign signature above is the real provenance. NOT a bundle SLSA attestation.
       - name: Attest build provenance (EXPECTED to fail — non-blocking)
-        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
         continue-on-error: true
         if: hashFiles('uds-bundle-*.tar.zst') != ''
         with:
