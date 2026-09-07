@@ -1,0 +1,24 @@
+# syntax=docker/dockerfile:1.7
+FROM python:3.12.10-slim-bookworm@sha256:4f9e14a0f80165f39bfcf54ce9a6c4a8cb67f742b5524d2a184b47f6972ecbe5
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PORT=7860
+
+WORKDIR /app
+RUN addgroup --system --gid 10001 szl \
+    && adduser --system --uid 10001 --ingroup szl --home /nonexistent --no-create-home szl
+
+COPY requirements-observatory.txt ./
+RUN python -m pip install --no-cache-dir --requirement requirements-observatory.txt
+COPY --chown=10001:10001 observatory/ ./observatory/
+COPY --chown=10001:10001 bundles/ ./bundles/
+COPY --chown=10001:10001 uds-bundles/PER_BUNDLE/ ./uds-bundles/PER_BUNDLE/
+
+USER 10001:10001
+EXPOSE 7860
+HEALTHCHECK --interval=30s --timeout=3s --start-period=12s --retries=3 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:7860/healthz', timeout=2).read()"
+
+CMD ["sh", "-c", "exec uvicorn observatory.app:app --host 0.0.0.0 --port ${PORT:-7860} --workers 1 --no-access-log"]
