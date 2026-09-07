@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#0a0d0d">
+  <title>UDS Bundle Observatory</title>
+  <meta name="description" content="Read-only inspection of repository-owned UDS and Zarf air-gap bundle definitions.">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#inventory">Skip to bundle inventory</a>
+  <div class="grain" aria-hidden="true"></div>
+  <header class="shell masthead">
+    <div>
+      <p class="eyebrow">SZL HOLDINGS / DISCONNECTED DELIVERY</p>
+      <h1>UDS Bundle<br>Observatory</h1>
+      <p class="lede">Inspect manifests. Trace declared dependencies. Produce deterministic receipts. Never touch a cluster.</p>
+    </div>
+    <dl class="authority-card" aria-label="Authority boundary">
+      <div><dt>Cluster writes</dt><dd>NONE</dd></div>
+      <div><dt>Registry pushes</dt><dd>NONE</dd></div>
+      <div><dt>Shell execution</dt><dd>NONE</dd></div>
+      <div><dt>Source</dt><dd id="source-state">READING…</dd></div>
+    </dl>
+  </header>
+
+  <main class="shell">
+    <section class="principle" aria-labelledby="principle-title">
+      <p class="section-label">OPERATING PRINCIPLE</p>
+      <div>
+        <h2 id="principle-title">Declared is not verified.</h2>
+        <p>A checksum in a manifest is evidence that a checksum was declared. A signature field is not a signature verification. A package graph is not a deployment. The observatory keeps those states separate.</p>
+      </div>
+    </section>
+
+    <section class="telemetry" aria-label="Repository manifest telemetry">
+      <div><strong id="bundle-count">—</strong><span>manifests discovered</span></div>
+      <div><strong id="reference-count">—</strong><span>declared references</span></div>
+      <div><strong id="unpinned-count">—</strong><span>unpinned references</span></div>
+      <div><strong id="invalid-count">—</strong><span>invalid manifests</span></div>
+    </section>
+
+    <section class="topology-panel" aria-labelledby="topology-title">
+      <div class="section-heading">
+        <div>
+          <p class="section-label">AIR-GAP TOPOLOGY</p>
+          <h2 id="topology-title">Repository-owned delivery graph</h2>
+        </div>
+        <p>Every node is derived from local source. No runtime registry lookup or deployment probe is performed.</p>
+      </div>
+      <div id="topology" class="topology" role="img" aria-label="Bundle and declared reference topology"></div>
+    </section>
+
+    <section id="inventory" class="inventory-panel" aria-labelledby="inventory-title">
+      <div class="section-heading">
+        <div>
+          <p class="section-label">MANIFEST INVENTORY</p>
+          <h2 id="inventory-title">Bounded local evidence</h2>
+        </div>
+        <p id="inventory-state" aria-live="polite">Reading repository manifests…</p>
+      </div>
+      <div class="inventory-grid" id="inventory-grid"></div>
+      <div class="empty-state" id="empty-state" hidden>
+        <h3>No recognized bundle manifests</h3>
+        <p>The service is ready, but no file matched the bounded UDS/Zarf manifest naming policy.</p>
+      </div>
+    </section>
+
+    <section class="validator-panel" aria-labelledby="validator-title">
+      <div class="section-heading">
+        <div>
+          <p class="section-label">LOCAL VALIDATOR</p>
+          <h2 id="validator-title">Test a manifest without executing it</h2>
+        </div>
+        <p>Maximum 128 KiB. Strict UTF-8. Duplicate keys, excessive aliases, deep nesting, and ambiguous roots fail closed.</p>
+      </div>
+      <form id="validator-form" class="validator-form">
+        <label>
+          <span>Format</span>
+          <select id="format" name="format">
+            <option value="auto">Auto-detect</option>
+            <option value="yaml">YAML</option>
+            <option value="json">JSON</option>
+          </select>
+        </label>
+        <label class="manifest-input">
+          <span>Manifest text</span>
+          <textarea id="manifest" name="manifest" required maxlength="131072" spellcheck="false" placeholder="kind: ZarfPackageConfig&#10;metadata:&#10;  name: example&#10;  version: 0.1.0"></textarea>
+        </label>
+        <div class="validator-actions">
+          <button type="submit" class="primary-action">Validate locally</button>
+          <button type="button" id="load-example" class="secondary-action">Load bounded example</button>
+          <output id="byte-count" for="manifest">0 bytes</output>
+        </div>
+      </form>
+      <div id="validation-result" class="validation-result" aria-live="polite" hidden>
+        <div id="validation-summary"></div>
+        <pre id="validation-json" tabindex="0"></pre>
+      </div>
+    </section>
+  </main>
+
+  <footer class="shell footer">
+    <p>Source authority: <code>szl-holdings/uds-bundles</code></p>
+    <p><code>DECLARED ≠ MEASURED ≠ VERIFIED ≠ DEPLOYED</code></p>
+  </footer>
+  <noscript><p class="noscript">JavaScript is required for the interactive observatory. The read-only API remains available at <code>/api/bundles</code>.</p></noscript>
+</body>
+</html>
