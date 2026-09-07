@@ -22,11 +22,13 @@ Thank you for contributing to SZL Holdings.
 
 Before opening a PR, confirm:
 
-- [ ] Commits are signed / verified
+- [ ] Authorship and source rights are accurate; no DCO or `Signed-off-by` trailer is required for this solo-maintainer repository
 - [ ] Tests pass locally
 - [ ] Documentation is updated if behavior changed
 - [ ] `STATUS.md` remains accurate
 - [ ] `SECURITY.md` and `LICENSE` are present
+
+GitHub-authenticated authorship, protected pull-request history, exact-head checks, and the immutable merge record provide repository provenance.
 
 ## Code of Conduct
 
