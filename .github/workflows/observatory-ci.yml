@@ -1,0 +1,68 @@
+name: UDS Observatory CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "observatory/**"
+      - ".github/workflows/observatory-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "observatory/**"
+      - ".github/workflows/observatory-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  observatory:
+    name: observatory/read-only-contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        with:
+          egress-policy: audit
+      - name: Checkout exact candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12.10"
+          cache: pip
+          cache-dependency-path: |
+            observatory/requirements.txt
+            observatory/requirements-dev.txt
+      - name: Install exact dependencies
+        run: python -m pip install --disable-pip-version-check -r observatory/requirements.txt -r observatory/requirements-dev.txt
+      - name: Prove parser, API, and frontend boundaries
+        run: |
+          python -m compileall -q observatory
+          pytest -q observatory/tests
+          python - <<'PY'
+          from pathlib import Path
+          text = (
+              Path("observatory/static/index.html").read_text()
+              + Path("observatory/static/app.js").read_text()
+              + Path("observatory/static/styles.css").read_text()
+              + Path("observatory/static/responsive.css").read_text()
+          )
+          forbidden = (
+              "https://",
+              "http://",
+              "localStorage",
+              "sessionStorage",
+              "document.cookie",
+              "eval(",
+          )
+          found = [value for value in forbidden if value in text]
+          if found:
+              raise SystemExit(f"forbidden frontend authority: {found}")
+          print("local-only frontend: PASS")
+          PY
+          git diff --check
