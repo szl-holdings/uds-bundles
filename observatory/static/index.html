@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="description" content="Read-only inspection of repository-owned UDS and Zarf bundle manifests.">
+  <title>UDS Bundle Observatory · SZL Holdings</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/responsive.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to observatory</a>
+  <header class="topbar">
+    <div class="brand" aria-label="SZL Holdings UDS Bundle Observatory">
+      <span class="mark" aria-hidden="true">◇</span>
+      <span><strong>UDS Bundle Observatory</strong><small>read-only delivery intelligence</small></span>
+    </div>
+    <div class="status" id="runtime-status" role="status" aria-live="polite">Connecting</div>
+  </header>
+
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <div>
+        <p class="eyebrow">SZL HOLDINGS · AIR-GAP DELIVERY</p>
+        <h1 id="hero-title">Inspect the bundle.<br><span>Preserve the boundary.</span></h1>
+        <p class="lede">Repository manifests, declared references and deterministic receipts—without cluster access, package publication or invented signature claims.</p>
+      </div>
+      <div class="orbit" aria-hidden="true">
+        <div class="ring r1"></div><div class="ring r2"></div><div class="core">UDS</div>
+      </div>
+    </section>
+
+    <section class="metrics" aria-label="Catalog metrics">
+      <article><strong id="bundle-count">—</strong><span>bundles</span></article>
+      <article><strong id="manifest-count">—</strong><span>manifests</span></article>
+      <article><strong id="valid-count">—</strong><span>valid parses</span></article>
+      <article><strong>0</strong><span>runtime mutations</span></article>
+    </section>
+
+    <section class="workspace">
+      <aside class="rail" aria-label="Bundle filters">
+        <label for="search">Find a bundle</label>
+        <input id="search" type="search" autocomplete="off" placeholder="a11oy, killinchu…">
+        <div class="boundary">
+          <span>AUTHORITY</span>
+          <strong>READ ONLY</strong>
+          <p>Validation never deploys, signs, pushes or contacts a cluster.</p>
+        </div>
+        <button id="refresh" type="button">Refresh catalog</button>
+      </aside>
+
+      <section class="catalog" aria-labelledby="catalog-title">
+        <div class="section-head"><div><p class="eyebrow">DISCOVERY</p><h2 id="catalog-title">Bundle constellation</h2></div><span id="receipt" class="receipt">receipt unavailable</span></div>
+        <div id="bundle-grid" class="grid" aria-live="polite"></div>
+      </section>
+    </section>
+
+    <section class="validator" aria-labelledby="validator-title">
+      <div class="section-head"><div><p class="eyebrow">LOCAL PARSER</p><h2 id="validator-title">Manifest validator</h2></div><span class="receipt">no execution authority</span></div>
+      <div class="validator-grid">
+        <div>
+          <label for="filename">Filename</label>
+          <input id="filename" value="zarf.yaml" maxlength="128">
+          <label for="manifest">YAML or JSON manifest</label>
+          <textarea id="manifest" spellcheck="false">kind: ZarfPackageConfig
+metadata:
+  name: example
+  version: 0.1.0
+components: []
+</textarea>
+          <button id="validate" type="button">Validate locally</button>
+        </div>
+        <pre id="validation-output" tabindex="0" aria-label="Validation result">Awaiting a bounded manifest.</pre>
+      </div>
+    </section>
+  </main>
+
+  <footer><span>SZL Holdings</span><span>DECLARED ≠ MEASURED ≠ DEPLOYED</span></footer>
+  <noscript>This observatory requires JavaScript for catalog interaction. The API remains available at /api/docs.</noscript>
+</body>
+</html>
