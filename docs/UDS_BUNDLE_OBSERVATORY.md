@@ -29,6 +29,12 @@ Open `http://127.0.0.1:7860` and inspect the API contract at `/api/docs`.
 | `POST /api/validate` | bounded computation | deterministic validation receipt for supplied text |
 | `GET /deployment.json` | local read | runtime identity without a Hub-success claim |
 
+## Direct-file containment
+
+Repository discovery and controlled-file hashing use one fail-closed ownership predicate. A candidate must remain lexically below the configured repository root, every path component is inspected without following links, symlinks and Windows junctions are rejected, and the strict resolved candidate must still remain below the strict resolved root. Internal aliases are rejected as well as links that escape the repository.
+
+The same predicate protects catalog discovery, exact bundle detail through the catalog, and controlled-file source commitments. Missing, dangling, recursive, or link-like paths are reported as unavailable rather than read.
+
 ## Security and truth boundary
 
 The service deliberately contains no code path for:
