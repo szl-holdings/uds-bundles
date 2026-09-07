@@ -1,6 +1,8 @@
 """Local-only bundle discovery and source commitment helpers."""
 from __future__ import annotations
 
+import os
+import stat
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -17,24 +19,76 @@ from .config import (
 from .parsing import validate_manifest
 
 
-def safe_child(root: Path, path: Path) -> bool:
+def _lexical_absolute(path: Path) -> Path:
+    """Normalize dots without resolving symlinks or junctions."""
+
+    return Path(os.path.abspath(os.fspath(path)))
+
+
+def _is_link_like(path: Path) -> bool:
+    """Reject POSIX symlinks and Windows directory junctions."""
+
     try:
-        path.resolve().relative_to(root.resolve())
+        if stat.S_ISLNK(path.lstat().st_mode):
+            return True
+        is_junction = getattr(path, "is_junction", None)
+        return bool(is_junction and is_junction())
+    except OSError:
         return True
+
+
+def source_owned(repo_root: Path, path: Path) -> bool:
+    """Prove that ``path`` is a direct, existing entry below ``repo_root``.
+
+    Containment is checked twice: first lexically, before link resolution, and
+    then against strict resolved paths. Every component from the repository
+    root to the candidate is inspected with ``lstat`` and link-like entries are
+    rejected, including aliases whose target remains inside the repository.
+    """
+
+    lexical_root = _lexical_absolute(repo_root)
+    lexical_candidate = _lexical_absolute(path)
+    try:
+        relative = lexical_candidate.relative_to(lexical_root)
     except ValueError:
         return False
+
+    try:
+        if _is_link_like(lexical_root):
+            return False
+        resolved_root = lexical_root.resolve(strict=True)
+        current = lexical_root
+        for part in relative.parts:
+            current /= part
+            if _is_link_like(current):
+                return False
+        resolved_candidate = current.resolve(strict=True)
+        resolved_candidate.relative_to(resolved_root)
+    except (OSError, RuntimeError, ValueError):
+        return False
+    return True
+
+
+def safe_child(root: Path, path: Path) -> bool:
+    """Backward-compatible name for the direct-source ownership predicate."""
+
+    return source_owned(root, path)
 
 
 def discover_bundles(repo_root: Path) -> list[dict[str, Any]]:
     discovered: dict[str, dict[str, Any]] = {}
     for relative_root in DISCOVERY_ROOTS:
-        root = (repo_root / relative_root).resolve()
-        if not root.is_dir() or not safe_child(repo_root, root):
+        root = repo_root / relative_root
+        if not source_owned(repo_root, root) or not root.is_dir():
             continue
         directories = sorted(
             path
             for path in root.iterdir()
-            if path.is_dir() and not path.name.startswith(".")
+            if (
+                not path.name.startswith(".")
+                and source_owned(repo_root, path)
+                and path.is_dir()
+            )
         )
         for directory in directories:
             if not SLUG_RE.fullmatch(directory.name):
@@ -42,7 +96,7 @@ def discover_bundles(repo_root: Path) -> list[dict[str, Any]]:
             manifests: list[dict[str, Any]] = []
             for name in MANIFEST_NAMES:
                 path = directory / name
-                if not path.is_file() or not safe_child(repo_root, path):
+                if not source_owned(repo_root, path) or not path.is_file():
                     continue
                 raw = path.read_bytes()
                 row: dict[str, Any] = {
@@ -81,10 +135,15 @@ def discover_bundles(repo_root: Path) -> list[dict[str, Any]]:
 
 
 def controlled_hashes(repo_root: Path) -> dict[str, str | None]:
-    return {
-        name: sha256_file(repo_root / name) if (repo_root / name).is_file() else None
-        for name in CONTROLLED_FILES
-    }
+    hashes: dict[str, str | None] = {}
+    for name in CONTROLLED_FILES:
+        path = repo_root / name
+        hashes[name] = (
+            sha256_file(path)
+            if source_owned(repo_root, path) and path.is_file()
+            else None
+        )
+    return hashes
 
 
 def catalog_payload(repo_root: Path) -> dict[str, Any]:
