@@ -1,7 +1,7 @@
 # Copyright 2026 SZL Holdings — SPDX-License-Identifier: Apache-2.0
 # rosie UDS runtime image. Derived from HF Space pattern at rosie-fresh/.
 # ADDITIVE: k8s/Zarf build target only.
-FROM python:3.14-slim@sha256:cad9a2c871761c413caa6fdd6441c783451e740a48aaeba60ae62a8b53525ef6
+FROM python:3.14-slim@sha256:caaf356f40667c496d405780745b9ac25771c189a51dfcc42430d531ea09f8a2
 ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 PORT=8080
 WORKDIR /app
 RUN pip install --no-cache-dir "fastapi==0.111.0" "uvicorn[standard]==0.30.1"
