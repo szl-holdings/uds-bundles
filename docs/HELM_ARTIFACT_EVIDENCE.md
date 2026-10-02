@@ -48,6 +48,16 @@ rejects missing evidence, placeholders (including `PENDING-cosign-attest-at-buil
 digest/source/license/scope mismatches, duplicate/unsafe archive paths and links.
 It never extracts archive members. Noncanonical edits fail even if JSON-equivalent.
 
+The archive profile permits only regular files and directories under one chart
+root, with a regular-file `Chart.yaml`. File/descendant collisions are rejected
+in either entry order. Compressed inputs and the **entire decompressed TAR** each
+have a 32 MiB limit; the latter includes metadata, headers and padding and is
+checked before any TAR header parsing. At most 10,000 members are accepted.
+PAX/GNU extension records (including long-name and sparse metadata), links,
+devices and other entry types are unsupported and rejected, even below the size
+limit. Truncated records, missing end markers and nonzero trailing data fail
+closed. Charts needing unsupported extensions require a reviewed profile change.
+
 Success means **unsigned integrity against the supplied expected values**.
 Someone able to replace both artifacts and the trusted expected values can
 forge this evidence. This verifier does not authenticate a publisher, validate

@@ -1,5 +1,7 @@
 """Offline consumer contract; all archives are synthetic, no release assets used."""
 import hashlib
+import gzip
+import importlib.util
 import io
 import json
 from pathlib import Path
@@ -9,10 +11,14 @@ import sys
 import tarfile
 import tempfile
 import unittest
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = "1234567890abcdef1234567890abcdef12345678"
+SPEC = importlib.util.spec_from_file_location("helm_evidence", ROOT / "scripts/helm_evidence.py")
+EVIDENCE = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(EVIDENCE)
 
 
 class EvidenceTests(unittest.TestCase):
@@ -122,6 +128,82 @@ class EvidenceTests(unittest.TestCase):
         self.assertNotEqual(self.run_cli("generate").returncode, 0)
         self.artifact.write_bytes(b"not a gzip archive")
         self.assertNotEqual(self.run_cli("generate").returncode, 0)
+
+    def test_total_expansion_bounded_before_metadata_parsing(self):
+        buffer = io.BytesIO()
+        with tarfile.open(fileobj=buffer, mode="w:gz", format=tarfile.PAX_FORMAT) as archive:
+            info = tarfile.TarInfo("fixture/Chart.yaml")
+            info.pax_headers = {"comment": "x" * 8192}
+            archive.addfile(info, io.BytesIO())
+        compressed = buffer.getvalue()
+        self.assertLess(len(compressed), 2048)
+        with mock.patch.object(EVIDENCE, "MAX_BYTES", 2048):
+            with mock.patch.object(EVIDENCE.tarfile.TarInfo, "frombuf") as parse:
+                with self.assertRaisesRegex(ValueError, "total decompressed TAR"):
+                    list(EVIDENCE.bounded_members(compressed))
+                parse.assert_not_called()
+        # Padding and concatenated gzip streams count toward the same total.
+        for expanded in (bytes(2049), bytes(1024) + b"x" * 2048):
+            with mock.patch.object(EVIDENCE, "MAX_BYTES", 2048):
+                with self.assertRaisesRegex(ValueError, "total decompressed TAR"):
+                    list(EVIDENCE.bounded_members(gzip.compress(expanded)))
+        with mock.patch.object(EVIDENCE, "MAX_BYTES", 2048):
+            with self.assertRaisesRegex(ValueError, "total decompressed TAR"):
+                list(EVIDENCE.bounded_members(gzip.compress(bytes(1024)) + gzip.compress(bytes(1025))))
+
+    def test_extensions_and_nonregular_types_rejected(self):
+        for kind in (tarfile.XHDTYPE, tarfile.XGLTYPE, tarfile.GNUTYPE_LONGNAME,
+                     tarfile.GNUTYPE_LONGLINK, tarfile.GNUTYPE_SPARSE,
+                     tarfile.SYMTYPE, tarfile.LNKTYPE, tarfile.FIFOTYPE,
+                     tarfile.CHRTYPE, tarfile.BLKTYPE, b"Z"):
+            with self.subTest(kind=kind):
+                info = tarfile.TarInfo("fixture/metadata")
+                info.type = kind
+                raw = info.tobuf() + bytes(1024)
+                with self.assertRaisesRegex(ValueError, "unsupported TAR type"):
+                    list(EVIDENCE.bounded_members(gzip.compress(raw)))
+
+    def test_chart_yaml_must_be_regular_file(self):
+        with tarfile.open(self.artifact, "w:gz") as archive:
+            directory = tarfile.TarInfo("fixture/Chart.yaml")
+            directory.type = tarfile.DIRTYPE
+            archive.addfile(directory)
+            archive.addfile(tarfile.TarInfo("fixture/values.yaml"), io.BytesIO())
+        result = self.run_cli("generate")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("expected one nonempty Helm chart", result.stderr)
+
+    def test_file_ancestor_collisions_both_orders(self):
+        for names in (("fixture/a", "fixture/a/b"), ("fixture/a/b", "fixture/a")):
+            with self.subTest(names=names):
+                self.archive([("fixture/Chart.yaml", b"chart")] + [(name, b"file") for name in names])
+                result = self.run_cli("generate")
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("hierarchy collision", result.stderr)
+
+    def test_directory_roots_and_member_limits(self):
+        with tarfile.open(self.artifact, "w:gz") as archive:
+            archive.addfile(tarfile.TarInfo("fixture/Chart.yaml"), io.BytesIO())
+            directory = tarfile.TarInfo("other")
+            directory.type = tarfile.DIRTYPE
+            archive.addfile(directory)
+        self.assertNotEqual(self.run_cli("generate").returncode, 0)
+        with mock.patch.object(EVIDENCE, "MAX_MEMBERS", 1):
+            with self.assertRaisesRegex(ValueError, "too many archive members"):
+                list(EVIDENCE.bounded_members(self.artifact.read_bytes()))
+
+    def test_truncation_trailing_data_and_explicit_directories(self):
+        raw = tarfile.TarInfo("fixture/Chart.yaml").tobuf()
+        for expanded in (raw, raw + bytes(512), raw + bytes(1024) + b"trailing"):
+            with self.subTest(size=len(expanded)):
+                with self.assertRaises(ValueError):
+                    list(EVIDENCE.bounded_members(gzip.compress(expanded)))
+        with tarfile.open(self.artifact, "w:gz", format=tarfile.USTAR_FORMAT) as archive:
+            directory = tarfile.TarInfo("fixture/")
+            directory.type = tarfile.DIRTYPE
+            archive.addfile(directory)
+            archive.addfile(tarfile.TarInfo("fixture/Chart.yaml"), io.BytesIO())
+        self.assertEqual(self.run_cli("generate").returncode, 0)
 
 
 if __name__ == "__main__":

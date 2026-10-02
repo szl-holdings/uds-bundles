@@ -6,16 +6,20 @@ This is deliberately not a signature, provenance, or runtime package scanner.
 """
 
 import argparse
+import gzip
 import hashlib
+import io
 import json
 from pathlib import Path, PurePosixPath
 import re
 import tarfile
+import zlib
 
 
 REPOSITORY = "https://github.com/szl-holdings/uds-bundles"
 SCOPE = "Helm archive files only; excludes container contents, models, agents, and tools"
 MAX_BYTES = 32 * 1024 * 1024
+MAX_MEMBERS = 10000
 
 
 def digest(data):
@@ -39,41 +43,79 @@ def read_limited(path):
     return data
 
 
+def bounded_members(compressed):
+    """Bound the entire TAR, including metadata/padding, before parsing headers.
+
+    Parse individual headers only: TarFile would consume PAX/GNU extensions
+    internally before yielding members. This deliberately narrow chart profile
+    rejects those extensions, sparse entries and every non-file/directory type.
+    """
+    with gzip.GzipFile(fileobj=io.BytesIO(compressed)) as stream:
+        expanded = stream.read(MAX_BYTES + 1)
+    if len(expanded) > MAX_BYTES:
+        raise ValueError("total decompressed TAR exceeds size limit")
+    if len(expanded) % 512:
+        raise ValueError("TAR stream is not block-aligned")
+    offset = 0
+    count = 0
+    while offset + 512 <= len(expanded):
+        header = expanded[offset:offset + 512]
+        if header == bytes(512):
+            if len(expanded) - offset < 1024 or any(expanded[offset:]):
+                raise ValueError("invalid TAR end markers or trailing data")
+            return
+        member = tarfile.TarInfo.frombuf(header, "utf-8", "strict")
+        count += 1
+        if count > MAX_MEMBERS:
+            raise ValueError("too many archive members")
+        if member.type not in (tarfile.REGTYPE, tarfile.AREGTYPE, tarfile.DIRTYPE):
+            raise ValueError("unsupported TAR type (including PAX/GNU metadata)")
+        if member.size < 0 or (member.isdir() and member.size != 0):
+            raise ValueError("invalid archive member size")
+        start = offset + 512
+        offset = start + ((member.size + 511) // 512) * 512
+        if offset > len(expanded):
+            raise ValueError("truncated archive member")
+        yield member, expanded[start:start + member.size]
+    raise ValueError("missing TAR end markers")
+
+
 def documents(artifact, source_sha, license_file):
     """Reproduce evidence for these exact archive bytes, without extracting files."""
     require_digest(source_sha, 40)
-    artifact_hash = digest(read_limited(artifact))
+    artifact_bytes = read_limited(artifact)
+    artifact_hash = digest(artifact_bytes)
     license_bytes = read_limited(license_file)
     if b"Apache License" not in license_bytes or b"Version 2.0" not in license_bytes:
         raise ValueError("expected repository Apache-2.0 LICENSE")
     components = []
     seen = set()
-    total = 0
-    with tarfile.open(artifact, "r:gz") as archive:
-        for member in archive:
-            path = PurePosixPath(member.name)
-            if (path.is_absolute() or ".." in path.parts or "\\" in member.name
-                    or ":" in member.name or str(path) != member.name
-                    or member.name in seen):
-                raise ValueError("unsafe or duplicate archive path")
-            seen.add(member.name)
-            if len(seen) > 10000:
-                raise ValueError("too many archive members")
-            if member.isdir():
-                continue
-            if not member.isfile() or len(path.parts) < 2:
-                raise ValueError("only regular chart files are supported")
-            total += member.size
-            if total > MAX_BYTES:
-                raise ValueError("expanded chart exceeds size limit")
-            with archive.extractfile(member) as stream:
-                contents = stream.read()
-            components.append({
-                "type": "file", "bom-ref": member.name, "name": member.name,
-                "hashes": [{"alg": "SHA-256", "content": digest(contents)}],
-            })
-    roots = {PurePosixPath(item["name"]).parts[0] for item in components}
-    if len(roots) != 1 or next(iter(roots)) + "/Chart.yaml" not in seen:
+    files = set()
+    directories = set()
+    roots = set()
+    for member, contents in bounded_members(artifact_bytes):
+        path = PurePosixPath(member.name)
+        if (not path.parts or path.is_absolute() or ".." in path.parts or "\\" in member.name
+                or ":" in member.name or str(path) != member.name
+                or member.name in seen):
+            raise ValueError("unsafe or duplicate archive path")
+        seen.add(member.name)
+        roots.add(path.parts[0])
+        parents = {str(parent) for parent in path.parents if parent != PurePosixPath(".")}
+        if parents & files or (member.isfile() and member.name in directories):
+            raise ValueError("file/directory hierarchy collision")
+        directories.update(parents)
+        if member.isdir():
+            directories.add(member.name)
+            continue
+        if not member.isfile() or len(path.parts) < 2:
+            raise ValueError("only regular chart files are supported")
+        files.add(member.name)
+        components.append({
+            "type": "file", "bom-ref": member.name, "name": member.name,
+            "hashes": [{"alg": "SHA-256", "content": digest(contents)}],
+        })
+    if len(roots) != 1 or next(iter(roots)) + "/Chart.yaml" not in files:
         raise ValueError("expected one nonempty Helm chart")
     sbom = {
         "bomFormat": "CycloneDX", "specVersion": "1.6", "version": 1,
@@ -126,7 +168,7 @@ def main():
                 path.write_bytes(expected)
             elif read_limited(path) != expected:
                 raise ValueError("missing, noncanonical, placeholder, or mismatched evidence: " + path.name)
-    except (OSError, ValueError, tarfile.TarError) as error:
+    except (OSError, EOFError, ValueError, tarfile.TarError, zlib.error) as error:
         parser.exit(1, "FAIL: " + str(error) + "\n")
     print("PASS: unsigned chart-file integrity; source binding is an assertion, not authenticated provenance")
 
