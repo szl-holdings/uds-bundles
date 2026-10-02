@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 from collections.abc import Iterable, Mapping
 from pathlib import Path
@@ -70,6 +71,8 @@ def _walk_shape(value: Any, *, depth: int = 0) -> tuple[int, int]:
         total = len(value)
         deepest = depth
         for key, item in value.items():
+            if not isinstance(key, str):
+                raise ValueError("manifest mapping keys must be strings")
             key_total, key_depth = _walk_shape(key, depth=depth + 1)
             item_total, item_depth = _walk_shape(item, depth=depth + 1)
             total += key_total + item_total
@@ -81,9 +84,13 @@ def _walk_shape(value: Any, *, depth: int = 0) -> tuple[int, int]:
             item_total, item_depth = _walk_shape(item, depth=depth + 1)
             total += item_total
             deepest = max(deepest, item_depth)
-    else:
+    elif isinstance(value, (str, int, float, bool, type(None))):
+        if isinstance(value, float) and not math.isfinite(value):
+            raise ValueError("manifest values must be finite")
         total = 1
         deepest = depth
+    else:
+        raise ValueError("manifest values must be JSON-compatible")
     if total > MAX_COLLECTION_ITEMS:
         raise ValueError("manifest collection count exceeds limit")
     return total, deepest
@@ -112,12 +119,19 @@ def parse_manifest(text: str, filename: str) -> tuple[Mapping[str, Any], str]:
             )
             parser = "json-strict"
         else:
-            value = yaml.load(text, Loader=StrictLoader)
+            # Use only the SafeLoader-derived constructor, with the same
+            # guaranteed disposal as PyYAML's wrapper. No dynamic Loader API.
+            loader = StrictLoader(text)
+            try:
+                value = loader.get_single_data()
+            finally:
+                loader.dispose()
             parser = "yaml-safe-strict"
     except (
         DuplicateKeyError,
         json.JSONDecodeError,
         UnicodeDecodeError,
+        RecursionError,
         ValueError,
         yaml.YAMLError,
     ) as exc:
