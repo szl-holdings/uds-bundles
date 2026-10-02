@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import json
+import math
 import re
+import string
 from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Any
@@ -70,6 +72,8 @@ def _walk_shape(value: Any, *, depth: int = 0) -> tuple[int, int]:
         total = len(value)
         deepest = depth
         for key, item in value.items():
+            if not isinstance(key, str):
+                raise ValueError("manifest mapping keys must be strings")
             key_total, key_depth = _walk_shape(key, depth=depth + 1)
             item_total, item_depth = _walk_shape(item, depth=depth + 1)
             total += key_total + item_total
@@ -81,9 +85,13 @@ def _walk_shape(value: Any, *, depth: int = 0) -> tuple[int, int]:
             item_total, item_depth = _walk_shape(item, depth=depth + 1)
             total += item_total
             deepest = max(deepest, item_depth)
-    else:
+    elif isinstance(value, (str, int, float, bool, type(None))):
+        if isinstance(value, float) and not math.isfinite(value):
+            raise ValueError("manifest values must be finite")
         total = 1
         deepest = depth
+    else:
+        raise ValueError("manifest values must be JSON-compatible")
     if total > MAX_COLLECTION_ITEMS:
         raise ValueError("manifest collection count exceeds limit")
     return total, deepest
@@ -112,12 +120,19 @@ def parse_manifest(text: str, filename: str) -> tuple[Mapping[str, Any], str]:
             )
             parser = "json-strict"
         else:
-            value = yaml.load(text, Loader=StrictLoader)
+            # Use only the SafeLoader-derived constructor, with the same
+            # guaranteed disposal as PyYAML's wrapper. No dynamic Loader API.
+            loader = StrictLoader(text)
+            try:
+                value = loader.get_single_data()
+            finally:
+                loader.dispose()
             parser = "yaml-safe-strict"
     except (
         DuplicateKeyError,
         json.JSONDecodeError,
         UnicodeDecodeError,
+        RecursionError,
         ValueError,
         yaml.YAMLError,
     ) as exc:
@@ -152,6 +167,31 @@ def classify_manifest(value: Mapping[str, Any], filename: str) -> str:
     return "generic-manifest"
 
 
+_IMAGE_NAME_CHARS = frozenset(string.ascii_letters + string.digits + "._/-")
+_IMAGE_TAG_CHARS = frozenset(string.ascii_letters + string.digits + "._-")
+_HEX_CHARS = frozenset(string.hexdigits)
+
+
+def _is_image_reference(candidate: str) -> bool:
+    """Recognize the existing image grammar without regex backtracking."""
+    if "/" not in candidate:
+        return False
+    name, digest_separator, digest = candidate.partition("@sha256:")
+    if digest_separator:
+        return (
+            bool(name)
+            and all(char in _IMAGE_NAME_CHARS for char in name)
+            and len(digest) == 64
+            and all(char in _HEX_CHARS for char in digest)
+        )
+    name, tag_separator, tag = candidate.partition(":")
+    return (
+        bool(name and tag_separator and tag)
+        and all(char in _IMAGE_NAME_CHARS for char in name)
+        and all(char in _IMAGE_TAG_CHARS for char in tag)
+    )
+
+
 def extract_references(value: Mapping[str, Any]) -> dict[str, list[str]]:
     images: set[str] = set()
     urls: set[str] = set()
@@ -166,13 +206,7 @@ def extract_references(value: Mapping[str, Any]) -> dict[str, list[str]]:
             digest_claims.add(candidate.lower())
         elif candidate.startswith(("http://", "https://", "oci://")):
             urls.add(candidate)
-        elif (
-            re.fullmatch(
-                r"[A-Za-z0-9._/-]+(?::[A-Za-z0-9._-]+|@sha256:[0-9a-fA-F]{64})",
-                candidate,
-            )
-            and "/" in candidate
-        ):
+        elif _is_image_reference(candidate):
             images.add(candidate)
         elif candidate.startswith(("./", "../")) or candidate.endswith(
             (".yaml", ".yml", ".json", ".tgz")

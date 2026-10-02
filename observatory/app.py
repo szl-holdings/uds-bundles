@@ -140,14 +140,15 @@ def create_app(repo_root: Path | None = None) -> FastAPI:
     @application.get("/{asset_name}", include_in_schema=False)
     def asset(asset_name: str):
         allowed = {
-            "app.js": "application/javascript",
-            "styles.css": "text/css",
-            "responsive.css": "text/css",
+            "app.js": (static_root / "app.js", "application/javascript"),
+            "styles.css": (static_root / "styles.css", "text/css"),
+            "responsive.css": (static_root / "responsive.css", "text/css"),
         }
-        media_type = allowed.get(asset_name)
-        if media_type is None:
+        asset = allowed.get(asset_name)
+        if asset is None:
             raise HTTPException(status_code=404, detail="NOT_FOUND")
-        return FileResponse(static_root / asset_name, media_type=media_type)
+        path, media_type = asset
+        return FileResponse(path, media_type=media_type)
 
     return application
 
