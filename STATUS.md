@@ -27,6 +27,14 @@ The Warhacker challenge is BUILD → PACKAGE → **DEPLOY**; the deploy is the a
 
 ## What's Experimental
 
+- **Helm chart-file evidence (source implementation)** - the Helm packaging
+  workflow now generates deterministic CycloneDX file inventories and unsigned
+  archive/source/SBOM/license bindings, with clean-consumer and tamper tests.
+  This does not establish signed Helm provenance, runtime package coverage, or
+  model/agent/tool inventory. Past release assets are unchanged; a future release
+  and independent consumer verification remain required. See
+  [Helm artifact evidence](docs/HELM_ARTIFACT_EVIDENCE.md).
+
 - **SLSA L1 honest on all organs; L2 SLSA provenance on 4 of 5 pinned digests** — killinchu/sentra/amaru/rosie pinned digests each carry an L2 SLSA provenance attestation that cryptographically verifies (`cosign verify-attestation --type slsaprovenance`, keyless Fulcio+Rekor); the a11oy *pinned* digest is L1-signed only (L2 re-attestation pending/founder-gated). The mesh bundle (`szl-mesh:v0.4.0` / `a11oy-bundle:0.5.0`) is **cosign-signed only** — its in-line build-provenance attestation is **roadmap**, blocked on an owner-only GHCR package-write grant. Do NOT claim the bundle is L2-attested until `cosign verify-attestation` returns an *in-line build* provenance payload for the bundle (the current bundle attestation is post-publish provenance, not in-line L2). **L3 is NOT claimed** (no FedRAMP, Iron Bank, or CMMC).
 - **Automated bundle signing** — Sigstore/cosign integration under development
 

@@ -7,10 +7,10 @@ name: Helm Lint + Chart Test
 on:
   push:
     branches: [main]
-    paths: ["charts/**", "bigbang/**", ".github/workflows/helm-lint.yml"]
+    paths: ["charts/**", "bigbang/**", ".github/workflows/helm-lint.yml", "scripts/helm_evidence.py", "tests/test_helm_evidence.py"]
   pull_request:
     branches: [main]
-    paths: ["charts/**", "bigbang/**"]
+    paths: ["charts/**", "bigbang/**", ".github/workflows/helm-lint.yml", "scripts/helm_evidence.py", "tests/test_helm_evidence.py"]
   release:
     types: [published]
 
@@ -44,6 +44,19 @@ jobs:
 
       - name: helm lint
         run: helm lint ./charts/szl
+
+      - name: Offline evidence consumer and negative tests
+        run: python3 -m unittest discover -s tests -p test_helm_evidence.py -v
+
+      - name: Package and verify chart-file evidence (unsigned)
+        run: |
+          mkdir -p dist
+          helm package ./charts/szl -d dist
+          chart=(dist/*.tgz)
+          test "${#chart[@]}" -eq 1
+          source_sha="$(git rev-parse HEAD)"
+          python3 scripts/helm_evidence.py generate "${chart[0]}" --source-sha "$source_sha"
+          python3 scripts/helm_evidence.py verify "${chart[0]}" --source-sha "$source_sha" --artifact-sha256 "$(sha256sum "${chart[0]}" | cut -d ' ' -f1)"
 
       - name: helm template (render gate — fail on empty render)
         run: |
@@ -79,9 +92,19 @@ jobs:
         uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
         with:
           version: v3.21.0
-      - name: helm package
-        run: helm package ./charts/szl -d .
-      - name: Attach chart to release
+      - name: Package with unsigned SBOM evidence
+        run: |
+          mkdir -p dist
+          helm package ./charts/szl -d dist
+          chart=(dist/*.tgz)
+          test "${#chart[@]}" -eq 1
+          source_sha="$(git rev-parse HEAD)"
+          python3 scripts/helm_evidence.py generate "${chart[0]}" --source-sha "$source_sha"
+          python3 scripts/helm_evidence.py verify "${chart[0]}" --source-sha "$source_sha" --artifact-sha256 "$(sha256sum "${chart[0]}" | cut -d ' ' -f1)"
+          cp LICENSE scripts/helm_evidence.py dist/
+      - name: Attach chart and evidence to release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload "${{ github.event.release.tag_name }}" szl-0.1.0.tgz --clobber
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        # Refuse replacement of existing release assets. No new signing permissions.
+        run: gh release upload "$RELEASE_TAG" dist/*
