@@ -11,7 +11,7 @@ import sys
 import tarfile
 import tempfile
 import unittest
-from unittest import mock
+import unittest.mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -137,17 +137,17 @@ class EvidenceTests(unittest.TestCase):
             archive.addfile(info, io.BytesIO())
         compressed = buffer.getvalue()
         self.assertLess(len(compressed), 2048)
-        with mock.patch.object(EVIDENCE, "MAX_BYTES", 2048):
-            with mock.patch.object(EVIDENCE.tarfile.TarInfo, "frombuf") as parse:
+        with unittest.mock.patch.object(EVIDENCE, "MAX_BYTES", 2048):
+            with unittest.mock.patch.object(EVIDENCE.tarfile.TarInfo, "frombuf") as parse:
                 with self.assertRaisesRegex(ValueError, "total decompressed TAR"):
                     list(EVIDENCE.bounded_members(compressed))
                 parse.assert_not_called()
         # Padding and concatenated gzip streams count toward the same total.
         for expanded in (bytes(2049), bytes(1024) + b"x" * 2048):
-            with mock.patch.object(EVIDENCE, "MAX_BYTES", 2048):
+            with unittest.mock.patch.object(EVIDENCE, "MAX_BYTES", 2048):
                 with self.assertRaisesRegex(ValueError, "total decompressed TAR"):
                     list(EVIDENCE.bounded_members(gzip.compress(expanded)))
-        with mock.patch.object(EVIDENCE, "MAX_BYTES", 2048):
+        with unittest.mock.patch.object(EVIDENCE, "MAX_BYTES", 2048):
             with self.assertRaisesRegex(ValueError, "total decompressed TAR"):
                 list(EVIDENCE.bounded_members(gzip.compress(bytes(1024)) + gzip.compress(bytes(1025))))
 
@@ -188,7 +188,7 @@ class EvidenceTests(unittest.TestCase):
             directory.type = tarfile.DIRTYPE
             archive.addfile(directory)
         self.assertNotEqual(self.run_cli("generate").returncode, 0)
-        with mock.patch.object(EVIDENCE, "MAX_MEMBERS", 1):
+        with unittest.mock.patch.object(EVIDENCE, "MAX_MEMBERS", 1):
             with self.assertRaisesRegex(ValueError, "too many archive members"):
                 list(EVIDENCE.bounded_members(self.artifact.read_bytes()))
 
