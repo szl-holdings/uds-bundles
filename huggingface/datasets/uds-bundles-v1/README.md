@@ -41,19 +41,30 @@ size_categories:
 
 # SZL UDS Bundles v1
 
-Airgap-deployable [UDS Core](https://uds.defenseunicorns.com/) / [Zarf](https://zarf.dev/) productionization artifacts for the SZL Holdings organ substrate (a11oy, amaru, sentra, killinchu, rosie).
+[UDS Core](https://uds.defenseunicorns.com/) / [Zarf](https://zarf.dev/) packaging artifacts (airgap-targeted; airgap deploy not yet demonstrated) for the SZL Holdings organ substrate (a11oy, amaru, sentra, killinchu, rosie).
 
 ## Contents
 
 - `uds_productionization/PER_BUNDLE/<organ>/` — per-organ Dockerfile, Helm chart, and UDS manifests (namespace, authorization policy, service, deployment).
-- `uds_productionization/AIRGAP_TEST_REPORT.md` — airgap deployment verification.
+- [`uds_productionization/AIRGAP_TEST_REPORT.md`](https://huggingface.co/datasets/SZLHOLDINGS/uds-bundles-v1/blob/main/uds_productionization/AIRGAP_TEST_REPORT.md) — airgap test status report (PARTIAL: image-free proof packages only; image-bearing build and kind airgap test not run).
+- [`uds_productionization/GAP_CHECK.md`](https://huggingface.co/datasets/SZLHOLDINGS/uds-bundles-v1/blob/main/uds_productionization/GAP_CHECK.md) — phase-by-phase status, including the blocked items.
 - `uds_productionization/COSIGN_SIGNING_LOG.md` — cosign signing provenance.
 - `uds_productionization/INVENTORY.md` — bundle inventory.
 - `uds_productionization/FOUNDER_DEPLOY_QUICKSTART.md` — operator deployment guide.
 
 ## Architecture
 
-Each organ ships as a self-contained, cosign-signed Zarf bundle deployable into an airgapped k3d / UDS Core mesh. Every deployment emits DSSE-signed Khipu receipts onto the Merkle DAG.
+The five `uds_productionization/artifacts/zarf-package-*-proof-amd64-0.3.1.tar.zst` files are **image-free proof packages** (about 2 KB each, built with zarf v0.51.0 without the `images:` layer). Each is cosign-signed with the SZL org key and verified with `cosign verify-blob --insecure-ignore-tlog=true` (offline key verification, no transparency-log check). A `zarf package deploy` dry-run of them validated checksums and rendered the deploy preview.
+
+What has **not** been done for this dataset's payload:
+
+- the image-bearing production packages (with the organ container images baked in) were not built or signed;
+- no SBOM was generated or attested;
+- the kind / k3d air-gapped deploy test was not run.
+
+See [`AIRGAP_TEST_REPORT.md`](https://huggingface.co/datasets/SZLHOLDINGS/uds-bundles-v1/blob/main/uds_productionization/AIRGAP_TEST_REPORT.md) and [`GAP_CHECK.md`](https://huggingface.co/datasets/SZLHOLDINGS/uds-bundles-v1/blob/main/uds_productionization/GAP_CHECK.md).
+
+In the GitHub source repository, CI proves the deploy *pipeline* on an online, ephemeral k3d cluster ([`deploy-proof.yml`](https://github.com/szl-holdings/uds-bundles/blob/main/.github/workflows/deploy-proof.yml)); that cluster is not air-gapped. No cable-pulled air-gap proof has been captured: [`STATUS.md`](https://github.com/szl-holdings/uds-bundles/blob/main/STATUS.md) records that `releases/szl-warhacker-uds-v1.0.0/airgap-proof/PROOF.json` does not exist yet. Do not read this dataset as evidence of an air-gapped deployment.
 
 ## Demo
 
