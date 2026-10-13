@@ -1,7 +1,7 @@
 name: HF Dataset Cards Check
 
 # Claim checks for the Hugging Face dataset cards sourced in huggingface/datasets/.
-# Stdlib-only unittest; no network, no credentials.
+# Stdlib-only unittest; no network, no credentials, no publishing.
 on:
   pull_request:
     branches: [main]
@@ -9,12 +9,26 @@ on:
       - "huggingface/**"
       - "tests/test_hf_dataset_cards.py"
       - ".github/workflows/hf-cards-check.yml"
+      # Evidence the claim checks read: the air-gap proof receipt, the proof-package
+      # artifacts and logs, and the key map and signing log.
+      - "releases/szl-warhacker-uds-v1.0.0/airgap-proof/**"
+      - "uds-bundles/artifacts/**"
+      - "uds-bundles/COSIGN_SIGNING_LOG.md"
+      - "COSIGN_KEYS.md"
+      - "bundles/v0.1.0/cosign_signing_key.pub"
   push:
     branches: [main]
     paths:
       - "huggingface/**"
       - "tests/test_hf_dataset_cards.py"
       - ".github/workflows/hf-cards-check.yml"
+      # Evidence the claim checks read: the air-gap proof receipt, the proof-package
+      # artifacts and logs, and the key map and signing log.
+      - "releases/szl-warhacker-uds-v1.0.0/airgap-proof/**"
+      - "uds-bundles/artifacts/**"
+      - "uds-bundles/COSIGN_SIGNING_LOG.md"
+      - "COSIGN_KEYS.md"
+      - "bundles/v0.1.0/cosign_signing_key.pub"
   workflow_dispatch: {}
 
 permissions:
