@@ -20,6 +20,8 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
+import subprocess
 import sys
 import tempfile
 
@@ -39,6 +41,29 @@ def card_path(root, dataset):
 
 def commit_message(git_sha):
     return f"docs(card): sync README.md from {SOURCE_REPO}@{git_sha}"
+
+
+class SourceGuard:
+    """Require the exact tracked card from the current canonical main commit."""
+
+    def __init__(self, root, git_sha):
+        if not re.fullmatch(r"[0-9a-f]{40}", git_sha):
+            raise ValueError("source revision must be a full Git commit SHA")
+        self.root, self.git_sha = Path(root), git_sha
+
+    def git(self, *args):
+        return subprocess.check_output(["git", "-C", str(self.root), *args], timeout=30)
+
+    def __call__(self, dataset):
+        if self.git("rev-parse", "HEAD").decode().strip() != self.git_sha:
+            raise RuntimeError("checkout does not match the claimed source revision")
+        path = card_path(self.root, dataset)
+        tracked = self.git("show", f"{self.git_sha}:{path.relative_to(self.root).as_posix()}")
+        if tracked != path.read_bytes():
+            raise RuntimeError("source card differs from the claimed Git blob")
+        remote = self.git("ls-remote", f"https://github.com/{SOURCE_REPO}.git", "refs/heads/main")
+        if remote.decode().split() != [self.git_sha, "refs/heads/main"]:
+            raise RuntimeError("source revision is stale; canonical main has advanced")
 
 
 class HubClient:
@@ -83,9 +108,10 @@ class HubClient:
         return info.oid
 
 
-def publish_one(client, root, dataset, git_sha, description, dry_run=False):
+def publish_one(client, root, dataset, git_sha, description, dry_run=False, *, source_guard):
     """Publish one card. Returns a result dict; result['ok'] is False on failure."""
     repo_id = f"{HUB_ORG}/{dataset}"
+    source_guard(dataset)
     local = card_path(root, dataset).read_bytes()
     result = {"dataset": repo_id, "local_sha256": sha256_hex(local), "ok": False}
 
@@ -95,12 +121,21 @@ def publish_one(client, root, dataset, git_sha, description, dry_run=False):
     result["hub_sha256_before"] = sha256_hex(current) if current is not None else None
 
     if current == local:
+        if client.head(repo_id) != head:
+            result["error"] = "Hub head changed during unchanged-card verification"
+            return result
+        source_guard(dataset)
         result.update(action="unchanged", hub_revision=head, hub_sha256=result["local_sha256"], ok=True)
         return result
     if dry_run:
+        if client.head(repo_id) != head:
+            result["error"] = "Hub head changed during comparison"
+            return result
+        source_guard(dataset)
         result.update(action="would-upload", ok=True)
         return result
 
+    source_guard(dataset)
     revision = client.upload_readme(repo_id, local, head, commit_message(git_sha), description)
     result["action"] = "uploaded"
     result["hub_revision"] = revision
@@ -113,6 +148,10 @@ def publish_one(client, root, dataset, git_sha, description, dry_run=False):
     if result["hub_sha256"] != result["local_sha256"]:
         result["error"] = "read-back sha256 does not match the source card"
         return result
+    if client.head(repo_id) != revision:
+        result["error"] = "Hub head changed during uploaded-card verification"
+        return result
+    source_guard(dataset)
     result["ok"] = True
     return result
 
@@ -140,10 +179,12 @@ def main(argv=None):
         description += f"\nPublished by: {args.run_url}"
 
     client = HubClient(token)
+    source_guard = SourceGuard(ROOT, args.git_sha)
     results = []
     for dataset in args.dataset or DATASETS:
         try:
-            results.append(publish_one(client, ROOT, dataset, args.git_sha, description, args.dry_run))
+            results.append(publish_one(client, ROOT, dataset, args.git_sha, description, args.dry_run,
+                                       source_guard=source_guard))
         except Exception as exc:  # report every dataset, then fail
             results.append({"dataset": f"{HUB_ORG}/{dataset}", "ok": False, "error": f"{type(exc).__name__}: {exc}"})
 
