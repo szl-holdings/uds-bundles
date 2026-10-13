@@ -8,9 +8,13 @@ on:
     branches: [main]
     paths:
       - "huggingface/datasets/*/README.md"
+      - "scripts/hf_publish_cards.py"
+      - "tests/test_hf_publish_cards.py"
+      - ".github/workflows/hf-dataset-cards-publish.yml"
   pull_request:
     branches: [main]
     paths:
+      - "huggingface/datasets/*/README.md"
       - "scripts/hf_publish_cards.py"
       - "tests/test_hf_publish_cards.py"
       - ".github/workflows/hf-dataset-cards-publish.yml"
@@ -28,10 +32,6 @@ on:
 
 permissions:
   contents: read
-
-concurrency:
-  group: hf-dataset-cards-publish
-  cancel-in-progress: false
 
 jobs:
   test:
@@ -61,6 +61,9 @@ jobs:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    concurrency:
+      group: hf-dataset-cards-publish
+      cancel-in-progress: false
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
@@ -84,6 +87,15 @@ jobs:
           python -m unittest -v tests/test_hf_dataset_cards.py
       - name: Install huggingface_hub (pinned)
         run: python -m pip install --disable-pip-version-check --no-cache-dir "huggingface_hub==2.0.0"
+      - name: Verify current canonical source before loading the publishing token
+        run: |
+          python - <<'PY'
+          import os
+          from scripts.hf_publish_cards import DATASETS, ROOT, SourceGuard
+          guard = SourceGuard(ROOT, os.environ["GITHUB_SHA"])
+          for dataset in DATASETS:
+              guard(dataset)
+          PY
       - name: Publish cards and verify read-back
         env:
           # Org-level HF_TOKEN only. HF_ORG_TOKEN is not used: it is invalid (HTTP 400).

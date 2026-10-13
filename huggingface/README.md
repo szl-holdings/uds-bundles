@@ -46,16 +46,25 @@ changes require a verified publication before Hub alignment can be claimed.
 The cards (only `README.md`, never the payloads) are published by
 [`hf-dataset-cards-publish.yml`](../.github/workflows/hf-dataset-cards-publish.yml):
 
-- it runs on a push to `main` that changes `huggingface/datasets/*/README.md`, and on
+- it runs on a push to `main` that changes a card, publisher, publisher test, or workflow, and on
   `workflow_dispatch` (one dataset or all, with an optional dry run);
 - it first runs `tests/test_hf_dataset_cards.py` and refuses to publish if the card claim
   checks fail or are missing;
 - it uploads a card only when its bytes differ from the Hub copy, with the Hub's current head
   as the parent commit and the GitHub commit SHA in the Hub commit message;
+- it verifies the checkout SHA, tracked card bytes, and current canonical `main` before
+  publishing and again around each upload; a stale rerun fails instead of republishing old cards;
 - it reads the card back at the new Hub revision and fails unless its sha256 equals the
-  sha256 of the card in this repository;
+  sha256 of the card in this repository and the Hub head still matches that revision;
+- unchanged-card checks also re-read the Hub head; a concurrent Hub edit fails verification;
+- only publication jobs share the write queue, so PR validation cannot replace a pending publish;
 - it authenticates with the org-level `HF_TOKEN` secret (not `HF_ORG_TOKEN`).
 
 The payloads are not published from here; they still come only from the uploads recorded in
 the lineage above. Edit cards here, not on the Hub. If a publish run fails, note in this file
 that the Hub copy is behind until a run succeeds.
+
+The GitHub-main check and Hub compare-and-swap operate on separate services. A main
+advance after the last pre-upload check can still race an upload; the post-upload check
+reports failure, and the newer main run reconciles the card. A successful result is a
+dated observation of the checked heads, not a permanent synchronization guarantee.
