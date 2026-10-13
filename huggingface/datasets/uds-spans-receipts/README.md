@@ -19,8 +19,9 @@ tags:
 - audit-log
 - observability
 - sample
+- synthetic
 - doi:10.5281/zenodo.19944926
-pretty_name: UDS Spans Receipts — OTel Governance Audit Log (SAMPLE)
+pretty_name: UDS Spans Receipts — Synthetic OTel Governance Audit Log (SYNTHETIC SAMPLE)
 size_categories:
 - n<1K
 task_categories:
@@ -54,13 +55,13 @@ configs:
 <div align="center">
 <p>
 
-[![dataset](https://img.shields.io/badge/dataset-OTel%20spans%20%C2%B7%20receipts%20%C2%B7%20SAMPLE-3af4c8?style=flat-square)](https://huggingface.co/datasets/SZLHOLDINGS/uds-spans-receipts/tree/main)
+[![dataset](https://img.shields.io/badge/dataset-OTel%20spans%20%C2%B7%20receipts%20%C2%B7%20SYNTHETIC-3af4c8?style=flat-square)](https://huggingface.co/datasets/SZLHOLDINGS/uds-spans-receipts/tree/main)
 [![license](https://img.shields.io/badge/license-apache--2.0-7e8aa3?style=flat-square)](https://huggingface.co/datasets/SZLHOLDINGS/uds-spans-receipts)
 
 </p>
 </div>
 
-# UDS Spans Receipts — OTel Governance Audit Log (SAMPLE)
+# UDS Spans Receipts — Synthetic OTel Governance Audit Log (SYNTHETIC SAMPLE)
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20434276.svg)](https://doi.org/10.5281/zenodo.20434276)
 [![Lean Kernel Green](https://img.shields.io/badge/Lean_4.13--kernel--green@c7c0ba17-22c55e?style=flat-square)](https://github.com/szl-holdings/lutar-lean/commit/c7c0ba17)
@@ -70,9 +71,11 @@ configs:
 
 > **Doctrine v11 LOCKED.** No marketing. Every number resolves to a CI log, a Lean proof, or a Zenodo DOI.
 
-**Label: SAMPLE.** This repository is a sample corpus of OpenTelemetry span records and governance receipts emitted by the UDS mesh governance layer, plus the hash-chained attestation log shared with [`uds-governance-receipts`](https://huggingface.co/datasets/SZLHOLDINGS/uds-governance-receipts). The `spans` and `receipts` configs load `data/spans_sample.jsonl` and `data/receipts_sample.jsonl` — they are samples, not a complete production sink, and this dataset is **not** the primary OTel sink for the SZL substrate. The production span exporter and collector are described in [szl-holdings/vsp-otel](https://github.com/szl-holdings/vsp-otel).
+**Label: SYNTHETIC SAMPLE.** The `spans` and `receipts` configs load generated records, not telemetry. Every row in `data/spans_sample.jsonl` (100 rows) and `data/receipts_sample.jsonl` (50 rows) was generated, carries `synthetic: true`, and is timestamped between 2026-01-15 and 2026-01-23. No row was emitted by a running UDS mesh. The `split` column in the span rows (train / validation / test) is a generated label, not a held-out evaluation split. The DSSE envelopes embedded in those rows (`dsse_envelope_b64`, `dsse_envelope`) are not verified signatures and must not be treated as receipts. This dataset is **not** an OTel sink for the SZL substrate; the production span exporter and collector are described in [szl-holdings/vsp-otel](https://github.com/szl-holdings/vsp-otel).
 
-Each span record includes: operation type, actor ORCID, Lean commit hash, thesis DOI, and a formula-gate pass/fail bitmap. Records that carry a DSSE envelope are the exception, not the rule: the single verified DSSE receipt in this repository is the Wire D record below. Successful loading of a row is not signature verification.
+The non-synthetic content is the hash-chained attestation log `extended-attestations.jsonl` (five records, 2026-05-27 onward, shared with [`uds-governance-receipts`](https://huggingface.co/datasets/SZLHOLDINGS/uds-governance-receipts)) and the one DSSE-signed Wire D verification record described below.
+
+Each synthetic span row has: `trace_id`, `span_id`, `parent_span_id`, `kind`, `component` (a11oy, amaru, rosie or sentra), `component_commit`, `mesh_commit`, `status` / `status_message`, `duration_ms`, `events`, `slsa_level`, `attestation_id`, `timestamp_utc`, `split`, `synthetic`, `dsse_envelope_b64`, and an `attributes` map of `szl.*`, `http.*`, `slsa.*`, `ai.*`, `policy.*`, `chain.*`, `dsse.*`, `sbom.*`, `sensor.*`, `tool.*` and similar keys. Each synthetic receipt row has `receipt_id`, `span_id`, `trace_id`, `component`, `subject_name`, `subject_sha256`, `predicate_type`, `builder_id`, `slsa_level_claimed`, `chain_position`, `mesh_commit`, `issued_at_utc`, `synthetic` and `dsse_envelope`. Successful loading of a row is not signature verification.
 
 ## Wire D — live span propagation, verified 2026-07-21
 
@@ -88,7 +91,7 @@ Full harness evidence: [`SZLHOLDINGS/test-results`](https://huggingface.co/datas
 
 | Path | Role |
 |---|---|
-| `data/spans_sample.jsonl`, `data/receipts_sample.jsonl` | SAMPLE span and receipt records (the rows the Hub viewer loads) |
+| `data/spans_sample.jsonl`, `data/receipts_sample.jsonl` | SYNTHETIC span and receipt records (the rows the Hub viewer loads; every row has `synthetic: true`) |
 | `extended-attestations.jsonl` | Five hash-chained attestation records (shared with `uds-governance-receipts`; not DSSE envelopes) |
 | `receipts/wire_d_live_20260721.dsse.json` | The one DSSE-signed verification record (ECDSA-P256) |
 | `schemas/` | Span and receipt JSON schemas; span graph schema and test script |
