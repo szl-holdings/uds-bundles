@@ -1,9 +1,10 @@
 # Hugging Face dataset cards sourced from this repository
 
 This repository is the canonical GitHub source for three Hugging Face datasets
-(HF upgrade plan, P18). Each `datasets/<id>/README.md` below is a **verbatim import**
-of that dataset's current Hub card, so GitHub holds the card before any mirror
-publishes it. The import was a read-only fetch; nothing was written to the Hub.
+(HF upgrade plan, P18). Each `datasets/<id>/README.md` began as a **verbatim import**
+of the dated Hub revision below. Subsequent source edits are listed separately;
+the import hashes preserve lineage and do not describe the current edited cards.
+The original import was a read-only fetch; nothing was written to the Hub.
 
 | Hub dataset | Card imported from Hub revision | sha256 of the imported card |
 |---|---|---|
@@ -16,8 +17,9 @@ All three cards declare `license: apache-2.0`, which matches this repository's
 
 ## Hub copies behind this source
 
-These cards have been edited here since the import above, so the table no longer
-describes their current bytes. The Hub copy stays behind until a publish lane runs.
+The `uds-bundles-v1` and `uds-spans-receipts` cards have been edited here since the
+imports above; `uds-governance-receipts` retains its imported bytes. These source
+changes require a verified publication before Hub alignment can be claimed.
 
 - `uds-bundles-v1`: the Hub copy is **behind** at revision `28c14086211944cfc2ceb6ece0f729153b545575`.
   The source card now states the airgap status from the dataset's own evidence

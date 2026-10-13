@@ -15,8 +15,6 @@ language:
 - en
 task_categories:
 - other
-size_categories:
-- n<1K
 ---
 
 <!-- SZL-ESTATE-CARD:v2:START -->
@@ -54,7 +52,9 @@ size_categories:
 
 ## Architecture
 
-The five `uds_productionization/artifacts/zarf-package-*-proof-amd64-0.3.1.tar.zst` files are **image-free proof packages** (about 2 KB each, built with zarf v0.51.0 without the `images:` layer). Each is cosign-signed with the SZL org key and verified with `cosign verify-blob --insecure-ignore-tlog=true` (offline key verification, no transparency-log check). A `zarf package deploy` dry-run of them validated checksums and rendered the deploy preview.
+The five `uds_productionization/artifacts/zarf-package-*-proof-amd64-0.3.1.tar.zst` files are **image-free proof packages** (about 2 KB each, built with zarf v0.51.0 without the `images:` layer). Each is cosign-signed with the UDS-bundles signing key (SHA-256 of DER SPKI: `daa4aeca263251e97125fd227ff82e024a64ec970d1c74828463ffba097cb40b`) and verified with `cosign verify-blob --insecure-ignore-tlog=true` (offline key verification, no transparency-log check). The key mapping is recorded in [`COSIGN_KEYS.md`](https://github.com/szl-holdings/uds-bundles/blob/main/COSIGN_KEYS.md).
+
+The recorded `zarf package deploy` preview covers **only the a11oy proof package**, `zarf-package-a11oy-runtime-proof-amd64-0.3.1.tar.zst`: checksums were validated and the preview rendered, then deployment was canceled at the confirmation prompt. No deploy preview for the other four packages is recorded. An OFFLINE PASS for a different image-bearing mesh release would not establish deployment of these dataset payloads.
 
 What has **not** been done for this dataset's payload:
 
