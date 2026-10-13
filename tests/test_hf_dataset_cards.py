@@ -28,9 +28,9 @@ SIGNING_LOG = ROOT / "uds-bundles" / "COSIGN_SIGNING_LOG.md"
 
 # Key fingerprints (SHA-256 of the DER SubjectPublicKeyInfo) as COSIGN_KEYS.md records them.
 # The five 0.3.1 proof packages are signed with the uds-bundles key, never the org key.
-UDS_BUNDLES_KEY_FP = "daa4aeca263251e97125fd227ff82e024a64ec970d1c74828463ffba097cb40b"
+UDS_BUNDLES_SPKI_SHA256 = "daa4aeca263251e97125fd227ff82e024a64ec970d1c74828463ffba097cb40b"
 UDS_BUNDLES_PUBKEY = "bundles/v0.1.0/cosign_signing_key.pub"
-ORG_RECEIPTS_KEY_FP = "a1f6d3233442cdad0801c702e0ff77aa45fd1ba45f532e3919c80d520b2826ab"
+ORG_RECEIPTS_SPKI_SHA256 = "a1f6d3233442cdad0801c702e0ff77aa45fd1ba45f532e3919c80d520b2826ab"
 
 # Wording that asserts an air-gapped deployment works. Allowed only once a captured
 # cable-pulled proof exists for the claimed artifacts (see STATUS.md and
@@ -151,7 +151,7 @@ def names_package_signing_key(text):
     for para in paragraphs(text):
         if (
             "signing key" in para
-            and (UDS_BUNDLES_KEY_FP in para or short_fp(UDS_BUNDLES_KEY_FP) in para)
+            and (UDS_BUNDLES_SPKI_SHA256 in para or short_fp(UDS_BUNDLES_SPKI_SHA256) in para)
             and UDS_BUNDLES_PUBKEY in para
         ):
             return True
@@ -451,16 +451,16 @@ class SigningKeyAttributionTests(unittest.TestCase):
 
     def test_signing_key_must_be_named_with_its_public_key(self):
         good = (
-            f"Signing key: the uds-bundles signing key {short_fp(UDS_BUNDLES_KEY_FP)}, "
+            f"Signing key: the uds-bundles signing key {short_fp(UDS_BUNDLES_SPKI_SHA256)}, "
             f"public key {UDS_BUNDLES_PUBKEY}."
         )
         self.assertTrue(names_package_signing_key(good))
         self.assertFalse(names_package_signing_key(self.ORIGINAL))
         self.assertFalse(
-            names_package_signing_key(f"Signing key: {short_fp(ORG_RECEIPTS_KEY_FP)}, {UDS_BUNDLES_PUBKEY}.")
+            names_package_signing_key(f"Signing key: {short_fp(ORG_RECEIPTS_SPKI_SHA256)}, {UDS_BUNDLES_PUBKEY}.")
         )
         self.assertFalse(
-            names_package_signing_key(f"Signing key: {short_fp(UDS_BUNDLES_KEY_FP)}, .github/cosign.pub.")
+            names_package_signing_key(f"Signing key: {short_fp(UDS_BUNDLES_SPKI_SHA256)}, .github/cosign.pub.")
         )
 
 
@@ -474,19 +474,19 @@ class SigningKeyEvidenceTests(unittest.TestCase):
         keys = COSIGN_KEYS.read_text(encoding="utf-8")
         uds = self.section(keys, "### Key 2", "### Key 3")
         self.assertIn("UDS-BUNDLES signing key", uds)
-        self.assertIn(UDS_BUNDLES_KEY_FP, uds)
-        self.assertIn(short_fp(UDS_BUNDLES_KEY_FP), uds)
+        self.assertIn(UDS_BUNDLES_SPKI_SHA256, uds)
+        self.assertIn(short_fp(UDS_BUNDLES_SPKI_SHA256), uds)
         self.assertIn(UDS_BUNDLES_PUBKEY, uds)
         org = self.section(keys, "### Key 1", "### Key 2")
         self.assertIn("ORG RECEIPTS key", org)
-        self.assertIn(ORG_RECEIPTS_KEY_FP, org)
+        self.assertIn(ORG_RECEIPTS_SPKI_SHA256, org)
         self.assertIn("DOES NOT verify: uds bundles", org)
 
     def test_signing_log_attributes_the_proof_packages_to_the_uds_bundles_key(self):
         log = SIGNING_LOG.read_text(encoding="utf-8")
-        self.assertIn(f"signing key** (SHA-256(DER SPKI) `{short_fp(UDS_BUNDLES_KEY_FP)}`", log)
+        self.assertIn(f"signing key** (SHA-256(DER SPKI) `{short_fp(UDS_BUNDLES_SPKI_SHA256)}`", log)
         self.assertIn(f"`{UDS_BUNDLES_PUBKEY}`", log)
-        self.assertIn(f"**NOT the SZL org key** `{short_fp(ORG_RECEIPTS_KEY_FP)}`", log)
+        self.assertIn(f"**NOT the SZL org key** `{short_fp(ORG_RECEIPTS_SPKI_SHA256)}`", log)
 
     def test_public_key_file_is_committed(self):
         # Existence only; the key bytes are not read here.
@@ -563,15 +563,15 @@ class UdsBundlesV1CardTests(unittest.TestCase):
     def test_names_the_uds_bundles_signing_key(self):
         self.assertTrue(
             names_package_signing_key(self.card),
-            f"card must name the uds-bundles key {short_fp(UDS_BUNDLES_KEY_FP)} "
+            f"card must name the uds-bundles key {short_fp(UDS_BUNDLES_SPKI_SHA256)} "
             f"and {UDS_BUNDLES_PUBKEY} as the package signer",
         )
 
     def test_signing_key_is_bound_to_the_published_bundle_key(self):
         pem = (ROOT / UDS_BUNDLES_PUBKEY).read_text()
         der = base64.b64decode("".join(line for line in pem.splitlines() if not line.startswith("---")))
-        self.assertEqual(hashlib.sha256(der).hexdigest(), UDS_BUNDLES_KEY_FP)
-        self.assertIn(UDS_BUNDLES_KEY_FP, self.card)
+        self.assertEqual(hashlib.sha256(der).hexdigest(), UDS_BUNDLES_SPKI_SHA256)
+        self.assertIn(UDS_BUNDLES_SPKI_SHA256, self.card)
 
     def test_artifact_archive_does_not_claim_an_example_count(self):
         self.assertNotIn("size_categories", front_matter(self.card))
