@@ -27,11 +27,19 @@ All three cards declare `license: apache-2.0`, which matches this repository's
 
 ## Publishing status
 
-No workflow publishes these cards or payloads yet. Two things are missing:
+The cards (only `README.md`, never the payloads) are published by
+[`hf-dataset-cards-publish.yml`](../.github/workflows/hf-dataset-cards-publish.yml):
 
-1. the org-level `reusable-hf-mirror.yml` in `szl-holdings/.github` (not yet present), and
-2. a Hugging Face credential in this repository: an `HF_TOKEN` scoped to these three
-   datasets, or a Hugging Face Trusted Publisher bound to this repository.
+- it runs on a push to `main` that changes `huggingface/datasets/*/README.md`, and on
+  `workflow_dispatch` (one dataset or all, with an optional dry run);
+- it first runs `tests/test_hf_dataset_cards.py` and refuses to publish if the card claim
+  checks fail or are missing;
+- it uploads a card only when its bytes differ from the Hub copy, with the Hub's current head
+  as the parent commit and the GitHub commit SHA in the Hub commit message;
+- it reads the card back at the new Hub revision and fails unless its sha256 equals the
+  sha256 of the card in this repository;
+- it authenticates with the org-level `HF_TOKEN` secret (not `HF_ORG_TOKEN`).
 
-Until then, edit a card here and in the same change note that the Hub copy is behind. Do not
-edit the cards on the Hub.
+The payloads are not published from here; they still come only from the uploads recorded in
+the lineage above. Edit cards here, not on the Hub. If a publish run fails, note in this file
+that the Hub copy is behind until a run succeeds.
