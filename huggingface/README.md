@@ -1,13 +1,10 @@
 # Hugging Face dataset cards sourced from this repository
 
 This repository is the canonical GitHub source for three Hugging Face datasets
-(HF upgrade plan, P18). Each `datasets/<id>/README.md` below started as a **verbatim
-import** of that dataset's Hub card, so GitHub holds the card before any mirror
-publishes it. The import was a read-only fetch; nothing was written to the Hub.
-
-The table records the imported bytes, not the current source. The
-`uds-governance-receipts` card is still byte-identical to its import. The `uds-bundles-v1`
-and `uds-spans-receipts` cards have been edited here since; see the next section.
+(HF upgrade plan, P18). Each `datasets/<id>/README.md` began as a **verbatim import**
+of the dated Hub revision below. Subsequent source edits are listed separately;
+the import hashes preserve lineage and do not describe the current edited cards.
+The original import was a read-only fetch; nothing was written to the Hub.
 
 | Hub dataset | Card imported from Hub revision | sha256 of the imported card |
 |---|---|---|
@@ -20,20 +17,14 @@ All three cards declare `license: apache-2.0`, which matches this repository's
 
 ## Hub copies behind this source
 
-Two cards have been edited here since the import above, so for these two the table
-describes the imported bytes, not the current source. Each Hub copy stays behind until a
-publish lane runs. `uds-governance-receipts` has not been edited and still matches the table.
+The `uds-bundles-v1` and `uds-spans-receipts` cards have been edited here since the
+imports above; `uds-governance-receipts` retains its imported bytes. These source
+changes require a verified publication before Hub alignment can be claimed.
 
 - `uds-bundles-v1`: the Hub copy is **behind** at revision `28c14086211944cfc2ceb6ece0f729153b545575`.
   The source card now states the airgap status from the dataset's own evidence
   (`AIRGAP_TEST_REPORT.md`, `GAP_CHECK.md`, `STATUS.md`): image-free proof packages only, no
-  air-gapped deploy demonstrated. It lists the five proof packages with the sha256 values in
-  `uds-bundles/artifacts/SHA256SUMS_PROOF.txt`, names their signer as the uds-bundles key
-  (`daa4aeca…7cb40b`, `bundles/v0.1.0/cosign_signing_key.pub`) rather than the org receipts
-  key, limits the deploy preview to the one recorded run (`a11oy-runtime-proof` 0.3.1,
-  cancelled before deployment), and admits a future air-gap claim only with a proof receipt
-  whose package name, version and sha256 match each claimed package.
-  `tests/test_hf_dataset_cards.py` checks all of this against the repository's evidence.
+  air-gapped deploy demonstrated. `tests/test_hf_dataset_cards.py` checks this.
 - `uds-spans-receipts`: the Hub copy is **behind** at revision `6573c9e3c9cf990e5975a3f19685a083bb962dd3`.
   The source card now labels the `spans` and `receipts` rows as synthetic (every Hub row carries
   `synthetic: true`), adds the `synthetic` tag, and lists the fields the rows actually have.
@@ -41,14 +32,8 @@ publish lane runs. `uds-governance-receipts` has not been edited and still match
 
 ## Lineage (from Hub commit history, read 2026-09-29)
 
-- `uds-bundles-v1`: created 2026-06-01. Its first payload upload was a local run with a
-  founder token, not a workflow; see [`uds-bundles/HF_PUSH_LOG.md`](../uds-bundles/HF_PUSH_LOG.md).
-  That log records only the first upload (Hub commit `bcfd121a0e56969c48a09045c282508d46fd0d81`,
-  09:13 UTC), which excluded `artifacts/*`. Hub commit `ab5cc3ff7977b06083bc8114de0b79f419112d7c`
-  (09:24 UTC the same day) added `uds_productionization/artifacts/`, including the five proof
-  `.tar.zst` packages; no file in this repository records how that upload was made. A read-only
-  listing on 2026-10-13 of Hub revision `28c14086211944cfc2ceb6ece0f729153b545575` showed the five
-  packages with LFS sha256 object ids equal to `uds-bundles/artifacts/SHA256SUMS_PROOF.txt`.
+- `uds-bundles-v1`: created 2026-06-01. Its payload was uploaded by a local run with a
+  founder token, not by a workflow; see [`uds-bundles/HF_PUSH_LOG.md`](../uds-bundles/HF_PUSH_LOG.md).
 - `uds-spans-receipts`: its history includes `sync: mirror szl-holdings/uds-mesh@08b77e4`
   (2026-05-29). `szl-holdings/uds-mesh` no longer exists.
 - `uds-governance-receipts`: the HF inventory's only recorded reference to it is
@@ -58,11 +43,28 @@ publish lane runs. `uds-governance-receipts` has not been edited and still match
 
 ## Publishing status
 
-No workflow publishes these cards or payloads yet. Two things are missing:
+The cards (only `README.md`, never the payloads) are published by
+[`hf-dataset-cards-publish.yml`](../.github/workflows/hf-dataset-cards-publish.yml):
 
-1. the org-level `reusable-hf-mirror.yml` in `szl-holdings/.github` (not yet present), and
-2. a Hugging Face credential in this repository: an `HF_TOKEN` scoped to these three
-   datasets, or a Hugging Face Trusted Publisher bound to this repository.
+- it runs on a push to `main` that changes a card, publisher, publisher test, or workflow, and on
+  `workflow_dispatch` (one dataset or all, with an optional dry run);
+- it first runs `tests/test_hf_dataset_cards.py` and refuses to publish if the card claim
+  checks fail or are missing;
+- it uploads a card only when its bytes differ from the Hub copy, with the Hub's current head
+  as the parent commit and the GitHub commit SHA in the Hub commit message;
+- it verifies the checkout SHA, tracked card bytes, and current canonical `main` before
+  publishing and again around each upload; a stale rerun fails instead of republishing old cards;
+- it reads the card back at the new Hub revision and fails unless its sha256 equals the
+  sha256 of the card in this repository and the Hub head still matches that revision;
+- unchanged-card checks also re-read the Hub head; a concurrent Hub edit fails verification;
+- only publication jobs share the write queue, so PR validation cannot replace a pending publish;
+- it authenticates with the org-level `HF_TOKEN` secret (not `HF_ORG_TOKEN`).
 
-Until then, edit a card here and in the same change note that the Hub copy is behind. Do not
-edit the cards on the Hub.
+The payloads are not published from here; they still come only from the uploads recorded in
+the lineage above. Edit cards here, not on the Hub. If a publish run fails, note in this file
+that the Hub copy is behind until a run succeeds.
+
+The GitHub-main check and Hub compare-and-swap operate on separate services. A main
+advance after the last pre-upload check can still race an upload; the post-upload check
+reports failure, and the newer main run reconciles the card. A successful result is a
+dated observation of the checked heads, not a permanent synchronization guarantee.
