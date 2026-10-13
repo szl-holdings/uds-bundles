@@ -8,18 +8,12 @@ on:
     paths:
       - "huggingface/**"
       - "tests/test_hf_dataset_cards.py"
-      - "COSIGN_KEYS.md"
-      - "bundles/v0.1.0/cosign_signing_key.pub"
-      - "uds-bundles/artifacts/DEPLOY_DRYRUN.txt"
       - ".github/workflows/hf-cards-check.yml"
   push:
     branches: [main]
     paths:
       - "huggingface/**"
       - "tests/test_hf_dataset_cards.py"
-      - "COSIGN_KEYS.md"
-      - "bundles/v0.1.0/cosign_signing_key.pub"
-      - "uds-bundles/artifacts/DEPLOY_DRYRUN.txt"
       - ".github/workflows/hf-cards-check.yml"
   workflow_dispatch: {}
 
