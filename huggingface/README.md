@@ -23,6 +23,10 @@ describes their current bytes. The Hub copy stays behind until a publish lane ru
   The source card now states the airgap status from the dataset's own evidence
   (`AIRGAP_TEST_REPORT.md`, `GAP_CHECK.md`, `STATUS.md`): image-free proof packages only, no
   air-gapped deploy demonstrated. `tests/test_hf_dataset_cards.py` checks this.
+- `uds-spans-receipts`: the Hub copy is **behind** at revision `6573c9e3c9cf990e5975a3f19685a083bb962dd3`.
+  The source card now labels the `spans` and `receipts` rows as synthetic (every Hub row carries
+  `synthetic: true`), adds the `synthetic` tag, and lists the fields the rows actually have.
+  `tests/test_hf_dataset_cards.py` checks the card text; the JSONL payload lives only on the Hub.
 
 ## Lineage (from Hub commit history, read 2026-09-29)
 

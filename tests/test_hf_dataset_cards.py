@@ -26,10 +26,37 @@ UNBACKED_RUNTIME_CLAIMS = (
     re.compile(r"every deployment emits", re.IGNORECASE),
 )
 AIRGAP_REPORT_LINK = re.compile(r"\]\([^)\s]*AIRGAP_TEST_REPORT\.md\)")
+# The uds-spans-receipts span/receipt rows are generated (synthetic: true on every Hub row).
+# The card must not present them as mesh output or claim fields the rows do not have.
+SYNTHETIC_ROW_OVERCLAIMS = (
+    re.compile(r"emitted by the UDS mesh", re.IGNORECASE),
+    re.compile(r"actor ORCID", re.IGNORECASE),
+    re.compile(r"formula-gate pass/fail bitmap", re.IGNORECASE),
+)
 
 
 def read_card(dataset):
     return (CARDS / dataset / "README.md").read_text(encoding="utf-8")
+
+
+def front_matter(text):
+    """Minimal parser for the card's YAML header: top-level scalars and string lists."""
+    lines = text.splitlines()
+    if not lines or lines[0].strip() != "---":
+        return {}
+    meta, key = {}, None
+    for line in lines[1:]:
+        if line.strip() == "---":
+            break
+        if line.startswith("- ") and key is not None:
+            meta.setdefault(key, [])
+            if isinstance(meta[key], list):
+                meta[key].append(line[2:].strip())
+        elif not line.startswith(" ") and ":" in line:
+            key, _, value = line.partition(":")
+            key, value = key.strip(), value.strip()
+            meta[key] = value if value else []
+    return meta
 
 
 def airgap_proof_passed(path):
@@ -116,6 +143,39 @@ class UdsBundlesV1CardTests(unittest.TestCase):
         for pattern in UNBACKED_RUNTIME_CLAIMS:
             with self.subTest(pattern=pattern.pattern):
                 self.assertIsNone(pattern.search(self.card), pattern.pattern)
+
+
+class FrontMatterParserTests(unittest.TestCase):
+    def test_reads_scalars_and_lists(self):
+        meta = front_matter(
+            "---\nlicense: apache-2.0\ntags:\n- a\n- b\npretty_name: X (Y)\n---\nbody\n"
+        )
+        self.assertEqual(meta["tags"], ["a", "b"])
+        self.assertEqual(meta["pretty_name"], "X (Y)")
+        self.assertEqual(meta["license"], "apache-2.0")
+
+
+class UdsSpansReceiptsCardTests(unittest.TestCase):
+    def setUp(self):
+        self.card = read_card("uds-spans-receipts")
+        self.meta = front_matter(self.card)
+
+    def test_tagged_synthetic(self):
+        self.assertIn("synthetic", self.meta.get("tags", []))
+
+    def test_pretty_name_says_synthetic(self):
+        self.assertIn("SYNTHETIC", self.meta.get("pretty_name", ""))
+
+    def test_rows_not_presented_as_mesh_output(self):
+        for pattern in SYNTHETIC_ROW_OVERCLAIMS:
+            with self.subTest(pattern=pattern.pattern):
+                self.assertIsNone(pattern.search(self.card), pattern.pattern)
+
+    def test_states_rows_carry_synthetic_flag(self):
+        self.assertTrue(
+            "`synthetic: true`" in self.card,
+            "card must say every span/receipt row carries synthetic: true",
+        )
 
 
 if __name__ == "__main__":
