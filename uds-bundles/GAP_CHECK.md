@@ -15,7 +15,7 @@ Honest accounting against the directive. No bandaid, no fabricated proof.
 | 1 | Combined szl-crew full-stack bundle | ✅ DONE | `PER_BUNDLE/szl-crew-full-stack/uds-bundle.yaml` |
 | 1 | Container images built from HF Space Dockerfile | ⛔ BLOCKED | docker daemon DOWN + binaries OOM-killed; `build_sign_all.sh` builds them on a healthy host |
 | 1 | Real Zarf packages (`*.tar.zst`) | ◑ PARTIAL/REAL | **5/5 image-free PROOF packages REALLY built** with `zarf v0.51.0` (artifacts/*.tar.zst). Image-bearing prod packages need docker (build script). |
-| 1 | Cosign signatures (`.sig`) | ✅ REAL (proof) / ◑ prod pending | **5/5 PROOF packages cosign-signed + `Verified OK`** with the SZL org key this session (artifacts/*.uds.sig, SHA256SUMS_PROOF.txt). Prod image-bearing packages signed by build script. |
+| 1 | Cosign signatures (`.sig`) | ✅ REAL (proof) / ◑ prod pending | **5/5 PROOF packages cosign-signed + `Verified OK`** with the uds-bundles signing key `daa4aeca…7cb40b` (`bundles/v0.1.0/cosign_signing_key.pub`), not the SZL org key `a1f6d323…2826ab`; see `COSIGN_KEYS.md` and `COSIGN_SIGNING_LOG.md` (artifacts/*.uds.sig, SHA256SUMS_PROOF.txt; signer attribution corrected 2026-10-13; the 2026-06-01 row misattributed it). Prod image-bearing packages signed by build script. |
 | 1 | SBOM via syft + cosign attest | ⛔ BLOCKED | syft OOM-killed; staged in build script |
 | 1 | Helm charts | ✅ DONE | `chart/` per flagship |
 | 1 | UDS Package CRs | ✅ DONE | `uds-package.yaml` per flagship |

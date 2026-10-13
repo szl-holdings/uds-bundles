@@ -13,6 +13,8 @@ on:
       - "uds-bundles/artifacts/DEPLOY_DRYRUN.txt"
       - "uds-bundles/artifacts/SHA256SUMS_PROOF.txt"
       - "uds-bundles/artifacts/*.tar.zst"
+      - "uds-bundles/GAP_CHECK.md"
+      - "uds-bundles/COSIGN_SIGNING_LOG.md"
       - ".github/workflows/hf-cards-check.yml"
   push:
     branches: [main]
@@ -24,6 +26,8 @@ on:
       - "uds-bundles/artifacts/DEPLOY_DRYRUN.txt"
       - "uds-bundles/artifacts/SHA256SUMS_PROOF.txt"
       - "uds-bundles/artifacts/*.tar.zst"
+      - "uds-bundles/GAP_CHECK.md"
+      - "uds-bundles/COSIGN_SIGNING_LOG.md"
       - ".github/workflows/hf-cards-check.yml"
   workflow_dispatch: {}
 

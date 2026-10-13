@@ -16,6 +16,10 @@ CARDS = ROOT / "huggingface" / "datasets"
 PROOF_ARTIFACTS = ROOT / "uds-bundles" / "artifacts"
 PROOF_SHA256SUMS = PROOF_ARTIFACTS / "SHA256SUMS_PROOF.txt"
 SOURCE_README = ROOT / "huggingface" / "README.md"
+COSIGN_KEYS = ROOT / "COSIGN_KEYS.md"
+SIGNING_LOG = ROOT / "uds-bundles" / "COSIGN_SIGNING_LOG.md"
+GAP_CHECK = ROOT / "uds-bundles" / "GAP_CHECK.md"
+UDS_BUNDLES_PUBKEY = "bundles/v0.1.0/cosign_signing_key.pub"
 # This dataset contains image-free 0.3.1 proof packages. Evidence about a different
 # image-bearing mesh release cannot authorize deployment claims for these bytes.
 AIRGAP_DEPLOY_CLAIMS = (
@@ -51,6 +55,7 @@ IMPORT_ROW = re.compile(
     r"`(?P<sha256>[0-9a-f]{64})` \|$",
     re.MULTILINE,
 )
+KEY_FULL_FINGERPRINT = re.compile(r"\(full: (?P<fp>[0-9a-f]{64})\)")
 BEHIND_NOTE = re.compile(r"^- `(?P<id>[a-z0-9-]+)`: the Hub copy is \*\*behind\*\*", re.MULTILINE)
 
 
@@ -95,6 +100,36 @@ def read_sha256sums(path):
             digest, _, name = line.partition("  ")
             sums[name.strip().rsplit("/", 1)[-1]] = digest.strip()
     return sums
+
+
+def key_fingerprint(heading):
+    """Full fingerprint of one key section of COSIGN_KEYS.md (no literals in this file)."""
+    text = COSIGN_KEYS.read_text(encoding="utf-8")
+    start = text.index(heading)
+    end = text.find("\n### ", start + len(heading))
+    match = KEY_FULL_FINGERPRINT.search(text[start:] if end == -1 else text[start:end])
+    if match is None:
+        raise AssertionError(f"no full fingerprint under {heading!r} in COSIGN_KEYS.md")
+    return match["fp"]
+
+
+def short_fp(fp):
+    """The short form COSIGN_KEYS.md and the signing log use, e.g. first 8 … last 6."""
+    return f"{fp[:8]}…{fp[-6:]}"
+
+
+def gap_check_signer_errors(row, uds_fp, org_fp):
+    """Problems with how the GAP_CHECK cosign row attributes the proof-package signatures."""
+    errors = []
+    if f"uds-bundles signing key `{short_fp(uds_fp)}`" not in row:
+        errors.append("does not name the uds-bundles signing key")
+    if UDS_BUNDLES_PUBKEY not in row:
+        errors.append("does not name the uds-bundles public key file")
+    # The org key may appear only as "not the SZL org key `<short org fingerprint>`".
+    remainder = row.replace(f"not the SZL org key `{short_fp(org_fp)}`", "")
+    if "org key" in remainder.lower() or short_fp(org_fp) in remainder:
+        errors.append("names the SZL org key without ruling it out")
+    return errors
 
 
 def airgap_overclaims(text):
@@ -222,6 +257,48 @@ class SourceReadmeImportTableTests(unittest.TestCase):
                     self.assertNotEqual(actual, imported_sha, "marked behind but unchanged")
                 else:
                     self.assertEqual(actual, imported_sha, "edited but not marked behind")
+
+
+class GapCheckSignerTests(unittest.TestCase):
+    """uds-bundles/GAP_CHECK.md must name the key that actually signed the proof packages."""
+
+    def setUp(self):
+        self.uds = key_fingerprint("### Key 2 — UDS-BUNDLES signing key")
+        self.org = key_fingerprint("### Key 1 — ORG RECEIPTS key")
+        rows = [
+            line
+            for line in GAP_CHECK.read_text(encoding="utf-8").splitlines()
+            if line.startswith("| 1 | Cosign signatures")
+        ]
+        self.assertEqual(len(rows), 1)
+        self.row = rows[0]
+
+    def test_key_map_and_signing_log_agree(self):
+        self.assertNotEqual(self.uds, self.org)
+        keys = COSIGN_KEYS.read_text(encoding="utf-8")
+        self.assertIn(UDS_BUNDLES_PUBKEY, keys)
+        log = SIGNING_LOG.read_text(encoding="utf-8")
+        self.assertIn(f"signing key** (SHA-256(DER SPKI) `{short_fp(self.uds)}`", log)
+        self.assertIn(f"`{UDS_BUNDLES_PUBKEY}`", log)
+        self.assertIn(f"**NOT the SZL org key** `{short_fp(self.org)}`", log)
+
+    def test_cosign_row_names_the_uds_bundles_key(self):
+        self.assertEqual(gap_check_signer_errors(self.row, self.uds, self.org), [])
+
+    def test_org_key_attribution_fails(self):
+        original = (
+            "| 1 | Cosign signatures (`.sig`) | REAL | **5/5 PROOF packages cosign-signed + "
+            "`Verified OK`** with the SZL org key this session (artifacts/*.uds.sig). |"
+        )
+        self.assertIn("names the SZL org key without ruling it out", gap_check_signer_errors(original, self.uds, self.org))
+        self.assertNotEqual(gap_check_signer_errors(original, self.uds, self.org), [])
+        swapped = self.row.replace(short_fp(self.uds), short_fp(self.org))
+        self.assertNotEqual(gap_check_signer_errors(swapped, self.uds, self.org), [])
+        org_signer = (
+            f"signed with the SZL org key `{short_fp(self.org)}`; uds-bundles signing key "
+            f"`{short_fp(self.uds)}` ({UDS_BUNDLES_PUBKEY}) is a different key"
+        )
+        self.assertIn("names the SZL org key without ruling it out", gap_check_signer_errors(org_signer, self.uds, self.org))
 
 
 class FrontMatterParserTests(unittest.TestCase):

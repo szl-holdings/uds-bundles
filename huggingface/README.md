@@ -1,15 +1,18 @@
 # Hugging Face dataset cards sourced from this repository
 
 This repository is the canonical GitHub source for three Hugging Face datasets
-(HF upgrade plan, P18). Each `datasets/<id>/README.md` began as a **verbatim import**
-of the dated Hub revision below. Subsequent source edits are listed separately;
-the import hashes preserve lineage and do not describe the current edited cards.
-The original import was a read-only fetch; nothing was written to the Hub.
+(HF upgrade plan, P18). Each `datasets/<id>/README.md` began as a **verbatim import** of a
+Hub card (see Lineage). The table below records, for each dataset, the Hub revision whose
+`README.md` was last confirmed and the sha256 of that Hub card. It was read on 2026-10-13
+with read-only Hub API calls, after card-lane publish run
+[38432684574](https://github.com/szl-holdings/uds-bundles/actions/runs/38432684574): each
+listed revision's `README.md` blob id equals the source card at `main`
+`3a61e65fc5456ba46561f73614de914744614d8e`.
 
-| Hub dataset | Card imported from Hub revision | sha256 of the imported card |
+| Hub dataset | Hub card revision (read 2026-10-13) | sha256 of the Hub card at that revision |
 |---|---|---|
-| [`SZLHOLDINGS/uds-bundles-v1`](https://huggingface.co/datasets/SZLHOLDINGS/uds-bundles-v1) | `28c14086211944cfc2ceb6ece0f729153b545575` | `3c38e90b132bca761b32b0858fae0433e4f72d81d4abca22d070e62cf1256f7e` |
-| [`SZLHOLDINGS/uds-spans-receipts`](https://huggingface.co/datasets/SZLHOLDINGS/uds-spans-receipts) | `6573c9e3c9cf990e5975a3f19685a083bb962dd3` | `5ed3604d0e0472c8c7e05b9e0ae448722a481fda59ec3889bacb2276f702979d` |
+| [`SZLHOLDINGS/uds-bundles-v1`](https://huggingface.co/datasets/SZLHOLDINGS/uds-bundles-v1) | `004670e9e87b8958cb81544a01b2bf1c9058a7b8` | `fd7adc3f6279ce4c883a000e725e399ea369cf78b11458d55384b4137325614f` |
+| [`SZLHOLDINGS/uds-spans-receipts`](https://huggingface.co/datasets/SZLHOLDINGS/uds-spans-receipts) | `310d53fd9781a6f50f19d13c77c2736944ce3022` | `8a36efbb2b3037378203356d869b1979223eee5765d2708b3203c5877749bb5f` |
 | [`SZLHOLDINGS/uds-governance-receipts`](https://huggingface.co/datasets/SZLHOLDINGS/uds-governance-receipts) | `b0f2631e8f3ade758acfcd70797096bdc0c5e922` | `a3123b5b6f0e05d90c69dd24b3b5ec6bf99e604f252a61fec767eb52aa1f66e1` |
 
 All three cards declare `license: apache-2.0`, which matches this repository's
@@ -17,21 +20,16 @@ All three cards declare `license: apache-2.0`, which matches this repository's
 
 ## Hub copies behind this source
 
-The `uds-bundles-v1` and `uds-spans-receipts` cards have been edited here since the
-imports above; `uds-governance-receipts` retains its imported bytes. These source
-changes require a verified publication before Hub alignment can be claimed.
+`uds-spans-receipts` and `uds-governance-receipts` match the table. A card listed below has
+been edited here since its table revision; its Hub copy stays behind until the card lane
+publishes it. After that run, set the row to the new Hub revision and card sha256 and remove
+the note in the same change. `tests/test_hf_dataset_cards.py` checks that these notes agree
+with the card bytes.
 
-- `uds-bundles-v1`: the Hub copy is **behind** at revision `28c14086211944cfc2ceb6ece0f729153b545575`.
-  The source card now states the airgap status from the dataset's own evidence
-  (`AIRGAP_TEST_REPORT.md`, `GAP_CHECK.md`, `STATUS.md`): image-free proof packages only, no
-  air-gapped deploy demonstrated. It also lists the five proof packages with their sha256
-  values and cites the Hub commit that added them (see Lineage). `tests/test_hf_dataset_cards.py`
-  checks this, including the package table against `uds-bundles/artifacts/SHA256SUMS_PROOF.txt`
-  and the committed files.
-- `uds-spans-receipts`: the Hub copy is **behind** at revision `6573c9e3c9cf990e5975a3f19685a083bb962dd3`.
-  The source card now labels the `spans` and `receipts` rows as synthetic (every Hub row carries
-  `synthetic: true`), adds the `synthetic` tag, and lists the fields the rows actually have.
-  `tests/test_hf_dataset_cards.py` checks the card text; the JSONL payload lives only on the Hub.
+- `uds-bundles-v1`: the Hub copy is **behind** at revision `004670e9e87b8958cb81544a01b2bf1c9058a7b8`.
+  The source card adds the five proof packages with their sha256 values and cites the Hub
+  commit that added them (see Lineage). `tests/test_hf_dataset_cards.py` checks the package
+  table against `uds-bundles/artifacts/SHA256SUMS_PROOF.txt` and the committed files.
 
 ## Lineage (from Hub commit history, read 2026-09-29)
 
@@ -48,7 +46,16 @@ changes require a verified publication before Hub alignment can be claimed.
 - `uds-governance-receipts`: the HF inventory's only recorded reference to it is
   `szl-holdings/szl-uds-deployment` (`scripts/verify_signed_assets.sh`), which is archived.
 - The three cards were last edited on the Hub on 2026-09-28 ("estate audit" Hub PRs); that
-  content is what is imported here.
+  content is what was originally imported here: revisions `28c14086211944cfc2ceb6ece0f729153b545575`
+  (`uds-bundles-v1`, card sha256 `3c38e90b132bca761b32b0858fae0433e4f72d81d4abca22d070e62cf1256f7e`),
+  `6573c9e3c9cf990e5975a3f19685a083bb962dd3` (`uds-spans-receipts`,
+  `5ed3604d0e0472c8c7e05b9e0ae448722a481fda59ec3889bacb2276f702979d`) and
+  `b0f2631e8f3ade758acfcd70797096bdc0c5e922` (`uds-governance-receipts`,
+  `a3123b5b6f0e05d90c69dd24b3b5ec6bf99e604f252a61fec767eb52aa1f66e1`).
+- 2026-10-13: card-lane run 38432684574 (source `3a61e65fc5456ba46561f73614de914744614d8e`)
+  uploaded the edited `uds-bundles-v1` and `uds-spans-receipts` cards as Hub revisions
+  `004670e9e87b8958cb81544a01b2bf1c9058a7b8` and `310d53fd9781a6f50f19d13c77c2736944ce3022`
+  (`README.md` only; payloads unchanged). `uds-governance-receipts` was unchanged.
 
 ## Publishing status
 
