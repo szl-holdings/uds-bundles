@@ -44,6 +44,7 @@ task_categories:
 ## Contents
 
 - `uds_productionization/PER_BUNDLE/<organ>/` — per-organ Dockerfile, Helm chart, and UDS manifests (namespace, authorization policy, service, deployment).
+- `uds_productionization/artifacts/` — the five image-free proof packages listed under Architecture, their detached cosign signatures (`<organ>-proof.uds.sig`), a copy of the public key `cosign_signing_key.pub`, and the 2026-06-01 capture logs (`SHA256SUMS_PROOF.txt`, `PROOF_CAPTURE.txt`, `VERIFY_RECHECK.txt`, `DEPLOY_DRYRUN.txt`).
 - [`uds_productionization/AIRGAP_TEST_REPORT.md`](https://huggingface.co/datasets/SZLHOLDINGS/uds-bundles-v1/blob/main/uds_productionization/AIRGAP_TEST_REPORT.md) — airgap test status report (PARTIAL: image-free proof packages only; image-bearing build and kind airgap test not run).
 - [`uds_productionization/GAP_CHECK.md`](https://huggingface.co/datasets/SZLHOLDINGS/uds-bundles-v1/blob/main/uds_productionization/GAP_CHECK.md) — phase-by-phase status, including the blocked items.
 - `uds_productionization/COSIGN_SIGNING_LOG.md` — cosign signing provenance.
@@ -53,6 +54,16 @@ task_categories:
 ## Architecture
 
 The five `uds_productionization/artifacts/zarf-package-*-proof-amd64-0.3.1.tar.zst` files are **image-free proof packages** (about 2 KB each, built with zarf v0.51.0 without the `images:` layer). Each is cosign-signed with the UDS-bundles signing key (SHA-256 of DER SPKI: `daa4aeca263251e97125fd227ff82e024a64ec970d1c74828463ffba097cb40b`) and verified with `cosign verify-blob --insecure-ignore-tlog=true` (offline key verification, no transparency-log check). The key mapping is recorded in [`COSIGN_KEYS.md`](https://github.com/szl-holdings/uds-bundles/blob/main/COSIGN_KEYS.md).
+
+These five packages are files of this dataset. Hub commit `ab5cc3ff7977b06083bc8114de0b79f419112d7c` (2026-06-01) added `uds_productionization/artifacts/`, and a read-only listing of Hub revision `28c14086211944cfc2ceb6ece0f729153b545575` on 2026-10-13 showed all five with LFS sha256 object ids equal to the values below and to `uds_productionization/artifacts/SHA256SUMS_PROOF.txt`. `uds_productionization/HF_PUSH_LOG.md` records only the earlier upload (Hub commit `bcfd121a0e56969c48a09045c282508d46fd0d81`), which excluded `artifacts/*`; no log in the dataset records the later upload.
+
+| Package | Version | File | sha256 |
+|---|---|---|---|
+| `a11oy-runtime-proof` | `0.3.1` | `zarf-package-a11oy-runtime-proof-amd64-0.3.1.tar.zst` | `800c75865b588cc56d9042ac029d67e11999fd54c09e1c6b3631667ab0984d79` |
+| `amaru-attestation-proof` | `0.3.1` | `zarf-package-amaru-attestation-proof-amd64-0.3.1.tar.zst` | `041e8ac703689ad2f8dcb123862ab3aab32bd7290d96c4e05f5cfc3aca32cfef` |
+| `sentra-gates-proof` | `0.3.1` | `zarf-package-sentra-gates-proof-amd64-0.3.1.tar.zst` | `4109db4c278d4a02f8f32be7fde575dda756a8b338e028d1dfef8d491c2e464b` |
+| `killinchu-bundle-proof` | `0.3.1` | `zarf-package-killinchu-bundle-proof-amd64-0.3.1.tar.zst` | `0e581c9f73de8187ee5d14c7cdeeeff1f55f85820e117b031cee987478d53874` |
+| `rosie-replay-proof` | `0.3.1` | `zarf-package-rosie-replay-proof-amd64-0.3.1.tar.zst` | `ed04612ee6738e90fd0c6acc3ac70dea9240b24e51cef3ac751c08cb7b1ac5e2` |
 
 The recorded `zarf package deploy` preview covers **only the a11oy proof package**, `zarf-package-a11oy-runtime-proof-amd64-0.3.1.tar.zst`: checksums were validated and the preview rendered, then deployment was canceled at the confirmation prompt. No deploy preview for the other four packages is recorded. An OFFLINE PASS for a different image-bearing mesh release would not establish deployment of these dataset payloads.
 

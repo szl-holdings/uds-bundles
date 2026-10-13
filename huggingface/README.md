@@ -24,7 +24,10 @@ changes require a verified publication before Hub alignment can be claimed.
 - `uds-bundles-v1`: the Hub copy is **behind** at revision `28c14086211944cfc2ceb6ece0f729153b545575`.
   The source card now states the airgap status from the dataset's own evidence
   (`AIRGAP_TEST_REPORT.md`, `GAP_CHECK.md`, `STATUS.md`): image-free proof packages only, no
-  air-gapped deploy demonstrated. `tests/test_hf_dataset_cards.py` checks this.
+  air-gapped deploy demonstrated. It also lists the five proof packages with their sha256
+  values and cites the Hub commit that added them (see Lineage). `tests/test_hf_dataset_cards.py`
+  checks this, including the package table against `uds-bundles/artifacts/SHA256SUMS_PROOF.txt`
+  and the committed files.
 - `uds-spans-receipts`: the Hub copy is **behind** at revision `6573c9e3c9cf990e5975a3f19685a083bb962dd3`.
   The source card now labels the `spans` and `receipts` rows as synthetic (every Hub row carries
   `synthetic: true`), adds the `synthetic` tag, and lists the fields the rows actually have.
@@ -32,8 +35,14 @@ changes require a verified publication before Hub alignment can be claimed.
 
 ## Lineage (from Hub commit history, read 2026-09-29)
 
-- `uds-bundles-v1`: created 2026-06-01. Its payload was uploaded by a local run with a
-  founder token, not by a workflow; see [`uds-bundles/HF_PUSH_LOG.md`](../uds-bundles/HF_PUSH_LOG.md).
+- `uds-bundles-v1`: created 2026-06-01. Its first payload upload was a local run with a
+  founder token, not a workflow; see [`uds-bundles/HF_PUSH_LOG.md`](../uds-bundles/HF_PUSH_LOG.md).
+  That log records only that upload (Hub commit `bcfd121a0e56969c48a09045c282508d46fd0d81`,
+  09:13 UTC), which excluded `artifacts/*`. Hub commit `ab5cc3ff7977b06083bc8114de0b79f419112d7c`
+  (09:24 UTC the same day) added `uds_productionization/artifacts/`, including the five proof
+  `.tar.zst` packages; no file in this repository records how that upload was made. A read-only
+  listing on 2026-10-13 of Hub revision `28c14086211944cfc2ceb6ece0f729153b545575` showed the five
+  packages with LFS sha256 object ids equal to `uds-bundles/artifacts/SHA256SUMS_PROOF.txt`.
 - `uds-spans-receipts`: its history includes `sync: mirror szl-holdings/uds-mesh@08b77e4`
   (2026-05-29). `szl-holdings/uds-mesh` no longer exists.
 - `uds-governance-receipts`: the HF inventory's only recorded reference to it is

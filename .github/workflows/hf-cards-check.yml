@@ -11,6 +11,8 @@ on:
       - "COSIGN_KEYS.md"
       - "bundles/v0.1.0/cosign_signing_key.pub"
       - "uds-bundles/artifacts/DEPLOY_DRYRUN.txt"
+      - "uds-bundles/artifacts/SHA256SUMS_PROOF.txt"
+      - "uds-bundles/artifacts/*.tar.zst"
       - ".github/workflows/hf-cards-check.yml"
   push:
     branches: [main]
@@ -20,6 +22,8 @@ on:
       - "COSIGN_KEYS.md"
       - "bundles/v0.1.0/cosign_signing_key.pub"
       - "uds-bundles/artifacts/DEPLOY_DRYRUN.txt"
+      - "uds-bundles/artifacts/SHA256SUMS_PROOF.txt"
+      - "uds-bundles/artifacts/*.tar.zst"
       - ".github/workflows/hf-cards-check.yml"
   workflow_dispatch: {}
 
