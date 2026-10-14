@@ -14,6 +14,13 @@ dataset this script:
 
 The token is read from the HF_TOKEN environment variable. Exit status is non-zero if any
 dataset fails.
+
+Source freshness is checked before every step that can write or report success: the card and
+the publisher files must have the same blobs on current canonical main as in this checkout.
+A main commit that changes none of them (and so is outside the workflow's push paths) does not
+stop this run. One that changes any of them stops the batch, leaving the remaining datasets to
+the publish run that such a push triggers. A write always covers every dataset, so a queued
+write that a newer one displaces is still covered; only a dry run can be narrowed (--dataset).
 """
 import argparse
 import hashlib
@@ -28,7 +35,16 @@ import tempfile
 HUB_ORG = "SZLHOLDINGS"
 DATASETS = ("uds-bundles-v1", "uds-spans-receipts", "uds-governance-receipts")
 SOURCE_REPO = "szl-holdings/uds-bundles"
+SOURCE_URL = f"https://github.com/{SOURCE_REPO}.git"
 ROOT = Path(__file__).resolve().parents[1]
+# Besides the cards, the files whose change on main starts a publish run (the workflow's push
+# paths). A run is stale once main changes its card or any of these.
+PUBLISHER_PATHS = (
+    "scripts/hf_publish_cards.py",
+    "tests/test_hf_publish_cards.py",
+    ".github/workflows/hf-dataset-cards-publish.yml",
+)
+FULL_SHA = re.compile(r"[0-9a-f]{40}")
 
 
 def sha256_hex(data):
@@ -43,13 +59,18 @@ def commit_message(git_sha):
     return f"docs(card): sync README.md from {SOURCE_REPO}@{git_sha}"
 
 
+class StaleSource(RuntimeError):
+    """Current canonical main no longer has this run's card or publisher (or cannot be read)."""
+
+
 class SourceGuard:
-    """Require the exact tracked card from the current canonical main commit."""
+    """Require the exact tracked card, unchanged on the current canonical main commit."""
 
     def __init__(self, root, git_sha):
-        if not re.fullmatch(r"[0-9a-f]{40}", git_sha):
+        if not FULL_SHA.fullmatch(git_sha):
             raise ValueError("source revision must be a full Git commit SHA")
         self.root, self.git_sha = Path(root), git_sha
+        self._fetched = {git_sha}
 
     def git(self, *args):
         return subprocess.check_output(["git", "-C", str(self.root), *args], timeout=30)
@@ -58,12 +79,23 @@ class SourceGuard:
         if self.git("rev-parse", "HEAD").decode().strip() != self.git_sha:
             raise RuntimeError("checkout does not match the claimed source revision")
         path = card_path(self.root, dataset)
-        tracked = self.git("show", f"{self.git_sha}:{path.relative_to(self.root).as_posix()}")
+        card = path.relative_to(self.root).as_posix()
+        tracked = self.git("show", f"{self.git_sha}:{card}")
         if tracked != path.read_bytes():
             raise RuntimeError("source card differs from the claimed Git blob")
-        remote = self.git("ls-remote", f"https://github.com/{SOURCE_REPO}.git", "refs/heads/main")
-        if remote.decode().split() != [self.git_sha, "refs/heads/main"]:
-            raise RuntimeError("source revision is stale; canonical main has advanced")
+        remote = self.git("ls-remote", SOURCE_URL, "refs/heads/main").decode().split()
+        if len(remote) != 2 or remote[1] != "refs/heads/main" or not FULL_SHA.fullmatch(remote[0]):
+            raise StaleSource("canonical main could not be read; treating the source as stale")
+        main = remote[0]
+        if main == self.git_sha:
+            return
+        if main not in self._fetched:
+            self.git("fetch", "--quiet", "--no-tags", "--depth=1", SOURCE_URL, main)
+            self._fetched.add(main)
+        inputs = (card, *PUBLISHER_PATHS)
+        if self.git("ls-tree", main, "--", *inputs) != self.git("ls-tree", self.git_sha, "--", *inputs):
+            raise StaleSource(f"source revision is stale; canonical main {main} changed the card "
+                              "or the publisher")
 
 
 class HubClient:
@@ -108,30 +140,51 @@ class HubClient:
         return info.oid
 
 
-def publish_one(client, root, dataset, git_sha, description, dry_run=False, *, source_guard):
-    """Publish one card. Returns a result dict; result['ok'] is False on failure."""
+def observe_tip(client, repo_id):
+    """The Hub head; an unobservable head must never become parent_commit=None (no CAS)."""
+    tip = client.head(repo_id)
+    if not isinstance(tip, str) or not tip:
+        raise RuntimeError(f"Hub head of {repo_id} could not be observed")
+    return tip
+
+
+def tip_is_stable(client, repo_id, expected, result):
+    """Read the head after every other check and require the revision the outcome names."""
+    result["hub_head_after"] = observe_tip(client, repo_id)
+    return result["hub_head_after"] == expected
+
+
+def publish_one(client, root, dataset, git_sha, description, dry_run=False, *, source_guard,
+                result=None):
+    """Publish one card. Returns a result dict; result['ok'] is False on failure.
+
+    A caller-supplied `result` is filled in place, so what was observed (and any upload already
+    made) stays on record when this raises.
+    """
     repo_id = f"{HUB_ORG}/{dataset}"
+    result = {} if result is None else result
+    result.update(dataset=repo_id, ok=False)
     source_guard(dataset)
     local = card_path(root, dataset).read_bytes()
-    result = {"dataset": repo_id, "local_sha256": sha256_hex(local), "ok": False}
+    result["local_sha256"] = sha256_hex(local)
 
-    head = client.head(repo_id)
+    head = observe_tip(client, repo_id)
     result["hub_head_before"] = head
     current = client.read_readme(repo_id, head)
     result["hub_sha256_before"] = sha256_hex(current) if current is not None else None
 
     if current == local:
-        if client.head(repo_id) != head:
+        source_guard(dataset)
+        if not tip_is_stable(client, repo_id, head, result):
             result["error"] = "Hub head changed during unchanged-card verification"
             return result
-        source_guard(dataset)
         result.update(action="unchanged", hub_revision=head, hub_sha256=result["local_sha256"], ok=True)
         return result
     if dry_run:
-        if client.head(repo_id) != head:
+        source_guard(dataset)
+        if not tip_is_stable(client, repo_id, head, result):
             result["error"] = "Hub head changed during comparison"
             return result
-        source_guard(dataset)
         result.update(action="would-upload", ok=True)
         return result
 
@@ -148,10 +201,10 @@ def publish_one(client, root, dataset, git_sha, description, dry_run=False, *, s
     if result["hub_sha256"] != result["local_sha256"]:
         result["error"] = "read-back sha256 does not match the source card"
         return result
-    if client.head(repo_id) != revision:
+    source_guard(dataset)
+    if not tip_is_stable(client, repo_id, revision, result):
         result["error"] = "Hub head changed during uploaded-card verification"
         return result
-    source_guard(dataset)
     result["ok"] = True
     return result
 
@@ -163,11 +216,14 @@ def main(argv=None):
         "--dataset",
         action="append",
         choices=DATASETS,
-        help="dataset to publish (repeatable); default: all three",
+        help="dry run only: dataset to compare (repeatable); default: all three",
     )
     parser.add_argument("--run-url", default="", help="URL of the publishing workflow run")
     parser.add_argument("--dry-run", action="store_true", help="compare only; never upload")
     args = parser.parse_args(argv)
+    if args.dataset and not args.dry_run:
+        parser.error("--dataset narrows a dry run only; a write covers every dataset so that a "
+                     "queued write it displaces is still covered")
 
     token = os.environ.get("HF_TOKEN", "").strip()
     if not token:
@@ -180,13 +236,22 @@ def main(argv=None):
 
     client = HubClient(token)
     source_guard = SourceGuard(ROOT, args.git_sha)
-    results = []
+    results, stopped = [], None
     for dataset in args.dataset or DATASETS:
+        result = {"dataset": f"{HUB_ORG}/{dataset}", "ok": False}
+        results.append(result)
+        if stopped:
+            result.update(action="not-attempted", error=stopped)
+            continue
         try:
-            results.append(publish_one(client, ROOT, dataset, args.git_sha, description, args.dry_run,
-                                       source_guard=source_guard))
+            publish_one(client, ROOT, dataset, args.git_sha, description, args.dry_run,
+                        source_guard=source_guard, result=result)
+        except StaleSource as exc:  # never publish stale bytes: stop and leave the rest to main
+            result.setdefault("action", "stale-source")  # an upload already made stays "uploaded"
+            result.update(ok=False, error=f"{type(exc).__name__}: {exc}")
+            stopped = f"stopped after {dataset}: {exc}"
         except Exception as exc:  # report every dataset, then fail
-            results.append({"dataset": f"{HUB_ORG}/{dataset}", "ok": False, "error": f"{type(exc).__name__}: {exc}"})
+            result.update(ok=False, error=f"{type(exc).__name__}: {exc}")
 
     print(json.dumps(results, indent=2))
     return 0 if all(r["ok"] for r in results) else 1
