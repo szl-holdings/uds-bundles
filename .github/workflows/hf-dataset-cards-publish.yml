@@ -21,7 +21,7 @@ on:
   workflow_dispatch:
     inputs:
       dataset:
-        description: "Dataset to publish (all = the three cards)"
+        description: "Dry run only: dataset to compare (a write always covers all three cards)"
         type: choice
         default: all
         options: [all, uds-bundles-v1, uds-spans-receipts, uds-governance-receipts]
@@ -61,8 +61,10 @@ jobs:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    # Writes share one queue. A dry run (or a PR, which never reaches this job) gets a group of
+    # its own, so validation never waits behind, displaces or is displaced by a write.
     concurrency:
-      group: hf-dataset-cards-publish
+      group: ${{ (github.event_name == 'pull_request' || inputs.dry_run) && format('hf-dataset-cards-validate-{0}', github.run_id) || 'hf-dataset-cards-publish' }}
       cancel-in-progress: false
     steps:
       - name: Harden runner
@@ -107,8 +109,12 @@ jobs:
         run: |
           set -uo pipefail
           args=(--git-sha "$GITHUB_SHA" --run-url "$RUN_URL")
-          if [ "$INPUT_DATASET" != "all" ]; then args+=(--dataset "$INPUT_DATASET"); fi
-          if [ "$INPUT_DRY_RUN" = "true" ]; then args+=(--dry-run); fi
+          if [ "$INPUT_DRY_RUN" = "true" ]; then
+            args+=(--dry-run)
+            # Only a dry run is narrowed. A write covers every card, so it also covers any
+            # queued write it displaced from the concurrency group.
+            if [ "$INPUT_DATASET" != "all" ]; then args+=(--dataset "$INPUT_DATASET"); fi
+          fi
           python scripts/hf_publish_cards.py "${args[@]}" > publish-result.json
           rc=$?
           cat publish-result.json
