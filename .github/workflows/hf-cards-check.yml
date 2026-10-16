@@ -17,6 +17,7 @@ on:
       - "releases/szl-warhacker-uds-v1.0.0/airgap-proof/**"
       - "uds-bundles/artifacts/**"
       - "uds-bundles/COSIGN_SIGNING_LOG.md"
+      - "uds-bundles/GAP_CHECK.md"
       - "COSIGN_KEYS.md"
       - "bundles/v0.1.0/cosign_signing_key.pub"
   push:
@@ -33,6 +34,7 @@ on:
       - "releases/szl-warhacker-uds-v1.0.0/airgap-proof/**"
       - "uds-bundles/artifacts/**"
       - "uds-bundles/COSIGN_SIGNING_LOG.md"
+      - "uds-bundles/GAP_CHECK.md"
       - "COSIGN_KEYS.md"
       - "bundles/v0.1.0/cosign_signing_key.pub"
   workflow_dispatch: {}

@@ -492,6 +492,16 @@ class SigningKeyEvidenceTests(unittest.TestCase):
         # Existence only; the key bytes are not read here.
         self.assertTrue((ROOT / UDS_BUNDLES_PUBKEY).is_file())
 
+    def test_gap_check_attributes_proof_signatures_to_the_uds_bundles_key(self):
+        rows = [
+            line
+            for line in (ROOT / "uds-bundles" / "GAP_CHECK.md").read_text(encoding="utf-8").splitlines()
+            if line.startswith("| 1 | Cosign signatures")
+        ]
+        self.assertEqual(len(rows), 1)
+        self.assertTrue(names_package_signing_key(rows[0]))
+        self.assertEqual(org_key_signer_claims(rows[0]), [])
+
 
 class DeployPreviewEvidenceTests(unittest.TestCase):
     def test_the_log_records_one_cancelled_preview(self):
