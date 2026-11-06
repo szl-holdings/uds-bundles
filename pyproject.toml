@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "uds-bundles"
+version = "0.1.0"
+description = "SZL UDS Zarf bundles for the two products (a11oy + killinchu) and their capability services — airgap-deployable, cosign-signed, SLSA L1+L2. Doctrine v11 LOCKED (749/14/163) · Apache-2.0."
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "Apache-2.0"}
+authors = [{name = "Stephen P. Lutar Jr.", email = "stephen@szlholdings.com"}]
+dependencies = [
+  "PyYAML==6.0.2",
+  "fastapi==0.115.6",
+  "pydantic==2.10.4",
+  "uvicorn[standard]==0.34.0",
+]
+
+[project.optional-dependencies]
+dev = ["httpx==0.28.1", "pytest==9.0.3", "pytest>=8", "ruff>=0.6"]
+
+[project.urls]
+Homepage = "https://github.com/szl-holdings/uds-bundles"
+Repository = "https://github.com/szl-holdings/uds-bundles"
+Organization = "https://github.com/szl-holdings"
+HuggingFace = "https://huggingface.co/SZLHOLDINGS"
+
+[tool.setuptools]
+packages = ["observatory"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+exclude = [".git", ".venv", "venv", "build", "dist", "node_modules", "__pycache__"]
+
+[tool.ruff.lint]
+# Baseline rule set (pyflakes + pycodestyle errors); extend deliberately per repo.
+select = ["E4", "E7", "E9", "F"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"
