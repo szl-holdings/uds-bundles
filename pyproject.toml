@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "uds-bundles"
+version = "0.1.0"
+description = "SZL UDS Zarf bundles for the two products (a11oy + killinchu) and their capability services — airgap-deployable, cosign-signed, SLSA L1+L2. Doctrine v11 LOCKED (749/14/163) · Apache-2.0."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+authors = [{ name = "Stephen Lutar", email = "stephen@szlholdings.com" }]
+dependencies = ["fastapi==0.115.6", "pydantic==2.10.4", "PyYAML==6.0.2", "uvicorn[standard]==0.34.0"]
+
+[project.urls]
+Homepage = "https://a11oy.net"
+Repository = "https://github.com/szl-holdings/uds-bundles"
+
+[tool.setuptools]
+packages = ["observatory"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = ["build", "dist", ".venv", "node_modules"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
