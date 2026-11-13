@@ -39,6 +39,8 @@ set -euo pipefail
 
 UDS_VERSION="${UDS_VERSION:-v0.32.0}"
 K3D_VERSION="${K3D_VERSION:-v5.8.3}"
+K3D_SHA256_VERSION="v5.8.3"                 # release the committed checksum below belongs to (SCPIN-CURL-1)
+K3D_SHA256_LINUX_AMD64="dbaa79a76ace7f4ca230a1ff41dc7d8a5036a8ad0309e9c54f9bf3836dbe853e"   # _dist/k3d-linux-amd64 in that release's checksums.txt
 UDS_CORE_TAG="${UDS_CORE_TAG:-0.42.0}"           # k3d-core-demo per uds_latest_specs.md
 MODE="${MODE:-core}"                              # core | k3d
 CLUSTER="${CLUSTER:-szl}"
@@ -79,7 +81,15 @@ install_uds() {
 install_k3d() {
   if command -v k3d >/dev/null 2>&1; then ok "k3d $(k3d version | head -1) already installed"; return; fi
   log "Install k3d ${K3D_VERSION}"
-  curl -fsSL https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG="${K3D_VERSION}" bash
+  # Pinned release binary + committed SHA-256 (SCPIN-CURL-1); a version without a committed checksum is refused.
+  [[ "$K3D_VERSION" == "$K3D_SHA256_VERSION" ]] || die "no committed SHA-256 for K3D_VERSION=${K3D_VERSION}; refusing"
+  local tmp; tmp="$(mktemp)"
+  curl -fsSLo "$tmp" "https://github.com/k3d-io/k3d/releases/download/${K3D_VERSION}/k3d-linux-amd64"
+  echo "${K3D_SHA256_LINUX_AMD64}  ${tmp}" | sha256sum -c - >/dev/null || { rm -f "$tmp"; die "k3d ${K3D_VERSION} SHA-256 mismatch; refusing"; }
+  local dst="/usr/local/bin/k3d"; [[ -w /usr/local/bin ]] || dst="$HOME/.local/bin/k3d"
+  mkdir -p "$(dirname "$dst")"
+  install -m 0755 "$tmp" "$dst"; rm -f "$tmp"
+  command -v k3d >/dev/null 2>&1 || export PATH="$(dirname "$dst"):$PATH"
   ok "k3d $(k3d version | head -1)"
 }
 
