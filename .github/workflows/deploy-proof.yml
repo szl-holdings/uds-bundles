@@ -91,7 +91,7 @@ jobs:
           # --output-signature` flow used below is rejected by cosign v3 (which
           # requires a signing-config). Matches the repo convention already used by
           # cosign-bootstrap.yml / zarf-bundle-build.yml / zarf-package-sign.yml.
-          cosign-release: v2.4.1
+          cosign-release: v2.6.5
 
       - name: Install k3d
         run: |
