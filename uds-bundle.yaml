@@ -78,7 +78,7 @@ packages:
 
   # ── killinchu: counter-UAS ML inference runner ────────────────────────────
   # Image ghcr.io/szl-holdings/killinchu:uds-v0.2.0 — PUBLIC
-  # v0.4.0 addition; continue-on-error: true in workflow (honest 4/5 fallback)
+  # v0.4.0 addition. CI `zarf package create` is a hard gate (no 4/5 fallback).
   - name: szl-killinchu
     path: bundles/szl-killinchu
     ref: "0.2.0"

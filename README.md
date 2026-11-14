@@ -183,4 +183,4 @@ The published mesh bundle artifact is `oci://ghcr.io/szl-holdings/szl-uds-bundle
 
 **Doctrine v11 LOCKED · locked kernel 749/14/163 @ c7c0ba17 (8 proven) · experimental main 1304/22 @ 7885fd9 (~36 theorems CI-green, never folded into the locked eight) · Λ = Conjecture 1 (NOT a theorem) · Khipu Conjecture 2 open · Apache-2.0**
 
-
+Estate on Hugging Face: models, datasets and Spaces are published under the [SZLHOLDINGS](https://huggingface.co/SZLHOLDINGS) org.

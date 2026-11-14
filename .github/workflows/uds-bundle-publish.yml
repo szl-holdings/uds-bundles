@@ -20,8 +20,8 @@
 #     is not yet public; re-add once image is public + charts vendored in this repo.
 #   - All 5 flagship Zarf packages are built from bundles/szl-<organ>/zarf.yaml
 #     which reference ghcr.io/szl-holdings/<organ>:uds-v0.2.0 (images EXIST in GHCR)
-#   - killinchu image is at ghcr.io/szl-holdings/killinchu:uds-v0.2.0
-#     → continue-on-error: true; honest 4/5 bundle if unavailable
+#   - killinchu is required. A failed `zarf package create` fails the job.
+#     There is no 4/5 fallback.
 #   - Bundle published to oci://ghcr.io/szl-holdings/szl-mesh
 #   - Bundle name: szl-mesh (matches uds-bundle.yaml metadata.name)
 #
@@ -138,47 +138,19 @@ jobs:
       - name: Build Zarf package — szl-rosie
         run: zarf package create bundles/szl-rosie --confirm -o bundles/szl-rosie
 
-      # killinchu image is ghcr.io/szl-holdings/killinchu:uds-v0.2.0.
-      # continue-on-error: true so a private killinchu never blocks the bundle.
-      - name: Build Zarf package — szl-killinchu (may fail if image private)
-        id: killinchu_build
-        continue-on-error: true
-        run: zarf package create bundles/szl-killinchu --confirm -o bundles/szl-killinchu
-
-      - name: Report killinchu build result
+      # Required, same as the other flagships. An unpullable image or any other
+      # `zarf package create` failure fails the job. No partial bundle is published.
+      - name: Build Zarf package — szl-killinchu
         run: |
-          if ls bundles/szl-killinchu/zarf-package-*.tar.zst >/dev/null 2>&1; then
-            echo "killinchu: BUILT — composing 5/5 bundle"
-            echo "KILLINCHU_BUILT=true" >> "$GITHUB_ENV"
-          else
-            echo "::warning::killinchu image is private/unavailable. Composing honest 4/5 bundle."
-            echo "KILLINCHU_BUILT=false" >> "$GITHUB_ENV"
+          set -euo pipefail
+          zarf package create bundles/szl-killinchu --confirm -o bundles/szl-killinchu
+          if ! ls bundles/szl-killinchu/zarf-package-*.tar.zst >/dev/null 2>&1; then
+            echo "::error::szl-killinchu Zarf package was not produced"
+            exit 1
           fi
 
       - name: List all built Zarf packages
         run: find bundles -name 'zarf-package-*.tar.zst' 2>/dev/null | sort
-
-      # ── Compose the UDS bundle ─────────────────────────────────────────────
-      # If killinchu did not build, drop it from the bundle manifest.
-      - name: Patch bundle manifest if killinchu unavailable (honest 4/5)
-        if: env.KILLINCHU_BUILT == 'false'
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          import re, sys
-          with open('uds-bundle.yaml', 'r') as f:
-              content = f.read()
-          # Remove from killinchu comment/package block to end of file
-          pattern = r'\n  # ── killinchu.*$'
-          result = re.split(pattern, content, maxsplit=1, flags=re.DOTALL)[0]
-          if result == content:
-              result = re.sub(r'\n  - name: szl-killinchu\b.*$', '', content, flags=re.DOTALL)
-          with open('uds-bundle.yaml', 'w') as f:
-              f.write(result)
-          print("Patched uds-bundle.yaml — killinchu removed for honest 4/5 build")
-          PY
-          echo "--- Bundle packages after patch ---"
-          grep -- '- name: szl-' uds-bundle.yaml || true
 
       - name: uds create (compose full UDS bundle)
         run: |
