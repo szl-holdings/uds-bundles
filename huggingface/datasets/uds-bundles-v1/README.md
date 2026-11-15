@@ -10,7 +10,7 @@ tags:
 - airgap
 - agentic-ai
 - governance
-- doi:10.5281/zenodo.19944926
+- doi:10.5281/zenodo.24239896
 language:
 - en
 task_categories:
@@ -94,21 +94,21 @@ Apache-2.0. See the SZL Holdings monorepo for the canonical license.
 
 
 **Cite this.** Part of the SZL Holdings *Ouroboros Thesis* (Governed Post-Determinism).  
-Concept DOI (always-latest): [10.5281/zenodo.19944926](https://doi.org/10.5281/zenodo.19944926).  
+Concept DOI (always-latest): [10.5281/zenodo.24239896](https://doi.org/10.5281/zenodo.24239896).  
 Author: Stephen P. Lutar Jr. · [ORCID 0009-0001-0110-4173](https://orcid.org/0009-0001-0110-4173) · Dataset license: Apache-2.0; the cited program publication is CC-BY-4.0.  
 Full DOI-pinned lineage (v1→v26) + the 8 papers: [szl-papers PAPERS_INDEX](https://github.com/szl-holdings/szl-papers/blob/main/PAPERS_INDEX.md).  
 No artifact-specific DOI is minted for this dataset; the concept DOI above covers the program.
 
 Honesty (Doctrine v11): Λ unconditional uniqueness is **Conjecture 1** (machine-checked FALSE as stated) — never a theorem; conditional uniqueness is **Theorem U** (axiom-free). Locked-proven formulas = **exactly 8** {F1,F4,F7,F11,F12,F18,F19,F22}; ~185 experimental theorems are a separate CI-green tier; Khipu BFT safety = Conjecture 2. Trust never 100%.
 
-Concept DOI: [10.5281/zenodo.19944926](https://doi.org/10.5281/zenodo.19944926)
+Concept DOI: [10.5281/zenodo.24239896](https://doi.org/10.5281/zenodo.24239896)
 
 ```bibtex
 @misc{szl_uds_bundles_v1,
   title  = {SZL UDS Bundles v1},
   author = {SZL Holdings},
   year   = {2026},
-  doi    = {10.5281/zenodo.19944926}
+  doi    = {10.5281/zenodo.24239896}
 }
 ```
 
