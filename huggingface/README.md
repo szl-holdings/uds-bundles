@@ -6,9 +6,8 @@ of the dated Hub revision below. Subsequent source edits are listed separately;
 the import hashes preserve lineage and do not describe the current edited cards.
 The original import was a read-only fetch; nothing was written to the Hub.
 
-The table records the imported bytes, not the current source. The
-`uds-governance-receipts` card is still byte-identical to its import. The `uds-bundles-v1`
-and `uds-spans-receipts` cards have been edited here since; see the next section.
+The table records the imported bytes, not the current source. All three cards have
+been edited here since; see the next section.
 
 | Hub dataset | Card imported from Hub revision | sha256 of the imported card |
 |---|---|---|
@@ -21,9 +20,9 @@ All three cards declare `license: apache-2.0`, which matches this repository's
 
 ## Hub copies behind this source
 
-The `uds-bundles-v1` and `uds-spans-receipts` cards have been edited here since the
-imports above; `uds-governance-receipts` retains its imported bytes. These source
-changes require a verified publication before Hub alignment can be claimed.
+The `uds-bundles-v1`, `uds-spans-receipts` and `uds-governance-receipts` cards have been
+edited here since the imports above. These source changes require a verified publication
+before Hub alignment can be claimed.
 
 - `uds-bundles-v1`: the Hub copy is **behind** at revision `28c14086211944cfc2ceb6ece0f729153b545575`.
   The source card now states the airgap status from the dataset's own evidence
@@ -39,6 +38,11 @@ changes require a verified publication before Hub alignment can be claimed.
   The source card now labels the `spans` and `receipts` rows as synthetic (every Hub row carries
   `synthetic: true`), adds the `synthetic` tag, and lists the fields the rows actually have.
   `tests/test_hf_dataset_cards.py` checks the card text; the JSONL payload lives only on the Hub.
+- `uds-governance-receipts`: the Hub copy is **behind** at revision `b0f2631e8f3ade758acfcd70797096bdc0c5e922`.
+  The source card was imported from that Hub revision and then edited (commit e3d1b80, PR #97):
+  the dataset-concept Zenodo DOI `10.5281/zenodo.24239896` was wired into the card front matter,
+  DOI badge, citation block and DOI table. `tests/test_hf_dataset_cards.py` checks the card
+  text; the JSONL payload lives only on the Hub.
 
 ## Lineage (from Hub commit history, read 2026-09-29)
 
