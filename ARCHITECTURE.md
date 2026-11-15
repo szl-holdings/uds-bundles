@@ -60,7 +60,7 @@ claimed at **L1 · L2-attested for images · L3 roadmap; bundle-level L2 is NOT 
 `DCO` · `Scorecard analysis workflow`. Build/deploy proof, gitleaks, SBOM, Trivy/Grype,
 pin-check, and version-doctrine guards also run.
 
-DOI [10.5281/zenodo.19944926](https://doi.org/10.5281/zenodo.19944926).
+DOI [10.5281/zenodo.24239896](https://doi.org/10.5281/zenodo.24239896).
 
 ---
 

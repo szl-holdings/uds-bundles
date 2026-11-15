@@ -4,7 +4,7 @@ Five image-free **PROOF** UDS/Zarf bundles (Zarf `v0.51.0`, package version `0.3
 cosign-signed with an ECDSA-P256 key. Built `Mon, 01 Jun 2026 09:19:19 +0000`.
 
 **Doctrine v11 LOCKED:** 749 declarations · 14 unique axioms · 163 sorries.
-**Concept DOI:** 10.5281/zenodo.19944926.
+**Concept DOI:** 10.5281/zenodo.24239896.
 
 > Naming note: Quechua component names (Amaru, Rosie, Sentra, Killinchu, a11oy)
 > are brand naming, not prior-art claims. Reed–Solomon ≠ holographic.

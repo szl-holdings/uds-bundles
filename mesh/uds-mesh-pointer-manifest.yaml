@@ -9,7 +9,7 @@
 #
 # Built for: szl-holdings/uds-mesh @ uds-v0.2.0 (meta-release)
 # Author: Lutar, Stephen P. · ORCID 0009-0001-0110-4173 · SZL Holdings
-# Academic citation: doi:10.5281/zenodo.19944926 (concept); doi:10.5281/zenodo.20195368 (v13)
+# Academic citation: doi:10.5281/zenodo.24239896 (concept); doi:10.5281/zenodo.20195368 (v13)
 
 apiVersion: szl.holdings/v1
 kind: MeshPointerManifest
