@@ -2,11 +2,11 @@
 
 ## Getting Help
 
-| Channel | Purpose | Response SLA |
+| Channel | Purpose | Target first response (best effort, not a contractual SLA) |
 |---|---|---|
 | [GitHub Issues](../../issues) | Bug reports, feature requests | 5 business days |
-| security@szlholdings.ai | Security vulnerabilities | See [SECURITY.md](SECURITY.md) |
-| hello@szlholdings.ai | General inquiries | 10 business days |
+| security@szlholdings.com | Security vulnerabilities | See [SECURITY.md](SECURITY.md) |
+| hello@szlholdings.com | General inquiries | 10 business days |
 
 ## Filing an Issue
 
@@ -24,11 +24,13 @@ Please use GitHub Issues for:
 ## Out of Scope
 
 The following are **not** supported on this channel:
-- Classified or controlled unclassified information (CUI) — contact security@szlholdings.ai directly
+- Classified or controlled unclassified information (CUI) — **do not send CUI or classified material by email or any public channel.** Email security@szlholdings.com (without sensitive content) to arrange an approved channel
 - Requests requiring payment or billing
 - HuggingFace hardware tier requests — contact SZL directly
 
-## SLA Definitions
+## Response targets
+
+SZL is currently maintained by a very small team with no staffed support rota. The figures below are **best-effort targets, not a service-level agreement**, and are not measured or reported today. A contractual SLA exists only if it is written into a signed agreement.
 
 - **5 business days** — initial triage and acknowledgment
 - **30 days** — resolution target for confirmed bugs
@@ -36,8 +38,8 @@ The following are **not** supported on this channel:
 
 ## Resources
 
-- [SZL Holdings website](https://szlholdings.ai)
-- [Doctrine v11](https://szlholdings.ai/doctrine)
+- [SZL Holdings website](https://a-11-oy.com)
+- [Doctrine v11](https://github.com/szl-holdings/szl-doctrine)
 - [SECURITY.md](SECURITY.md) — vulnerability disclosure policy
 - [CHANGELOG.md](CHANGELOG.md) — version history
 
