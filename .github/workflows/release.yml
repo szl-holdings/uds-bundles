@@ -20,6 +20,34 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Download release assets (so the shipped bytes are what gets attested)
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir dist --pattern '*' || echo "release has no assets"
+          ls -l dist
+
+      - name: Attest provenance of release assets
+        if: github.event_name == 'release' && hashFiles('dist/*') != ''
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4
+        with:
+          subject-path: 'dist/*'
+          push-to-registry: false
+
+      - name: Verify the attestations just created (fail the job if they do not verify)
+        if: github.event_name == 'release' && hashFiles('dist/*') != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for f in dist/*; do
+            gh attestation verify "$f" --repo "$GITHUB_REPOSITORY"
+          done
+
       - name: Generate SBOM (CycloneDX JSON)
         uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.17.9
         with:
