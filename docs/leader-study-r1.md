@@ -13,7 +13,7 @@ Date: 2026-11-24. Method: web-verified leader landscape + governing-seat ratific
 1. (Zarf) Propose a documentation-only design note reviewing how this repo's bundle documentation explains airgap artifact contents and verification expectations without changing any bundle. Cost: doc-only, approximately 0.5-1 maintainer day; limit: note only, no code, no infra changes.
 2. (Helm) Propose a documentation-only design note reviewing whether chart-source, values-override, and release-provenance references are described consistently for the two products and their capability services, while keeping a11oy family FROZEN and killinchu untouched. Cost: doc-only, approximately 0.5 maintainer day; limit: note only, no code, no infra changes.
 3. (Flux) Propose a documentation-only design note comparing GitOps reconciliation concepts with this repo's airgap bundle workflow, explicitly separating any future upstream PR idea from local authorization and avoiding deployment or integration claims. Cost: doc-only, approximately 0.5-1 maintainer day; limit: note only, no code, no infra changes.
-4. Baseline preserve honestly: preserve Doctrine v11 LOCKED (749/14/163), honest truth labels, airgap discipline, the non-affiliation and upstream-PR contribution posture for UDS, and the frozen/untouched product-lane exclusions; this card authorizes no merge, implementation, integration, deployment, or excluded-lane change.
+Baseline preserve honestly: preserve Doctrine v11 LOCKED (749/14/163), honest truth labels, cosign-signed airgap discipline, SLSA L1 for uds-bundles with L2 on organ images only and bundle-level L2 NOT earned, the non-affiliation and upstream-PR posture for UDS
 
 ## Do not do (per governing seat)
 
