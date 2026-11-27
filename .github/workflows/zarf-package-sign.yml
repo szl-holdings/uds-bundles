@@ -46,6 +46,7 @@ env:
 jobs:
   package-sign:
     name: Build & Sign (${{ matrix.flagship }})
+    environment: release
     runs-on: ubuntu-latest
     permissions:
       id-token: write   # OIDC token exchange with Fulcio (keyless signing)

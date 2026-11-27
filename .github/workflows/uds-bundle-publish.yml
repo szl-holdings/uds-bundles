@@ -58,6 +58,7 @@ env:
 jobs:
   publish:
     name: Build + Publish UDS Bundle
+    environment: release
     runs-on: ubuntu-latest
     permissions:
       contents: read
