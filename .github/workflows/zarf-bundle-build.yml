@@ -22,6 +22,7 @@ permissions:
 
 jobs:
   build:
+    environment: release
     runs-on: ubuntu-latest
     # secrets context is NOT available in top-level `env:` or in `if:` — map the
     # signing key through job-level env, then gate signing on env.COSIGN_KEY.

@@ -76,6 +76,7 @@ jobs:
 
   package:
     name: package + attach szl-0.1.0.tgz
+    environment: release
     runs-on: ubuntu-latest
     needs: lint
     if: github.event_name == 'release'
